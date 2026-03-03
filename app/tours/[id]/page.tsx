@@ -8,7 +8,7 @@ const tour = {
   id: 1,
   title: 'Golden Triangle Tour',
   description: 'Experience the iconic Delhi-Agra-Jaipur circuit',
-  longDescription: 'Embark on an unforgettable journey through India\'s most iconic destinations. The Golden Triangle tour takes you through Delhi\'s historical monuments, Agra\'s magnificent Taj Mahal, and Jaipur\'s royal palaces.',
+  longDescription: 'Embark on an unforgettable journey through India&apos;s most iconic destinations. The Golden Triangle tour takes you through Delhi&apos;s historical monuments, Agra&apos;s magnificent Taj Mahal, and Jaipur&apos;s royal palaces.',
   duration: 6,
   price: 599,
   maxGroupSize: 15,
@@ -147,7 +147,7 @@ export default function TourDetailPage() {
             <section className="mb-12">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                  <h2 className="text-2xl font-bold mb-4">What's Included</h2>
+                  <h2 className="text-2xl font-bold mb-4">What&apos;s Included</h2>
                   <ul className="space-y-2">
                     {tour.included.map((item, idx) => (
                       <li key={idx} className="flex items-start space-x-2">
@@ -158,7 +158,7 @@ export default function TourDetailPage() {
                   </ul>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold mb-4">What's Not Included</h2>
+                  <h2 className="text-2xl font-bold mb-4">What&apos;s Not Included</h2>
                   <ul className="space-y-2">
                     {tour.excluded.map((item, idx) => (
                       <li key={idx} className="flex items-start space-x-2">
