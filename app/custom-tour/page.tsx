@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, Calendar, Users, DollarSign, Heart, Camera, Utensils, Mountain } from 'lucide-react'
+import { MapPin, Heart, Camera, Utensils, Mountain, Loader2 } from 'lucide-react'
+import SuccessModal from '@/components/public/shared/SuccessModal'
 
 const destinations = [
   'Jaipur', 'Udaipur', 'Jodhpur', 'Jaisalmer', 'Bikaner', 'Pushkar', 
@@ -32,7 +33,8 @@ export default function CustomTourPage() {
     additionalInfo: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [message, setMessage] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const toggleDestination = (dest: string) => {
     setFormData(prev => ({
@@ -55,7 +57,7 @@ export default function CustomTourPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    setMessage('')
+    setErrorMessage('')
 
     try {
       const response = await fetch('/api/custom-tour', {
@@ -65,13 +67,13 @@ export default function CustomTourPage() {
       })
 
       if (response.ok) {
-        setMessage('Your custom tour request has been submitted! We will contact you within 24 hours.')
+        setShowSuccess(true)
         setStep(5)
       } else {
-        setMessage('Failed to submit request. Please try again.')
+        setErrorMessage('Failed to submit request. Please try again.')
       }
     } catch (error) {
-      setMessage('An error occurred. Please try again.')
+      setErrorMessage('An error occurred. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -303,15 +305,16 @@ export default function CustomTourPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="btn-primary flex-1 disabled:opacity-50"
+                    className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                    {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                    <span>{isSubmitting ? 'Submitting...' : 'Submit Request'}</span>
                   </button>
                 </div>
 
-                {message && (
-                  <p className={`text-center ${message.includes('submitted') ? 'text-green-600' : 'text-red-600'}`}>
-                    {message}
+                {errorMessage && (
+                  <p className="text-center text-red-600">
+                    {errorMessage}
                   </p>
                 )}
               </div>
@@ -336,6 +339,17 @@ export default function CustomTourPage() {
           </form>
         </div>
       </div>
+
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={() => {
+          setShowSuccess(false)
+          window.location.href = '/'
+        }}
+        title="Custom Tour Request Submitted!"
+        message="Thank you for your interest! Our travel experts will review your preferences and contact you within 24 hours with a customized itinerary and quote."
+        type="custom"
+      />
     </div>
   )
 }

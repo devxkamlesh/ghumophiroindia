@@ -1,9 +1,37 @@
 'use client'
 
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { MapPin, Calendar, Users, Search, Star, Award, Shield } from 'lucide-react'
+import { MapPin, Calendar, Users, Search, Star, Award, Shield, Loader2 } from 'lucide-react'
 
 export default function Hero() {
+  const router = useRouter()
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchParams, setSearchParams] = useState({
+    destination: '',
+    duration: '',
+    travelers: '',
+  })
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSearching(true)
+
+    // Simulate search delay
+    await new Promise(resolve => setTimeout(resolve, 800))
+
+    // Build query string
+    const params = new URLSearchParams()
+    if (searchParams.destination) params.append('destination', searchParams.destination)
+    if (searchParams.duration) params.append('duration', searchParams.duration)
+    if (searchParams.travelers) params.append('travelers', searchParams.travelers)
+
+    // Navigate to tours page with search params
+    router.push(`/tours?${params.toString()}`)
+    setIsSearching(false)
+  }
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background with overlay */}
@@ -69,7 +97,7 @@ export default function Hero() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="max-w-5xl mx-auto"
         >
-          <div className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 lg:p-8">
+          <form onSubmit={handleSearch} className="bg-white rounded-2xl shadow-2xl p-4 md:p-6 lg:p-8">
             <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-gray-900 text-center md:text-left">
               Find Your Perfect Tour
             </h2>
@@ -82,8 +110,13 @@ export default function Hero() {
                   Where to?
                 </label>
                 <div className="relative group">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-600 z-10" />
-                  <select className="w-full pl-10 pr-10 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900 font-medium appearance-none cursor-pointer hover:border-primary-400 hover:shadow-md transition-all duration-200 text-sm">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-600 z-10 pointer-events-none" />
+                  <select 
+                    value={searchParams.destination}
+                    onChange={(e) => setSearchParams({ ...searchParams, destination: e.target.value })}
+                    className="w-full pl-10 pr-10 py-4 md:py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900 font-medium appearance-none cursor-pointer hover:border-primary-400 hover:shadow-md transition-all duration-200 text-sm touch-manipulation"
+                    disabled={isSearching}
+                  >
                     <option value="">Select destination</option>
                     <option value="jaipur">Jaipur - Pink City</option>
                     <option value="udaipur">Udaipur - City of Lakes</option>
@@ -107,8 +140,13 @@ export default function Hero() {
                   Duration
                 </label>
                 <div className="relative group">
-                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-600 z-10" />
-                  <select className="w-full pl-10 pr-10 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900 font-medium appearance-none cursor-pointer hover:border-primary-400 hover:shadow-md transition-all duration-200 text-sm">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-600 z-10 pointer-events-none" />
+                  <select 
+                    value={searchParams.duration}
+                    onChange={(e) => setSearchParams({ ...searchParams, duration: e.target.value })}
+                    className="w-full pl-10 pr-10 py-4 md:py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900 font-medium appearance-none cursor-pointer hover:border-primary-400 hover:shadow-md transition-all duration-200 text-sm touch-manipulation"
+                    disabled={isSearching}
+                  >
                     <option value="">Select duration</option>
                     <option value="1-2">1-2 Days</option>
                     <option value="3-5">3-5 Days</option>
@@ -130,8 +168,13 @@ export default function Hero() {
                   Travelers
                 </label>
                 <div className="relative group">
-                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-600 z-10" />
-                  <select className="w-full pl-10 pr-10 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900 font-medium appearance-none cursor-pointer hover:border-primary-400 hover:shadow-md transition-all duration-200 text-sm">
+                  <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-primary-600 z-10 pointer-events-none" />
+                  <select 
+                    value={searchParams.travelers}
+                    onChange={(e) => setSearchParams({ ...searchParams, travelers: e.target.value })}
+                    className="w-full pl-10 pr-10 py-4 md:py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900 font-medium appearance-none cursor-pointer hover:border-primary-400 hover:shadow-md transition-all duration-200 text-sm touch-manipulation"
+                    disabled={isSearching}
+                  >
                     <option value="">Select travelers</option>
                     <option value="1">1 Person</option>
                     <option value="2">2 People</option>
@@ -149,9 +192,22 @@ export default function Hero() {
 
               {/* Search Button */}
               <div className="md:col-span-3 md:flex md:items-end">
-                <button className="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-3.5 rounded-xl font-bold text-base md:text-lg transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center space-x-2">
-                  <Search className="w-5 h-5" />
-                  <span>Search Tours</span>
+                <button 
+                  type="submit"
+                  disabled={isSearching}
+                  className="w-full min-h-[52px] md:min-h-[46px] bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white px-6 py-4 md:py-3.5 rounded-xl font-bold text-base md:text-lg transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98] flex items-center justify-center space-x-2 disabled:opacity-70 disabled:cursor-not-allowed touch-manipulation"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Searching...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-5 h-5" />
+                      <span>Search Tours</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -160,21 +216,21 @@ export default function Hero() {
             <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-200">
               <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3">Popular searches:</p>
               <div className="flex flex-wrap gap-2">
-                <a href="/tours/golden-triangle" className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium">
+                <a href="/tours?destination=golden-triangle" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
                   Golden Triangle
                 </a>
-                <a href="/destinations/jaipur" className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium">
+                <a href="/tours?destination=jaipur" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
                   Jaipur City Tour
                 </a>
-                <a href="/destinations/jaisalmer" className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium">
+                <a href="/tours?destination=jaisalmer" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
                   Desert Safari
                 </a>
-                <a href="/custom-tour" className="text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium">
+                <a href="/custom-tour" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
                   Custom Tour
                 </a>
               </div>
             </div>
-          </div>
+          </form>
         </motion.div>
       </div>
 

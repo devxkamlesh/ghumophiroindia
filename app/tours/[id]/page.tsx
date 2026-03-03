@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import { Clock, Users, Star, MapPin, Check, X } from 'lucide-react'
-import BookingForm from '@/components/BookingForm'
+import BookingForm from '@/components/public/booking/BookingForm'
 
 // This would come from database in production
 const tour = {

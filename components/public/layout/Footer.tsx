@@ -66,8 +66,8 @@ export default function Footer() {
               </li>
               <li className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-primary-400 flex-shrink-0" />
-                <a href="mailto:info@rajasthantours.com" className="hover:text-primary-400 transition-colors">
-                  info@rajasthantours.com
+                <a href="mailto:info@ghumophiroindia.com" className="hover:text-primary-400 transition-colors">
+                  info@ghumophiroindia.com
                 </a>
               </li>
             </ul>
@@ -78,7 +78,7 @@ export default function Footer() {
       <div className="border-t border-gray-800">
         <div className="container-custom py-6">
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-            <p>&copy; 2024 Rajasthan Tours. All rights reserved.</p>
+            <p>&copy; 2024 Ghumo Phiro India. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <Link href="/privacy" className="hover:text-primary-400 transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="hover:text-primary-400 transition-colors">Terms of Service</Link>
