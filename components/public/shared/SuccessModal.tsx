@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { CheckCircle, X, Mail, Phone, MessageCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -106,12 +107,12 @@ export default function SuccessModal({
                 >
                   Got it!
                 </button>
-                <a
+                <Link
                   href="/tours"
                   className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors text-center"
                 >
                   Browse More Tours
-                </a>
+                </Link>
               </div>
 
               {/* Reference Number (optional) */}

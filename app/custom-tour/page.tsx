@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { MapPin, Heart, Camera, Utensils, Mountain, Loader2 } from 'lucide-react'
 import SuccessModal from '@/components/public/shared/SuccessModal'
 
@@ -331,9 +332,9 @@ export default function CustomTourPage() {
                 <p className="text-gray-600 mb-8">
                   Thank you for your interest. Our travel experts will review your request and contact you within 24 hours with a customized itinerary and quote.
                 </p>
-                <a href="/" className="btn-primary inline-block">
+                <Link href="/" className="btn-primary inline-block">
                   Return to Home
-                </a>
+                </Link>
               </div>
             )}
           </form>
