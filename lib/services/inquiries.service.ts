@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { inquiries } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { CreateInquiryInput, UpdateInquiryInput, InquiryQuery } from '@/lib/validations/inquiry.schema'
+import { toInquiryEntity, toInquiryUpdateEntity, toInquiryResponse } from '@/lib/mappers/inquiry.mapper'
 
 export const inquiriesService = {
   /**
@@ -28,7 +29,7 @@ export const inquiriesService = {
     ])
 
     return {
-      inquiries: inquiriesList,
+      inquiries: inquiriesList.map(toInquiryResponse),
       total: totalCount.length,
       page,
       limit,
@@ -46,55 +47,48 @@ export const inquiriesService = {
       .where(eq(inquiries.id, parseInt(id)))
       .limit(1)
 
-    return inquiry || null
+    return inquiry ? toInquiryResponse(inquiry) : null
   },
 
   /**
    * Create a new inquiry
    */
   async create(data: CreateInquiryInput) {
+    const entity = toInquiryEntity(data)
     const [newInquiry] = await db
       .insert(inquiries)
-      .values({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        country: null,
-        tourInterest: data.tourId || null,
-        message: data.message,
-        status: 'new',
-        createdAt: new Date(),
-      })
+      .values(entity)
       .returning()
 
-    return newInquiry
+    return toInquiryResponse(newInquiry)
   },
 
   /**
    * Update an inquiry
    */
   async update(id: string, data: UpdateInquiryInput) {
+    const updates = toInquiryUpdateEntity(data)
     const [updatedInquiry] = await db
       .update(inquiries)
-      .set(data)
+      .set(updates)
       .where(eq(inquiries.id, parseInt(id)))
       .returning()
 
-    return updatedInquiry || null
+    return updatedInquiry ? toInquiryResponse(updatedInquiry) : null
   },
 
   /**
    * Mark inquiry as in progress
    */
   async markInProgress(id: string) {
-    return this.update(id, { status: 'in_progress' })
+    return this.update(id, { status: 'contacted' })
   },
 
   /**
    * Mark inquiry as resolved
    */
-  async markResolved(id: string, response?: string) {
-    return this.update(id, { status: 'resolved', response })
+  async markResolved(id: string) {
+    return this.update(id, { status: 'closed' })
   },
 
   /**
@@ -113,10 +107,12 @@ export const inquiriesService = {
    * Get recent inquiries (for dashboard)
    */
   async getRecent(limit: number = 5) {
-    return db
+    const inquiriesList = await db
       .select()
       .from(inquiries)
       .orderBy(desc(inquiries.createdAt))
       .limit(limit)
+    
+    return inquiriesList.map(toInquiryResponse)
   },
 }

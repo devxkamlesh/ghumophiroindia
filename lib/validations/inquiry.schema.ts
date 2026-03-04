@@ -4,19 +4,18 @@ export const createInquirySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits'),
-  subject: z.string().min(5, 'Subject must be at least 5 characters'),
+  country: z.string().optional(),
+  tourInterest: z.string().optional(),
   message: z.string().min(10, 'Message must be at least 10 characters'),
-  tourId: z.string().uuid().optional(),
+  tourId: z.string().optional(),
 })
 
 export const updateInquirySchema = z.object({
-  status: z.enum(['new', 'in_progress', 'resolved']),
-  response: z.string().optional(),
-  assignedTo: z.string().uuid().optional(),
+  status: z.enum(['new', 'contacted', 'converted', 'closed']).optional(),
 })
 
 export const inquiryQuerySchema = z.object({
-  status: z.enum(['new', 'in_progress', 'resolved']).optional(),
+  status: z.enum(['new', 'contacted', 'converted', 'closed']).optional(),
   page: z.number().int().positive().default(1),
   limit: z.number().int().positive().max(100).default(10),
 })

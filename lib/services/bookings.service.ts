@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { bookings } from '@/lib/db/schema'
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { CreateBookingInput, UpdateBookingInput, BookingQuery } from '@/lib/validations/booking.schema'
+import { toBookingEntity, toBookingUpdateEntity, toBookingResponse } from '@/lib/mappers/booking.mapper'
 
 export const bookingsService = {
   /**
@@ -57,7 +58,7 @@ export const bookingsService = {
     ])
 
     return {
-      bookings: bookingsList,
+      bookings: bookingsList.map(toBookingResponse),
       total: totalCount.length,
       page,
       limit,
@@ -75,7 +76,7 @@ export const bookingsService = {
       .where(eq(bookings.id, parseInt(id)))
       .limit(1)
 
-    return booking || null
+    return booking ? toBookingResponse(booking) : null
   },
 
   /**
@@ -100,7 +101,7 @@ export const bookingsService = {
     ])
 
     return {
-      bookings: userBookings,
+      bookings: userBookings.map(toBookingResponse),
       total: totalCount.length,
       page,
       limit,
@@ -112,44 +113,30 @@ export const bookingsService = {
    * Create a new booking
    */
   async create(data: CreateBookingInput) {
+    const entity = toBookingEntity(data)
     const [newBooking] = await db
       .insert(bookings)
-      .values({
-        tourId: parseInt(data.tourId),
-        userId: data.userId ? parseInt(data.userId) : null,
-        customerName: data.name,
-        customerEmail: data.email,
-        customerPhone: data.phone,
-        customerCountry: '', // Will be added from user profile or form
-        numberOfTravelers: data.numberOfTravelers,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.startDate), // Calculate based on tour duration
-        totalPrice: '0', // Calculate based on tour price
-        specialRequests: data.specialRequests,
-        status: 'pending',
-        paymentStatus: 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
+      .values(entity)
       .returning()
 
-    return newBooking
+    return toBookingResponse(newBooking)
   },
 
   /**
    * Update a booking
    */
   async update(id: string, data: UpdateBookingInput) {
+    const updates = toBookingUpdateEntity(data)
     const [updatedBooking] = await db
       .update(bookings)
       .set({
-        ...data,
+        ...updates,
         updatedAt: new Date(),
       })
       .where(eq(bookings.id, parseInt(id)))
       .returning()
 
-    return updatedBooking || null
+    return updatedBooking ? toBookingResponse(updatedBooking) : null
   },
 
   /**
@@ -170,11 +157,13 @@ export const bookingsService = {
    * Get recent bookings (for dashboard)
    */
   async getRecent(limit: number = 5) {
-    return db
+    const bookingsList = await db
       .select()
       .from(bookings)
       .orderBy(desc(bookings.createdAt))
       .limit(limit)
+    
+    return bookingsList.map(toBookingResponse)
   },
 
   /**
