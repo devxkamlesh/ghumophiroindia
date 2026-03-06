@@ -154,7 +154,7 @@ function LoginForm() {
         {/* Demo Credentials (Remove in production) */}
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <p className="text-xs text-gray-600 font-medium mb-2">Demo Credentials:</p>
-          <p className="text-xs text-gray-500">Admin: admin@example.com / admin123</p>
+          <p className="text-xs text-gray-500">Admin: admin@ghumophiroindia.com / admin123</p>
           <p className="text-xs text-gray-500">User: user@example.com / user123</p>
         </div>
       </div>

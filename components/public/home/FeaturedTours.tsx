@@ -1,68 +1,34 @@
 'use client'
 
-import { Star, Clock, Users, MapPin, ArrowRight, TrendingUp } from 'lucide-react'
+import { Star, Clock, Users, ArrowRight, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
-const tours = [
-  {
-    id: 1,
-    title: 'Golden Triangle Tour',
-    description: 'Delhi, Agra & Jaipur - The Classic India Experience',
-    image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=2071',
-    duration: '6 Days',
-    groupSize: '2-15',
-    price: 599,
-    rating: 4.9,
-    reviews: 234,
-    highlights: ['Taj Mahal', 'Amber Fort', 'Red Fort'],
-    badge: 'Most Popular',
-    badgeColor: 'bg-red-500',
-  },
-  {
-    id: 2,
-    title: 'Jaipur City Tour',
-    description: 'Explore the Pink City\'s Royal Heritage',
-    image: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?q=80&w=2070',
-    duration: '2 Days',
-    groupSize: '2-10',
-    price: 149,
-    rating: 4.8,
-    reviews: 189,
-    highlights: ['Hawa Mahal', 'City Palace', 'Jantar Mantar'],
-    badge: 'Best Value',
-    badgeColor: 'bg-green-500',
-  },
-  {
-    id: 3,
-    title: 'Udaipur Lake City',
-    description: 'Venice of the East - Romantic Getaway',
-    image: 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?q=80&w=2070',
-    duration: '3 Days',
-    groupSize: '2-8',
-    price: 249,
-    rating: 5.0,
-    reviews: 156,
-    highlights: ['Lake Pichola', 'City Palace', 'Boat Ride'],
-    badge: 'Top Rated',
-    badgeColor: 'bg-yellow-500',
-  },
-  {
-    id: 4,
-    title: 'Jaisalmer Desert Safari',
-    description: 'Golden City & Thar Desert Adventure',
-    image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=2070',
-    duration: '4 Days',
-    groupSize: '2-12',
-    price: 329,
-    rating: 4.9,
-    reviews: 201,
-    highlights: ['Camel Safari', 'Desert Camp', 'Fort Visit'],
-    badge: 'Adventure',
-    badgeColor: 'bg-orange-500',
-  },
-]
+interface Tour {
+  id: string
+  title: string
+  description: string
+  duration: string
+  price: number
+  maxGroupSize: number
+  rating: number
+  reviewCount: number
+  images: string[]
+  highlights: string[]
+  difficulty: string
+}
 
-export default function FeaturedTours() {
+interface FeaturedToursProps {
+  tours: Tour[]
+}
+
+const getBadgeInfo = (index: number, rating: number) => {
+  if (rating >= 4.9) return { text: 'Top Rated', color: 'bg-yellow-500' }
+  if (index === 0) return { text: 'Most Popular', color: 'bg-red-500' }
+  if (index === 1) return { text: 'Best Value', color: 'bg-green-500' }
+  return { text: 'Adventure', color: 'bg-orange-500' }
+}
+
+export default function FeaturedTours({ tours }: FeaturedToursProps) {
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50">
       <div className="container-custom">
@@ -82,79 +48,93 @@ export default function FeaturedTours() {
 
         {/* Tours Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {tours.map((tour) => (
-            <Link
-              key={tour.id}
-              href={`/tours/${tour.id}`}
-              className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
-            >
-              {/* Image Container */}
-              <div className="relative h-56 overflow-hidden">
-                <div
-                  className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                  style={{ backgroundImage: `url('${tour.image}')` }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                
-                {/* Badge */}
-                <div className={`absolute top-4 left-4 ${tour.badgeColor} text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg`}>
-                  {tour.badge}
-                </div>
-
-                {/* Price */}
-                <div className="absolute top-4 right-4 bg-white px-3 py-1.5 rounded-full shadow-lg">
-                  <span className="text-lg font-bold text-primary-600">${tour.price}</span>
-                </div>
-
-                {/* Rating */}
-                <div className="absolute bottom-4 left-4 flex items-center space-x-1 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-sm text-gray-900">{tour.rating}</span>
-                  <span className="text-xs text-gray-600">({tour.reviews})</span>
-                </div>
-              </div>
-
-              {/* Content */}
-              <div className="p-5">
-                <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-1">
-                  {tour.title}
-                </h3>
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2">{tour.description}</p>
-
-                {/* Meta Info */}
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4 pb-4 border-b border-gray-100">
-                  <div className="flex items-center space-x-1">
-                    <Clock className="w-4 h-4 text-primary-600" />
-                    <span className="font-medium">{tour.duration}</span>
+          {tours.map((tour, index) => {
+            const badge = getBadgeInfo(index, tour.rating)
+            // Use Unsplash images as fallback with proper tour-related images
+            const fallbackImages = [
+              'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80', // India architecture
+              'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80', // Taj Mahal
+              'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80', // Desert
+              'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80', // Mountains
+              'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80', // Beach
+              'https://images.unsplash.com/photo-1548013146-72479768bada?w=800&q=80', // Palace
+            ]
+            const imageUrl = tour.images[0] || fallbackImages[index % fallbackImages.length]
+            
+            return (
+              <Link
+                key={tour.id}
+                href={`/tours/${tour.id}`}
+                className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+              >
+                {/* Image Container */}
+                <div className="relative h-56 overflow-hidden">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                    style={{ backgroundImage: `url('${imageUrl}')` }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  
+                  {/* Badge */}
+                  <div className={`absolute top-4 left-4 ${badge.color} text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg`}>
+                    {badge.text}
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Users className="w-4 h-4 text-primary-600" />
-                    <span className="font-medium">{tour.groupSize}</span>
+
+                  {/* Price */}
+                  <div className="absolute top-4 right-4 bg-white px-3 py-1.5 rounded-full shadow-lg">
+                    <span className="text-lg font-bold text-primary-600">₹{tour.price}</span>
+                  </div>
+
+                  {/* Rating */}
+                  <div className="absolute bottom-4 left-4 flex items-center space-x-1 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-bold text-sm text-gray-900">{tour.rating.toFixed(1)}</span>
+                    <span className="text-xs text-gray-600">({tour.reviewCount})</span>
                   </div>
                 </div>
 
-                {/* Highlights */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {tour.highlights.slice(0, 2).map((highlight, idx) => (
-                    <span
-                      key={idx}
-                      className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full font-medium"
-                    >
-                      {highlight}
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="font-bold text-lg mb-2 text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-1">
+                    {tour.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{tour.description}</p>
+
+                  {/* Meta Info */}
+                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4 pb-4 border-b border-gray-100">
+                    <div className="flex items-center space-x-1">
+                      <Clock className="w-4 h-4 text-primary-600" />
+                      <span className="font-medium">{tour.duration}</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Users className="w-4 h-4 text-primary-600" />
+                      <span className="font-medium">{tour.maxGroupSize}</span>
+                    </div>
+                  </div>
+
+                  {/* Highlights */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {tour.highlights.slice(0, 2).map((highlight, idx) => (
+                      <span
+                        key={idx}
+                        className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full font-medium"
+                      >
+                        {highlight}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* CTA */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-primary-600 group-hover:text-primary-700">
+                      View Details
                     </span>
-                  ))}
+                    <ArrowRight className="w-5 h-5 text-primary-600 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
-
-                {/* CTA */}
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-primary-600 group-hover:text-primary-700">
-                    View Details
-                  </span>
-                  <ArrowRight className="w-5 h-5 text-primary-600 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            )
+          })}
         </div>
 
         {/* View All Button */}

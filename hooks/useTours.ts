@@ -14,7 +14,7 @@ export function useTours(query?: TourQuery) {
   }
 
   const { data, error, isLoading, mutate } = useSWR(
-    `/api/v1/tours?${params.toString()}`,
+    `/api/tours?${params.toString()}`,
     fetcher
   )
 
@@ -29,7 +29,7 @@ export function useTours(query?: TourQuery) {
 
 export function useTour(id: string) {
   const { data, error, isLoading, mutate } = useSWR(
-    id ? `/api/v1/tours/${id}` : null,
+    id ? `/api/tours/${id}` : null,
     fetcher
   )
 

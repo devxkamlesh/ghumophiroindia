@@ -14,7 +14,7 @@ export function useBookings(query?: BookingQuery) {
   }
 
   const { data, error, isLoading, mutate } = useSWR(
-    `/api/v1/bookings?${params.toString()}`,
+    `/api/bookings?${params.toString()}`,
     fetcher
   )
 
@@ -29,7 +29,7 @@ export function useBookings(query?: BookingQuery) {
 
 export function useBooking(id: string) {
   const { data, error, isLoading, mutate } = useSWR(
-    id ? `/api/v1/bookings/${id}` : null,
+    id ? `/api/bookings/${id}` : null,
     fetcher
   )
 

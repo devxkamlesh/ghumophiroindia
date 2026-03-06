@@ -117,7 +117,7 @@ export const customTourRequests = pgTable('custom_tour_requests', {
   interests: jsonb('interests').$type<string[]>(),
   startDate: timestamp('start_date'),
   additionalInfo: text('additional_info'),
-  status: text('status').notNull().default('new'),
+  status: text('status').notNull().default('pending'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })

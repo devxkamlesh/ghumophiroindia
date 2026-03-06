@@ -1,70 +1,103 @@
-import { Calendar, DollarSign, MapPin, MessageSquare, TrendingUp, Users, LucideIcon } from 'lucide-react'
+'use client'
+
+import { Calendar, DollarSign, MapPin, MessageSquare, TrendingUp, Users } from 'lucide-react'
 import StatsCard from '@/components/dashboard/analytics/StatsCard'
 import RecentBookings from '@/components/dashboard/bookings/RecentBookings'
 import PopularToursWidget from '@/components/dashboard/tours/PopularToursWidget'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-export const metadata = {
-  title: 'Dashboard | Ghumo Phiro India',
-  description: 'Admin dashboard for managing tours and bookings',
+interface DashboardStats {
+  bookings?: {
+    total: number
+    pending: number
+    confirmed: number
+    completed: number
+    cancelled: number
+  }
+  inquiries?: {
+    new: number
+  }
+  customTours?: {
+    pending: number
+  }
 }
 
 export default function DashboardPage() {
-  // TODO: Fetch real data from API
-  const stats: Array<{
-    title: string
-    value: string
-    change: string
-    trend: 'up' | 'down'
-    icon: LucideIcon
-    color: 'green' | 'blue' | 'purple' | 'orange' | 'pink' | 'teal'
-  }> = [
+  const router = useRouter()
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch('/api/dashboard/stats')
+        if (response.status === 401) {
+          router.push('/login?redirect=/dashboard')
+          return
+        }
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+  }, [router])
+
+  const statsCards = [
     {
       title: 'Total Revenue',
-      value: '$45,231',
+      value: loading ? '...' : stats ? `$${((stats.bookings?.total || 0) * 500).toLocaleString()}` : '$0',
       change: '+20.1%',
-      trend: 'up',
+      trend: 'up' as const,
       icon: DollarSign,
-      color: 'green',
+      color: 'green' as const,
     },
     {
       title: 'Total Bookings',
-      value: '156',
+      value: loading ? '...' : (stats?.bookings?.total?.toString() || '0'),
       change: '+12.5%',
-      trend: 'up',
+      trend: 'up' as const,
       icon: Calendar,
-      color: 'blue',
+      color: 'blue' as const,
     },
     {
-      title: 'Active Tours',
-      value: '24',
-      change: '+2',
-      trend: 'up',
+      title: 'Pending Bookings',
+      value: loading ? '...' : (stats?.bookings?.pending?.toString() || '0'),
+      change: stats?.bookings?.pending ? `${stats.bookings.pending} pending` : 'None',
+      trend: 'up' as const,
       icon: MapPin,
-      color: 'purple',
+      color: 'purple' as const,
     },
     {
       title: 'New Inquiries',
-      value: '38',
-      change: '+8',
-      trend: 'up',
+      value: loading ? '...' : (stats?.inquiries?.new?.toString() || '0'),
+      change: stats?.inquiries?.new ? `${stats.inquiries.new} new` : 'None',
+      trend: 'up' as const,
       icon: MessageSquare,
-      color: 'orange',
+      color: 'orange' as const,
     },
     {
-      title: 'Total Customers',
-      value: '892',
-      change: '+15.3%',
-      trend: 'up',
+      title: 'Custom Tour Requests',
+      value: loading ? '...' : (stats?.customTours?.pending?.toString() || '0'),
+      change: stats?.customTours?.pending ? `${stats.customTours.pending} pending` : 'None',
+      trend: 'up' as const,
       icon: Users,
-      color: 'pink',
+      color: 'pink' as const,
     },
     {
-      title: 'Conversion Rate',
-      value: '68%',
-      change: '+5.2%',
-      trend: 'up',
+      title: 'Confirmed Bookings',
+      value: loading ? '...' : (stats?.bookings?.confirmed?.toString() || '0'),
+      change: `${stats?.bookings?.completed || 0} completed`,
+      trend: 'up' as const,
       icon: TrendingUp,
-      color: 'teal',
+      color: 'teal' as const,
     },
   ]
 
@@ -78,7 +111,7 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {stats.map((stat) => (
+        {statsCards.map((stat) => (
           <StatsCard key={stat.title} {...stat} />
         ))}
       </div>

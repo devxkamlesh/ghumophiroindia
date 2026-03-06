@@ -112,7 +112,7 @@ async function seed() {
         maxGroupSize: 15,
         difficulty: 'easy',
         category: 'heritage',
-        images: ['/images/tours/golden-triangle.jpg'],
+        images: ['https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=2071'],
         highlights: [
           'Visit the iconic Taj Mahal',
           'Explore Red Fort and Qutub Minar in Delhi',
@@ -194,7 +194,7 @@ async function seed() {
         maxGroupSize: 20,
         difficulty: 'easy',
         category: 'beach',
-        images: ['/images/tours/goa-beach.jpg'],
+        images: ['https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?q=80&w=2074'],
         highlights: [
           'Pristine beaches of North and South Goa',
           'Water sports activities',
@@ -264,7 +264,7 @@ async function seed() {
         maxGroupSize: 12,
         difficulty: 'easy',
         category: 'nature',
-        images: ['/images/tours/kerala-backwaters.jpg'],
+        images: ['https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?q=80&w=2048'],
         highlights: [
           'Houseboat cruise in Alleppey backwaters',
           'Tea plantation visit in Munnar',
@@ -340,7 +340,7 @@ async function seed() {
         maxGroupSize: 10,
         difficulty: 'moderate',
         category: 'desert',
-        images: ['/images/tours/rajasthan-desert.jpg'],
+        images: ['https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=2070'],
         highlights: [
           'Camel safari in Thar Desert',
           'Luxury desert camp stay',
@@ -428,7 +428,7 @@ async function seed() {
         maxGroupSize: 8,
         difficulty: 'challenging',
         category: 'adventure',
-        images: ['/images/tours/himalayan-trek.jpg'],
+        images: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070'],
         highlights: [
           'Trek to high altitude passes',
           'Visit Buddhist monasteries',

@@ -1,18 +1,78 @@
+'use client'
+
 import { Calendar, Heart, Star, MapPin } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-export const metadata = {
-  title: 'My Account | Ghumo Phiro India',
-  description: 'Manage your bookings and profile',
+interface Booking {
+  id: string
+  startDate: string
+  numberOfTravelers: number
+  status: string
 }
 
 export default function MyAccountPage() {
+  const router = useRouter()
+  const [userName, setUserName] = useState('Traveler')
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Check session
+        const sessionResponse = await fetch('/api/v1/auth/session')
+        if (!sessionResponse.ok) {
+          router.push('/login?redirect=/my-account')
+          return
+        }
+        
+        const sessionData = await sessionResponse.json()
+        setUserName(sessionData.user?.name || 'Traveler')
+        
+        // Fetch user bookings
+        const bookingsResponse = await fetch(`/api/bookings/user/${sessionData.user.id}?limit=10`)
+        if (bookingsResponse.ok) {
+          const bookingsData = await bookingsResponse.json()
+          setBookings(bookingsData.bookings || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [router])
+
+  const upcomingBookings = bookings.filter((b) => new Date(b.startDate) > new Date())
+  const totalBookings = bookings.length
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-6 text-white animate-pulse">
+          <div className="h-8 bg-white/20 rounded w-1/2 mb-2"></div>
+          <div className="h-4 bg-white/20 rounded w-1/3"></div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 animate-pulse">
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-6 text-white">
-        <h1 className="text-3xl font-bold mb-2">Welcome back, John!</h1>
+        <h1 className="text-3xl font-bold mb-2">Welcome back, {userName}!</h1>
         <p className="text-primary-100">Ready for your next adventure?</p>
       </div>
 
@@ -24,7 +84,7 @@ export default function MyAccountPage() {
               <Calendar className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold">5</div>
+              <div className="text-2xl font-bold">{totalBookings}</div>
               <div className="text-sm text-gray-600">Total Bookings</div>
             </div>
           </div>
@@ -35,7 +95,7 @@ export default function MyAccountPage() {
               <MapPin className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold">2</div>
+              <div className="text-2xl font-bold">{upcomingBookings.length}</div>
               <div className="text-sm text-gray-600">Upcoming Trips</div>
             </div>
           </div>
@@ -46,7 +106,7 @@ export default function MyAccountPage() {
               <Heart className="w-6 h-6 text-pink-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold">8</div>
+              <div className="text-2xl font-bold">0</div>
               <div className="text-sm text-gray-600">Wishlist</div>
             </div>
           </div>
@@ -57,7 +117,7 @@ export default function MyAccountPage() {
               <Star className="w-6 h-6 text-yellow-600" />
             </div>
             <div>
-              <div className="text-2xl font-bold">3</div>
+              <div className="text-2xl font-bold">0</div>
               <div className="text-sm text-gray-600">Reviews</div>
             </div>
           </div>
@@ -72,53 +132,44 @@ export default function MyAccountPage() {
             View all
           </Link>
         </div>
-        <div className="space-y-4">
-          {[
-            {
-              id: 1,
-              tour: 'Golden Triangle Tour',
-              date: 'April 15, 2026',
-              travelers: 2,
-              status: 'Confirmed',
-              image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=200',
-            },
-            {
-              id: 2,
-              tour: 'Udaipur Lake City',
-              date: 'May 10, 2026',
-              travelers: 2,
-              status: 'Confirmed',
-              image: 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?q=80&w=200',
-            },
-          ].map((booking) => (
-            <div key={booking.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors">
-              <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                <Image 
-                  src={booking.image} 
-                  alt={booking.tour} 
-                  fill
-                  className="object-cover"
-                  sizes="80px"
-                />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{booking.tour}</h3>
-                <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-                  <span className="flex items-center space-x-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{booking.date}</span>
+        {upcomingBookings.length > 0 ? (
+          <div className="space-y-4">
+            {upcomingBookings.slice(0, 2).map((booking) => (
+              <div key={booking.id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors">
+                <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                  <MapPin className="w-8 h-8 text-gray-400 absolute inset-0 m-auto" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900">Booking #{booking.id}</h3>
+                  <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
+                    <span className="flex items-center space-x-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{new Date(booking.startDate).toLocaleDateString()}</span>
+                    </span>
+                    <span>{booking.numberOfTravelers} travelers</span>
+                  </div>
+                </div>
+                <div>
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                    booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                    booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-gray-100 text-gray-700'
+                  }`}>
+                    {booking.status}
                   </span>
-                  <span>{booking.travelers} travelers</span>
                 </div>
               </div>
-              <div>
-                <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-medium rounded-full">
-                  {booking.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+            <p>No upcoming trips</p>
+            <Link href="/tours" className="text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
+              Browse tours
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Quick Actions */}
