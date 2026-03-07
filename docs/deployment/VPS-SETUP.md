@@ -27,7 +27,7 @@ This guide uses the latest stable versions as of April 2026:
 
 ### 1.1 Connect to VPS
 ```bash
-ssh root@your-vps-ip
+ssh root@187.127.151.137
 ```
 
 ### 1.2 Update System
@@ -179,7 +179,7 @@ cd backend
 **Option B: Using SCP from Local Machine**
 ```bash
 # Run this from your local machine (Windows)
-scp -r C:\Users\kamle\Desktop\travel kiro\backend root@your-vps-ip:/var/www/ghumo-phiro/
+scp -r C:\Users\kamle\Desktop\travel kiro\backend root@187.127.151.137:/var/www/ghumo-phiro/
 ```
 
 **Option C: Using SFTP Client**
@@ -428,14 +428,14 @@ ufw status
 curl http://localhost:5000/health
 # Should return: {"status":"ok","timestamp":"..."}
 
-curl http://your-vps-ip/api/v1/health
+curl http://187.127.151.137/api/v1/health
 # Should return the same
 ```
 
 ### 11.2 Test from Your Local Machine
 Open browser and visit:
 ```
-http://your-vps-ip/api/v1/health
+http://187.127.151.137/api/v1/health
 ```
 
 ---

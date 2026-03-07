@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
+                "file": "docs/deployment/VPS-SETUP.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "MANUAL-DEPLOY-COMMANDS"
+              "title": "VPS-SETUP"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
+                "file": "docs/deployment/VPS-SETUP.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for MANUAL-DEPLOY-COMMANDS"
+              "title": "Backlinks for VPS-SETUP"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
+                "file": "docs/deployment/VPS-SETUP.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from MANUAL-DEPLOY-COMMANDS"
+              "title": "Outgoing links from VPS-SETUP"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
+                "file": "docs/deployment/VPS-SETUP.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of MANUAL-DEPLOY-COMMANDS"
+              "title": "Outline of VPS-SETUP"
             }
           }
         ]
@@ -185,6 +185,7 @@
   },
   "active": "2295bc4e91425315",
   "lastOpenFiles": [
+    "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
     "docs/deployment/VPS-SETUP.md",
     "backend/logs/combined.log",
     "backend/logs/error.log",
@@ -200,7 +201,6 @@
     "docs/development/DEVELOPMENT.md",
     "MANUAL-DEPLOY-COMMANDS.md",
     "docs/deployment/DEPLOYMENT.md",
-    "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
     "VPS-SETUP.md",
     "docs/versions",
     "docs/development",

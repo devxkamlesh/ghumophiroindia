@@ -203,7 +203,7 @@ ufw status
 curl http://localhost:5000/health
 
 # Test through Nginx
-curl http://your-vps-ip/api/v1/health
+curl http://187.127.151.137/api/v1/health
 
 # Check PM2 status
 pm2 status
@@ -394,6 +394,6 @@ redis-cli info memory
 5. Run `npm install && npm run db:push && npm run build`
 6. Start with `pm2 start ecosystem.config.js`
 7. Configure Nginx reverse proxy
-8. Test: `curl http://your-vps-ip/api/v1/health`
+8. Test: `curl http://187.127.151.137/api/v1/health`
 
 Done! Backend is live on VPS.
