@@ -11,6 +11,7 @@ import {
   Settings,
   CreditCard,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/my-account', icon: LayoutDashboard },
@@ -22,8 +23,42 @@ const navigation = [
   { name: 'Settings', href: '/my-account/settings', icon: Settings },
 ]
 
-export default function UserPanelSidebar() {
+interface UserPanelSidebarProps {
+  userId: string
+}
+
+export default function UserPanelSidebar({ userId }: UserPanelSidebarProps) {
   const pathname = usePathname()
+  const [stats, setStats] = useState({
+    totalBookings: 0,
+    upcomingTrips: 0,
+    wishlistItems: 0,
+  })
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch(`/api/bookings/user/${userId}`)
+        if (response.ok) {
+          const data = await response.json()
+          const bookings = data.bookings || []
+          const upcoming = bookings.filter((b: any) => 
+            new Date(b.startDate) > new Date() && b.status !== 'cancelled'
+          ).length
+          
+          setStats({
+            totalBookings: bookings.length,
+            upcomingTrips: upcoming,
+            wishlistItems: 0, // TODO: Implement wishlist
+          })
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error)
+      }
+    }
+
+    fetchStats()
+  }, [userId])
 
   return (
     <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-40 hidden lg:block">
@@ -55,15 +90,15 @@ export default function UserPanelSidebar() {
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Total Bookings</span>
-            <span className="font-bold text-gray-900">5</span>
+            <span className="font-bold text-gray-900">{stats.totalBookings}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Upcoming Trips</span>
-            <span className="font-bold text-primary-600">2</span>
+            <span className="font-bold text-primary-600">{stats.upcomingTrips}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Wishlist Items</span>
-            <span className="font-bold text-gray-900">8</span>
+            <span className="font-bold text-gray-900">{stats.wishlistItems}</span>
           </div>
         </div>
       </div>
