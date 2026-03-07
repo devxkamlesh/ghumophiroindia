@@ -1,0 +1,64 @@
+import { Router } from 'express'
+import tourController from './tour.controller'
+import { authenticate, authorize } from '../../middleware/auth.middleware'
+import { validateBody, validateQuery, validateParams } from '../../middleware/validate.middleware'
+import {
+  createTourSchema,
+  updateTourSchema,
+  tourQuerySchema,
+  tourIdSchema,
+} from './tour.validator'
+
+const router = Router()
+
+// Public routes
+router.get(
+  '/',
+  validateQuery(tourQuerySchema),
+  tourController.getTours
+)
+
+router.get(
+  '/featured',
+  tourController.getFeaturedTours
+)
+
+router.get(
+  '/slug/:slug',
+  tourController.getTourBySlug
+)
+
+router.get(
+  '/:id',
+  validateParams(tourIdSchema),
+  tourController.getTourById
+)
+
+// Admin only routes
+router.use(authenticate, authorize('admin'))
+
+router.get(
+  '/admin/stats',
+  tourController.getTourStats
+)
+
+router.post(
+  '/',
+  validateBody(createTourSchema),
+  tourController.createTour
+)
+
+router.patch(
+  '/:id',
+  validateParams(tourIdSchema),
+  validateBody(updateTourSchema),
+  tourController.updateTour
+)
+
+router.delete(
+  '/:id',
+  validateParams(tourIdSchema),
+  tourController.deleteTour
+)
+
+export default router
