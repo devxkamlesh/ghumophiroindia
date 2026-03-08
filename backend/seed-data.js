@@ -12,94 +12,193 @@ const adminUser = {
   role: 'admin'
 };
 
-// Sample tours
+// Sample tours - Rajasthan focused
 const sampleTours = [
   {
-    title: 'Golden Triangle Tour',
-    slug: 'golden-triangle-tour',
-    description: 'Experience the best of North India with visits to Delhi, Agra, and Jaipur',
-    longDescription: 'The Golden Triangle Tour is one of the most popular tourist circuits in India, covering three iconic cities: Delhi, Agra, and Jaipur. This tour offers a perfect blend of history, culture, and architecture.',
-    duration: 6,
-    price: 25000,
+    title: 'Jaipur Heritage Tour - The Pink City',
+    slug: 'jaipur-heritage-tour',
+    description: 'Explore India\'s first planned city with royal palaces, forts, and vibrant bazaars',
+    longDescription: 'Discover the royal heritage of Jaipur, the Pink City. Visit magnificent forts, palaces, and experience the vibrant culture of Rajasthan\'s capital city.',
+    duration: 3,
+    price: 8500,
     maxGroupSize: 15,
     difficulty: 'easy',
     category: 'heritage',
     images: [
-      'https://images.unsplash.com/photo-1564507592333-c60657eea523',
-      'https://images.unsplash.com/photo-1587474260584-136574528ed5'
+      'https://images.unsplash.com/photo-1599661046289-e31897846e41',
+      'https://images.unsplash.com/photo-1477587458883-47145ed94245'
     ],
     highlights: [
-      'Visit the iconic Taj Mahal',
-      'Explore the majestic Amber Fort',
-      'Discover the historical Red Fort',
-      'Experience the vibrant markets of Jaipur',
-      'Enjoy traditional Rajasthani cuisine'
+      'Amber Fort with elephant ride',
+      'City Palace and Jantar Mantar (UNESCO)',
+      'Hawa Mahal - Palace of Winds',
+      'Nahargarh Fort sunset view',
+      'Traditional Rajasthani dinner'
     ],
     included: [
-      'Accommodation in 4-star hotels',
-      'Daily breakfast and dinner',
-      'Air-conditioned transportation',
-      'Professional English-speaking guide',
-      'All monument entrance fees'
+      'Hotel accommodation',
+      'Daily breakfast',
+      'All monument entrance fees',
+      'AC transportation',
+      'English speaking guide'
     ],
     excluded: [
-      'International flights',
-      'Travel insurance',
+      'Lunch and dinner (except mentioned)',
       'Personal expenses',
-      'Lunch',
-      'Tips and gratuities'
+      'Camera fees at monuments',
+      'Tips'
     ],
     itinerary: [
       {
         day: 1,
-        title: 'Arrival in Delhi',
-        description: 'Arrive in Delhi and check into your hotel. Evening at leisure.',
-        activities: ['Airport pickup', 'Hotel check-in', 'Welcome dinner']
+        title: 'Arrival & City Palace',
+        description: 'Arrive in Jaipur and explore City Palace and Jantar Mantar',
+        activities: ['Hotel check-in', 'City Palace visit', 'Jantar Mantar', 'Evening at leisure']
       },
       {
         day: 2,
-        title: 'Delhi Sightseeing',
-        description: 'Full day tour of Old and New Delhi including Red Fort, Jama Masjid, and India Gate.',
-        activities: ['Red Fort visit', 'Jama Masjid', 'Rickshaw ride in Chandni Chowk', 'India Gate']
+        title: 'Amber Fort & Hawa Mahal',
+        description: 'Visit the magnificent Amber Fort and iconic Hawa Mahal',
+        activities: ['Amber Fort with elephant ride', 'Jal Mahal photo stop', 'Hawa Mahal', 'Local market shopping']
       },
       {
         day: 3,
-        title: 'Delhi to Agra',
-        description: 'Drive to Agra and visit the magnificent Taj Mahal and Agra Fort.',
-        activities: ['Drive to Agra', 'Taj Mahal visit', 'Agra Fort', 'Sunset at Mehtab Bagh']
-      },
-      {
-        day: 4,
-        title: 'Agra to Jaipur',
-        description: 'Drive to Jaipur via Fatehpur Sikri. Evening at leisure in Jaipur.',
-        activities: ['Fatehpur Sikri visit', 'Drive to Jaipur', 'Evening free time']
-      },
-      {
-        day: 5,
-        title: 'Jaipur Sightseeing',
-        description: 'Full day tour of Jaipur including Amber Fort, City Palace, and Hawa Mahal.',
-        activities: ['Amber Fort', 'City Palace', 'Hawa Mahal', 'Jantar Mantar', 'Local market visit']
-      },
-      {
-        day: 6,
-        title: 'Departure',
-        description: 'Transfer to Delhi airport for your onward journey.',
-        activities: ['Hotel checkout', 'Drive to Delhi', 'Airport drop']
+        title: 'Nahargarh Fort & Departure',
+        description: 'Morning at Nahargarh Fort and departure',
+        activities: ['Nahargarh Fort', 'Jaigarh Fort', 'Departure transfer']
       }
     ],
-    destinations: ['Delhi', 'Agra', 'Jaipur'],
+    destinations: ['Jaipur'],
     rating: 4.8,
-    reviewCount: 156,
+    reviewCount: 0,
     isFeatured: true
   },
   {
-    title: 'Kerala Backwaters Experience',
-    slug: 'kerala-backwaters-experience',
-    description: 'Cruise through the serene backwaters of Kerala on a traditional houseboat',
-    longDescription: 'Experience the tranquil beauty of Kerala\'s backwaters with a stay on a traditional houseboat. Enjoy the lush green landscapes, local village life, and authentic Kerala cuisine.',
-    duration: 4,
-    price: 18000,
-    maxGroupSize: 8,
+    title: 'Jaisalmer Desert Safari - The Golden City',
+    slug: 'jaisalmer-desert-safari',
+    description: 'Experience the magic of Thar Desert with camel safari and camping under stars',
+    longDescription: 'Explore the living fort of Jaisalmer and experience authentic desert life with camel safari, sand dunes, and traditional Rajasthani culture.',
+    duration: 3,
+    price: 12500,
+    maxGroupSize: 12,
+    difficulty: 'moderate',
+    category: 'desert',
+    images: [
+      'https://images.unsplash.com/photo-1609137144813-7d9921338f24',
+      'https://images.unsplash.com/photo-1477587458883-47145ed94245'
+    ],
+    highlights: [
+      'Jaisalmer Fort - Living Fort (UNESCO)',
+      'Camel safari at Sam Sand Dunes',
+      'Desert camping with cultural program',
+      'Patwon Ki Haveli',
+      'Sunset and sunrise in desert'
+    ],
+    included: [
+      'Hotel and desert camp accommodation',
+      'All meals',
+      'Camel safari',
+      'Cultural performances',
+      'Transportation'
+    ],
+    excluded: [
+      'Travel to/from Jaisalmer',
+      'Personal expenses',
+      'Alcoholic beverages',
+      'Tips'
+    ],
+    itinerary: [
+      {
+        day: 1,
+        title: 'Jaisalmer Fort & Havelis',
+        description: 'Explore the golden fort and magnificent havelis',
+        activities: ['Jaisalmer Fort visit', 'Patwon Ki Haveli', 'Salim Singh Ki Haveli', 'Evening at Gadisar Lake']
+      },
+      {
+        day: 2,
+        title: 'Desert Safari & Camping',
+        description: 'Camel safari and overnight desert camping',
+        activities: ['Drive to Sam Sand Dunes', 'Camel safari', 'Sunset viewing', 'Cultural program', 'Dinner under stars']
+      },
+      {
+        day: 3,
+        title: 'Sunrise & Departure',
+        description: 'Desert sunrise and return to Jaisalmer',
+        activities: ['Desert sunrise', 'Breakfast at camp', 'Return to Jaisalmer', 'Departure']
+      }
+    ],
+    destinations: ['Jaisalmer', 'Sam Sand Dunes'],
+    rating: 4.9,
+    reviewCount: 0,
+    isFeatured: true
+  },
+  {
+    title: 'Udaipur Romantic Getaway - City of Lakes',
+    slug: 'udaipur-romantic-getaway',
+    description: 'Experience the romance of Udaipur with lake palaces and royal heritage',
+    longDescription: 'Discover the Venice of the East with its beautiful lakes, palaces, and romantic ambiance. Perfect for couples and honeymooners.',
+    duration: 3,
+    price: 15000,
+    maxGroupSize: 10,
+    difficulty: 'easy',
+    category: 'heritage',
+    images: [
+      'https://images.unsplash.com/photo-1587474260584-136574528ed5',
+      'https://images.unsplash.com/photo-1564507592333-c60657eea523'
+    ],
+    highlights: [
+      'Lake Pichola boat ride',
+      'City Palace complex',
+      'Jag Mandir island palace',
+      'Fateh Sagar Lake',
+      'Sunset at Sajjangarh Palace'
+    ],
+    included: [
+      'Hotel accommodation',
+      'Daily breakfast',
+      'Boat rides',
+      'All entrance fees',
+      'Transportation'
+    ],
+    excluded: [
+      'Lunch and dinner',
+      'Personal expenses',
+      'Camera fees',
+      'Tips'
+    ],
+    itinerary: [
+      {
+        day: 1,
+        title: 'City Palace & Lake Pichola',
+        description: 'Explore the magnificent City Palace and enjoy boat ride',
+        activities: ['City Palace visit', 'Lake Pichola boat ride', 'Jag Mandir visit', 'Evening at leisure']
+      },
+      {
+        day: 2,
+        title: 'Fateh Sagar & Sajjangarh',
+        description: 'Visit Fateh Sagar Lake and Monsoon Palace',
+        activities: ['Fateh Sagar Lake', 'Saheliyon Ki Bari', 'Sajjangarh Palace', 'Sunset viewing']
+      },
+      {
+        day: 3,
+        title: 'Local Markets & Departure',
+        description: 'Shopping and departure',
+        activities: ['Local market visit', 'Shopping', 'Departure transfer']
+      }
+    ],
+    destinations: ['Udaipur'],
+    rating: 4.9,
+    reviewCount: 0,
+    isFeatured: true
+  },
+  {
+    title: 'Ranthambore Tiger Safari',
+    slug: 'ranthambore-tiger-safari',
+    description: 'Spot majestic Bengal tigers in their natural habitat',
+    longDescription: 'Experience thrilling tiger safaris in one of India\'s most famous national parks. Ranthambore offers the best chance to spot tigers in the wild.',
+    duration: 2,
+    price: 9500,
+    maxGroupSize: 6,
     difficulty: 'easy',
     category: 'city',
     images: [
@@ -107,126 +206,149 @@ const sampleTours = [
       'https://images.unsplash.com/photo-1593693397690-362cb9666fc2'
     ],
     highlights: [
-      'Houseboat cruise in Alleppey',
-      'Traditional Kerala cuisine',
-      'Village visits',
-      'Kathakali dance performance',
-      'Ayurvedic massage'
+      'Tiger safari in open jeep',
+      'Ranthambore Fort inside forest',
+      'Bird watching',
+      'Wildlife photography',
+      'Multiple safari zones'
     ],
     included: [
-      'Houseboat accommodation',
-      'All meals on houseboat',
-      'Hotel accommodation in Kochi',
-      'Airport transfers',
-      'Kathakali show tickets'
-    ],
-    excluded: [
-      'Flights',
-      'Travel insurance',
-      'Personal expenses',
-      'Alcoholic beverages'
-    ],
-    itinerary: [
-      {
-        day: 1,
-        title: 'Arrival in Kochi',
-        description: 'Arrive in Kochi and explore Fort Kochi area.',
-        activities: ['Airport pickup', 'Fort Kochi walk', 'Chinese fishing nets', 'Kathakali show']
-      },
-      {
-        day: 2,
-        title: 'Kochi to Alleppey',
-        description: 'Drive to Alleppey and board your houseboat for an overnight cruise.',
-        activities: ['Drive to Alleppey', 'Board houseboat', 'Backwater cruise', 'Village visits']
-      },
-      {
-        day: 3,
-        title: 'Backwater Cruise',
-        description: 'Continue cruising through the backwaters and disembark in the evening.',
-        activities: ['Morning cruise', 'Lunch on boat', 'Disembark', 'Return to Kochi']
-      },
-      {
-        day: 4,
-        title: 'Departure',
-        description: 'Transfer to airport for departure.',
-        activities: ['Hotel checkout', 'Airport transfer']
-      }
-    ],
-    destinations: ['Kochi', 'Alleppey'],
-    rating: 4.9,
-    reviewCount: 89,
-    isFeatured: true
-  },
-  {
-    title: 'Rajasthan Desert Safari',
-    slug: 'rajasthan-desert-safari',
-    description: 'Experience the magic of the Thar Desert with camel safaris and desert camping',
-    longDescription: 'Embark on an unforgettable journey through the golden sands of Rajasthan. Experience camel safaris, desert camping under the stars, and the rich cultural heritage of desert villages.',
-    duration: 5,
-    price: 22000,
-    maxGroupSize: 12,
-    difficulty: 'moderate',
-    category: 'desert',
-    images: [
-      'https://images.unsplash.com/photo-1477587458883-47145ed94245',
-      'https://images.unsplash.com/photo-1609137144813-7d9921338f24'
-    ],
-    highlights: [
-      'Camel safari in Thar Desert',
-      'Desert camping experience',
-      'Traditional Rajasthani folk performances',
-      'Visit to desert villages',
-      'Sunset and sunrise in the desert'
-    ],
-    included: [
-      'Hotel and camp accommodation',
+      'Hotel accommodation',
       'All meals',
-      'Camel safari',
-      'Cultural performances',
+      '2 safari rides',
+      'Safari permits',
       'Transportation'
     ],
     excluded: [
-      'Flights',
-      'Travel insurance',
+      'Travel to/from Ranthambore',
       'Personal expenses',
-      'Alcoholic drinks'
+      'Camera fees',
+      'Tips to driver/guide'
     ],
     itinerary: [
       {
         day: 1,
-        title: 'Arrival in Jaisalmer',
-        description: 'Arrive in Jaisalmer and explore the Golden Fort.',
-        activities: ['Airport/station pickup', 'Jaisalmer Fort visit', 'Patwon Ki Haveli', 'Evening at leisure']
+        title: 'Arrival & Evening Safari',
+        description: 'Arrive and enjoy evening safari',
+        activities: ['Hotel check-in', 'Lunch', 'Evening safari (Zone 1-5)', 'Dinner']
       },
       {
         day: 2,
-        title: 'Desert Safari',
-        description: 'Drive to Sam Sand Dunes for camel safari and desert camping.',
-        activities: ['Drive to Sam', 'Camel safari', 'Sunset viewing', 'Cultural program', 'Dinner under stars']
-      },
-      {
-        day: 3,
-        title: 'Desert Exploration',
-        description: 'Explore desert villages and experience local life.',
-        activities: ['Village visits', 'Desert activities', 'Traditional lunch', 'Return to Jaisalmer']
-      },
-      {
-        day: 4,
-        title: 'Jaisalmer Sightseeing',
-        description: 'Visit Gadisar Lake and local markets.',
-        activities: ['Gadisar Lake', 'Market shopping', 'Sunset point', 'Farewell dinner']
-      },
-      {
-        day: 5,
-        title: 'Departure',
-        description: 'Transfer to airport/station.',
-        activities: ['Hotel checkout', 'Transfer']
+        title: 'Morning Safari & Departure',
+        description: 'Early morning safari and departure',
+        activities: ['Early morning safari', 'Breakfast', 'Ranthambore Fort visit', 'Departure']
       }
     ],
-    destinations: ['Jaisalmer', 'Sam Sand Dunes'],
+    destinations: ['Ranthambore'],
     rating: 4.7,
-    reviewCount: 124,
-    isFeatured: true
+    reviewCount: 0,
+    isFeatured: false
+  },
+  {
+    title: 'Jodhpur Blue City Experience',
+    slug: 'jodhpur-blue-city-experience',
+    description: 'Explore the magnificent Mehrangarh Fort and blue houses of Jodhpur',
+    longDescription: 'Discover the Blue City with its imposing Mehrangarh Fort, blue-painted houses, and rich Marwar heritage.',
+    duration: 2,
+    price: 7500,
+    maxGroupSize: 15,
+    difficulty: 'easy',
+    category: 'heritage',
+    images: [
+      'https://images.unsplash.com/photo-1609137144813-7d9921338f24',
+      'https://images.unsplash.com/photo-1477587458883-47145ed94245'
+    ],
+    highlights: [
+      'Mehrangarh Fort - largest in India',
+      'Jaswant Thada marble memorial',
+      'Umaid Bhawan Palace',
+      'Blue city walking tour',
+      'Clock Tower market'
+    ],
+    included: [
+      'Hotel accommodation',
+      'Daily breakfast',
+      'All entrance fees',
+      'Transportation',
+      'Guide services'
+    ],
+    excluded: [
+      'Lunch and dinner',
+      'Personal expenses',
+      'Camera fees',
+      'Tips'
+    ],
+    itinerary: [
+      {
+        day: 1,
+        title: 'Mehrangarh Fort & Blue City',
+        description: 'Explore the magnificent fort and blue houses',
+        activities: ['Mehrangarh Fort visit', 'Jaswant Thada', 'Blue city walk', 'Clock Tower market']
+      },
+      {
+        day: 2,
+        title: 'Umaid Bhawan & Departure',
+        description: 'Visit palace and departure',
+        activities: ['Umaid Bhawan Palace', 'Museum visit', 'Shopping', 'Departure']
+      }
+    ],
+    destinations: ['Jodhpur'],
+    rating: 4.8,
+    reviewCount: 0,
+    isFeatured: false
+  },
+  {
+    title: 'Pushkar Spiritual Journey',
+    slug: 'pushkar-spiritual-journey',
+    description: 'Visit the only Brahma temple in the world and sacred Pushkar Lake',
+    longDescription: 'Experience the spiritual essence of Pushkar with its sacred lake, Brahma temple, and vibrant ghats.',
+    duration: 2,
+    price: 5500,
+    maxGroupSize: 20,
+    difficulty: 'easy',
+    category: 'heritage',
+    images: [
+      'https://images.unsplash.com/photo-1587474260584-136574528ed5',
+      'https://images.unsplash.com/photo-1564507592333-c60657eea523'
+    ],
+    highlights: [
+      'Brahma Temple - only one in world',
+      'Pushkar Lake ghats',
+      'Evening aarti ceremony',
+      'Savitri Temple hilltop',
+      'Local bazaars'
+    ],
+    included: [
+      'Hotel accommodation',
+      'Daily breakfast',
+      'Temple visits',
+      'Transportation',
+      'Guide'
+    ],
+    excluded: [
+      'Lunch and dinner',
+      'Personal expenses',
+      'Donations at temples',
+      'Tips'
+    ],
+    itinerary: [
+      {
+        day: 1,
+        title: 'Pushkar Lake & Temples',
+        description: 'Explore sacred sites and ghats',
+        activities: ['Brahma Temple', 'Pushkar Lake ghats', 'Evening aarti', 'Market walk']
+      },
+      {
+        day: 2,
+        title: 'Savitri Temple & Departure',
+        description: 'Hilltop temple and departure',
+        activities: ['Savitri Temple trek', 'Panoramic views', 'Shopping', 'Departure']
+      }
+    ],
+    destinations: ['Pushkar'],
+    rating: 4.6,
+    reviewCount: 0,
+    isFeatured: false
   }
 ];
 
