@@ -373,10 +373,13 @@ async function registerAdmin() {
         console.log('ℹ️  Admin user already exists, logging in...');
         return await loginAdmin();
       }
+      console.error('❌ Registration failed with status:', response.status);
+      console.error('❌ Response:', JSON.stringify(data, null, 2));
       throw new Error(data.message || 'Failed to register admin');
     }
   } catch (error) {
     console.error('❌ Error registering admin:', error.message);
+    if (error.cause) console.error('Cause:', error.cause);
     throw error;
   }
 }
