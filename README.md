@@ -1,6 +1,6 @@
-# Ghumo Phiro India - Tour Booking Platform
+# Ghumo Firo India - Tour Booking Platform
 
-A modern, full-stack tour booking platform for exploring India's diverse destinations.
+A modern, full-stack tour booking platform for exploring Rajasthan's royal heritage and vibrant culture.
 
 ---
 
@@ -72,13 +72,13 @@ ghumo-phiro-india/
 ## 🎯 Features
 
 ### For Customers
-- Browse tours by category, destination, difficulty
-- Advanced search and filtering
-- Detailed tour information with itineraries
-- Secure booking system
-- User account management
+- Browse Rajasthan tours by category, price, duration
+- Real-time filtering and search
+- Detailed tour information with day-by-day itineraries
+- Online booking with form validation
 - Custom tour requests
 - Contact and inquiry forms
+- Responsive design (mobile, tablet, desktop)
 
 ### For Admins
 - Complete tour management (CRUD)
@@ -180,20 +180,23 @@ NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
 ## 📚 Documentation
 
 ### Deployment
-- [User Setup Guide](./docs/deployment/USER-SETUP.md) - Create non-root user
 - [VPS Setup Guide](./docs/deployment/VPS-SETUP.md) - Complete server setup
 - [Manual Deploy Commands](./docs/deployment/MANUAL-DEPLOY-COMMANDS.md) - Quick reference
-- [Docker Deployment](./docs/deployment/DEPLOYMENT.md) - Optional Docker setup
+- [Deployment Guide](./docs/deployment/DEPLOYMENT.md) - Docker setup (optional)
 
 ### Development
 - [Development Guide](./docs/development/DEVELOPMENT.md) - Local setup
 - [Backend README](./backend/README.md) - Backend documentation
 - [Frontend README](./frontend/README.md) - Frontend documentation
+- [Frontend Quick Start](./frontend/QUICKSTART.md) - Frontend quick start
 - [API Documentation](./backend/API.md) - API endpoints
 
 ### Versions
 - [Version Information](./docs/versions/VERSION-INFO.md) - All versions
-- [Version Updates](./docs/versions/VERSIONS-UPDATED.md) - Recent changes
+
+### Frontend
+- [Frontend Complete](./FRONTEND_COMPLETE.md) - Frontend build summary
+- [Implementation Summary](./frontend/IMPLEMENTATION_SUMMARY.md) - Detailed implementation
 
 ---
 
@@ -313,7 +316,7 @@ MIT License - See LICENSE file for details
 
 ## 👥 Team
 
-Ghumo Phiro India Development Team
+Ghumo Firo India Development Team
 
 ---
 
@@ -326,6 +329,6 @@ For issues and questions:
 
 ---
 
-**Last Updated**: April 13, 2026  
+**Last Updated**: April 14, 2026  
 **Version**: 1.0.0  
-**Status**: Ready for deployment
+**Status**: ✅ Backend Deployed | ✅ Frontend Complete | Ready for Frontend Deployment

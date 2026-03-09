@@ -1,7 +1,7 @@
 {
-  "name": "ghumo-phiro-frontend",
+  "name": "ghumo-firo-frontend",
   "version": "1.0.0",
-  "description": "Frontend for Ghumo Phiro India - Tour Booking Platform",
+  "description": "Frontend for Ghumo Firo India - Tour Booking Platform",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

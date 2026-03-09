@@ -1,7 +1,7 @@
 {
-  "name": "ghumo-phiro-india",
+  "name": "ghumo-firo-india",
   "version": "1.0.0",
-  "description": "Tour Booking Platform - Monorepo",
+  "description": "Ghumo Firo India - Tour Booking Platform Monorepo",
   "private": true,
   "workspaces": [
     "backend",
