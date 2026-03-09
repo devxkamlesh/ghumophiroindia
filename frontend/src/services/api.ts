@@ -14,16 +14,19 @@ const api = axios.create({
 export const tourService = {
   getAll: async (): Promise<Tour[]> => {
     const { data } = await api.get('/tours');
-    return data.data.tours || [];
+    // /tours endpoint returns data as array directly (sendPaginated)
+    return Array.isArray(data.data) ? data.data : [];
   },
 
   getFeatured: async (): Promise<Tour[]> => {
     const { data } = await api.get('/tours/featured');
+    // /tours/featured endpoint returns { tours } wrapped (sendSuccess)
     return data.data.tours || [];
   },
 
   getById: async (id: string): Promise<Tour> => {
     const { data } = await api.get(`/tours/${id}`);
+    // /tours/:id endpoint returns { tour } wrapped (sendSuccess)
     return data.data.tour;
   },
 };
