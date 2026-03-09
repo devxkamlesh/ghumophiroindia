@@ -45,8 +45,14 @@ export default function MyBookingsPage() {
 
         const data = await bookingService.getMyBookings();
         setBookings(data);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch bookings:', err);
+        // If 401, clear token and redirect to login
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          router.push('/login');
+        }
       } finally {
         setLoading(false);
       }

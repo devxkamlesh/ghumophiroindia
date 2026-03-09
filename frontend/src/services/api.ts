@@ -68,7 +68,11 @@ export const authService = {
     password: string;
   }): Promise<{ token: string; user: any }> => {
     const { data: response } = await api.post('/auth/login', data);
-    return response.data;
+    // Backend returns accessToken, map it to token for consistency
+    return {
+      token: response.data.accessToken,
+      user: response.data.user,
+    };
   },
 
   logout: (): void => {
