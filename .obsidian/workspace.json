@@ -185,6 +185,8 @@
   },
   "active": "2295bc4e91425315",
   "lastOpenFiles": [
+    "backend/seed-db-direct.ts",
+    "backend/seed-data.js",
     "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
     "docs/deployment/VPS-SETUP.md",
     "backend/logs/combined.log",
