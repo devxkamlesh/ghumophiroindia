@@ -42,3 +42,37 @@ export const inquiryService = {
     await api.post('/inquiries', inquiry);
   },
 };
+
+export const authService = {
+  register: async (data: {
+    name: string;
+    email: string;
+    password: string;
+    phone: string;
+  }): Promise<void> => {
+    await api.post('/auth/register', data);
+  },
+
+  login: async (data: {
+    email: string;
+    password: string;
+  }): Promise<{ token: string; user: any }> => {
+    const { data: response } = await api.post('/auth/login', data);
+    return response.data;
+  },
+
+  logout: (): void => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  },
+
+  getProfile: async (): Promise<any> => {
+    const token = localStorage.getItem('token');
+    const { data } = await api.get('/auth/profile', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return data.data.user;
+  },
+};
