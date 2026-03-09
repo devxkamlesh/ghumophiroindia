@@ -18,7 +18,7 @@ const app = createServer()
 const apiRouter = require('express').Router()
 
 // Health check endpoint (also available at /api/v1/health)
-apiRouter.get('/health', async (req, res) => {
+apiRouter.get('/health', async (req: any, res: any) => {
   const { checkDatabaseConnection } = await import('./core/database')
   const { checkRedisConnection } = await import('./core/redis')
   
@@ -41,7 +41,7 @@ apiRouter.get('/health', async (req, res) => {
 })
 
 // Apply rate limiting to all API routes except health
-apiRouter.use((req, res, next) => {
+apiRouter.use((req: any, res: any, next: any) => {
   if (req.path === '/health') {
     return next()
   }
