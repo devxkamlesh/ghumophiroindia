@@ -2,34 +2,36 @@ import { eq, desc, sql } from 'drizzle-orm'
 import db from '../../core/database'
 import { inquiries } from '../../core/database/schema'
 import { NotFoundError } from '../../shared/errors'
-import { z } from 'zod'
-
-export const createInquirySchema = z.object({
-  name: z.string().min(2).max(100),
-  email: z.string().email(),
-  phone: z.string().min(10).max(20),
-  country: z.string().optional(),
-  tourInterest: z.string().optional(),
-  message: z.string().min(10),
-})
+import type { CreateInquiryInput, UpdateInquiryStatusInput } from './inquiry.validator'
 
 export class InquiryService {
-  async create(data: z.infer<typeof createInquirySchema>) {
+  async create(data: CreateInquiryInput) {
     const [inquiry] = await db.insert(inquiries).values(data).returning()
     return inquiry
   }
 
   async getAll(page = 1, limit = 20) {
     const offset = (page - 1) * limit
-    const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(inquiries)
-    
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(inquiries)
+
     const results = await db.query.inquiries.findMany({
       orderBy: desc(inquiries.createdAt),
       limit,
       offset,
     })
 
-    return { inquiries: results, total: count }
+    return {
+      inquiries: results,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit),
+      },
+    }
   }
 
   async getById(id: number) {
@@ -40,7 +42,7 @@ export class InquiryService {
     return inquiry
   }
 
-  async updateStatus(id: number, status: string) {
+  async updateStatus(id: number, status: UpdateInquiryStatusInput['status']) {
     const [updated] = await db
       .update(inquiries)
       .set({ status })

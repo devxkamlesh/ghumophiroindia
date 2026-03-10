@@ -1,8 +1,12 @@
 import { Router } from 'express'
-import inquiryService, { createInquirySchema } from './inquiry.service'
+import inquiryService from './inquiry.service'
+import { createInquirySchema, updateInquiryStatusSchema, inquiryQuerySchema } from './inquiry.validator'
 import { sendSuccess } from '../../shared/response'
 import { authenticate, authorize } from '../../middleware/auth.middleware'
-import { validateBody } from '../../middleware/validate.middleware'
+import { validateBody, validateQuery, validateParams } from '../../middleware/validate.middleware'
+import { z } from 'zod'
+
+const idParamSchema = z.object({ id: z.coerce.number().int().positive() })
 
 const router = Router()
 
@@ -19,28 +23,28 @@ router.post('/', validateBody(createInquirySchema), async (req, res, next) => {
 // Admin routes
 router.use(authenticate, authorize('admin'))
 
-router.get('/', async (req, res, next) => {
+router.get('/', validateQuery(inquiryQuerySchema), async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page as string) || 1
-    const result = await inquiryService.getAll(page)
+    const { page, limit } = req.query as unknown as { page: number; limit: number }
+    const result = await inquiryService.getAll(page, limit)
     sendSuccess(res, result)
   } catch (error) {
     next(error)
   }
 })
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', validateParams(idParamSchema), async (req, res, next) => {
   try {
-    const inquiry = await inquiryService.getById(parseInt(req.params.id, 10))
+    const inquiry = await inquiryService.getById(Number(req.params.id))
     sendSuccess(res, { inquiry })
   } catch (error) {
     next(error)
   }
 })
 
-router.patch('/:id/status', async (req, res, next) => {
+router.patch('/:id/status', validateParams(idParamSchema), validateBody(updateInquiryStatusSchema), async (req, res, next) => {
   try {
-    const inquiry = await inquiryService.updateStatus(parseInt(req.params.id, 10), req.body.status)
+    const inquiry = await inquiryService.updateStatus(Number(req.params.id), req.body.status)
     sendSuccess(res, { inquiry })
   } catch (error) {
     next(error)
