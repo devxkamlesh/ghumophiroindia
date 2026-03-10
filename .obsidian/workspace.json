@@ -185,6 +185,8 @@
   },
   "active": "2295bc4e91425315",
   "lastOpenFiles": [
+    "frontend/src/components/theme-toggle.tsx",
+    "frontend/src/components/theme-provider.tsx",
     "frontend/src/components/ui/badge.tsx",
     "frontend/src/app/(user-panel)/my-account/bookings/page.tsx",
     "frontend/src/app/(user-panel)/my-account/page.tsx",
@@ -198,8 +200,6 @@
     "frontend/src/app/contact/page.tsx",
     "frontend/src/app/about/page.tsx",
     "frontend/src/app/tours/[id]/page.tsx",
-    "frontend/src/app/tours/page.tsx",
-    "frontend/src/app/page.tsx",
     "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
     "docs/deployment/VPS-SETUP.md",
     "docs/deployment/QUICK-START.md",
