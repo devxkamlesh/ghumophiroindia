@@ -1,202 +1,226 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { tourService } from '@/services/api';
 import { formatCurrency } from '@/lib/utils';
-import { Clock, Users, MapPin, Filter } from 'lucide-react';
+import { Clock, Users, MapPin, Star, ArrowRight, Filter, Search } from 'lucide-react';
 import type { Tour } from '@/types';
 
 export default function ToursPage() {
   const [tours, setTours] = useState<Tour[]>([]);
-  const [filteredTours, setFilteredTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [priceFilter, setPriceFilter] = useState<string>('all');
-  const [durationFilter, setDurationFilter] = useState<string>('all');
+  const [filters, setFilters] = useState({
+    category: 'all',
+    difficulty: 'all',
+    search: '',
+  });
 
   useEffect(() => {
-    const fetchTours = async () => {
-      try {
-        const data = await tourService.getAll();
-        const toursArray = Array.isArray(data) ? data : [];
-        setTours(toursArray);
-        setFilteredTours(toursArray);
-      } catch (error) {
-        console.error('Failed to fetch tours:', error);
-        setTours([]);
-        setFilteredTours([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchTours();
-  }, []);
+  }, [filters]);
 
-  useEffect(() => {
-    let filtered = [...tours];
+  const fetchTours = async () => {
+    try {
+      setLoading(true);
+      const data = await tourService.getAll();
+      let filtered = Array.isArray(data) ? data : [];
 
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(tour => tour.category.toLowerCase() === categoryFilter);
-    }
-
-    if (priceFilter !== 'all') {
-      if (priceFilter === 'low') {
-        filtered = filtered.filter(tour => tour.price < 15000);
-      } else if (priceFilter === 'medium') {
-        filtered = filtered.filter(tour => tour.price >= 15000 && tour.price < 30000);
-      } else if (priceFilter === 'high') {
-        filtered = filtered.filter(tour => tour.price >= 30000);
+      // Apply filters
+      if (filters.category !== 'all') {
+        filtered = filtered.filter(tour => tour.category === filters.category);
       }
-    }
-
-    if (durationFilter !== 'all') {
-      if (durationFilter === 'short') {
-        filtered = filtered.filter(tour => tour.duration <= 3);
-      } else if (durationFilter === 'medium') {
-        filtered = filtered.filter(tour => tour.duration > 3 && tour.duration <= 7);
-      } else if (durationFilter === 'long') {
-        filtered = filtered.filter(tour => tour.duration > 7);
+      if (filters.difficulty !== 'all') {
+        filtered = filtered.filter(tour => tour.difficulty === filters.difficulty);
       }
+      if (filters.search) {
+        filtered = filtered.filter(tour => 
+          tour.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+          tour.description.toLowerCase().includes(filters.search.toLowerCase())
+        );
+      }
+
+      setTours(filtered);
+    } catch (error) {
+      console.error('Failed to fetch tours:', error);
+      setTours([]);
+    } finally {
+      setLoading(false);
     }
-
-    setFilteredTours(filtered);
-  }, [categoryFilter, priceFilter, durationFilter, tours]);
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <p className="text-muted-foreground">Loading tours...</p>
-        </div>
-      </div>
-    );
-  }
+  };
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold mb-4">Explore Our Tours</h1>
-        <p className="text-muted-foreground text-lg">
-          Discover amazing destinations across Rajasthan
-        </p>
-      </div>
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-orange-100 via-pink-100 to-orange-200 py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Explore Our <span className="bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">Tours</span>
+            </h1>
+            <p className="text-lg text-muted-foreground mb-8">
+              Discover the beauty of Rajasthan with our carefully curated tour packages
+            </p>
 
-      {/* Filters */}
-      <div className="mb-8 p-6 bg-muted/50 rounded-lg">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter size={20} />
-          <h2 className="text-lg font-semibold">Filters</h2>
+            {/* Search Bar */}
+            <div className="relative max-w-xl mx-auto">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+              <input
+                type="text"
+                placeholder="Search tours..."
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                className="w-full pl-12 pr-4 py-4 rounded-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 focus:border-orange-500 focus:outline-none"
+              />
+            </div>
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Category</label>
+      </section>
+
+      {/* Filters & Tours */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          {/* Filters */}
+          <div className="flex flex-wrap gap-4 mb-8">
+            <div className="flex items-center gap-2">
+              <Filter size={20} className="text-muted-foreground" />
+              <span className="font-semibold">Filters:</span>
+            </div>
+
+            {/* Category Filter */}
             <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2"
+              value={filters.category}
+              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+              className="px-4 py-2 rounded-lg border bg-background"
             >
               <option value="all">All Categories</option>
+              <option value="city">City Tours</option>
               <option value="heritage">Heritage</option>
-              <option value="adventure">Adventure</option>
-              <option value="cultural">Cultural</option>
-              <option value="wildlife">Wildlife</option>
+              <option value="desert">Desert Safari</option>
+              <option value="custom">Custom</option>
             </select>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Price Range</label>
+            {/* Difficulty Filter */}
             <select
-              value={priceFilter}
-              onChange={(e) => setPriceFilter(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2"
+              value={filters.difficulty}
+              onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
+              className="px-4 py-2 rounded-lg border bg-background"
             >
-              <option value="all">All Prices</option>
-              <option value="low">Under ₹15,000</option>
-              <option value="medium">₹15,000 - ₹30,000</option>
-              <option value="high">Above ₹30,000</option>
+              <option value="all">All Difficulties</option>
+              <option value="easy">Easy</option>
+              <option value="moderate">Moderate</option>
+              <option value="challenging">Challenging</option>
             </select>
+
+            <Button
+              variant="outline"
+              onClick={() => setFilters({ category: 'all', difficulty: 'all', search: '' })}
+            >
+              Clear Filters
+            </Button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Duration</label>
-            <select
-              value={durationFilter}
-              onChange={(e) => setDurationFilter(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2"
-            >
-              <option value="all">All Durations</option>
-              <option value="short">1-3 days</option>
-              <option value="medium">4-7 days</option>
-              <option value="long">8+ days</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Tours Grid */}
-      {filteredTours.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">No tours found matching your filters.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTours.map((tour) => (
-            <Card key={tour.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="relative h-48 w-full">
-                {tour.images && tour.images[0] ? (
-                  <Image
-                    src={tour.images[0]}
-                    alt={tour.title}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-muted flex items-center justify-center">
-                    <MapPin className="text-muted-foreground" size={48} />
-                  </div>
-                )}
-                <div className="absolute top-2 right-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-medium">
-                  {tour.category}
-                </div>
+          {/* Tours Grid */}
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
+            </div>
+          ) : tours.length === 0 ? (
+            <div className="text-center py-20">
+              <MapPin className="mx-auto mb-4 text-muted-foreground" size={48} />
+              <h3 className="text-xl font-semibold mb-2">No Tours Found</h3>
+              <p className="text-muted-foreground mb-4">Try adjusting your filters</p>
+              <Button onClick={() => setFilters({ category: 'all', difficulty: 'all', search: '' })}>
+                Clear Filters
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="mb-4 text-muted-foreground">
+                Showing {tours.length} {tours.length === 1 ? 'tour' : 'tours'}
               </div>
-              <CardHeader>
-                <CardTitle className="line-clamp-1">{tour.title}</CardTitle>
-                <CardDescription className="line-clamp-2">
-                  {tour.shortDescription || tour.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                  <div className="flex items-center gap-1">
-                    <Clock size={16} />
-                    <span>{tour.duration} days</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Users size={16} />
-                    <span>Max {tour.maxGroupSize}</span>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-2xl font-bold text-primary">
-                    {formatCurrency(tour.price)}
-                  </span>
-                  <span className="text-sm text-muted-foreground"> / person</span>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Link href={`/tours/${tour.id}`} className="w-full">
-                  <Button className="w-full">View Details</Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {tours.map((tour) => (
+                  <Link key={tour.id} href={`/tours/${tour.id}`}>
+                    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 border-0 h-full">
+                      <div className="relative h-56 overflow-hidden">
+                        {tour.images && tour.images[0] ? (
+                          <Image
+                            src={tour.images[0]}
+                            alt={tour.title}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
+                            <MapPin className="text-white" size={48} />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                        <div className="absolute top-3 left-3">
+                          <Badge className="bg-white/90 backdrop-blur-sm text-gray-900 capitalize">
+                            {tour.category}
+                          </Badge>
+                        </div>
+                        {tour.featured && (
+                          <div className="absolute top-3 right-3">
+                            <Badge className="bg-yellow-500 text-white">
+                              <Star size={12} className="mr-1 fill-white" />
+                              Featured
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+
+                      <CardContent className="p-5">
+                        <h3 className="text-lg font-bold mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                          {tour.title}
+                        </h3>
+                        
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {tour.shortDescription || tour.description}
+                        </p>
+
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                          <div className="flex items-center gap-1">
+                            <Clock size={14} />
+                            <span>{tour.duration}D</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users size={14} />
+                            <span>Max {tour.maxGroupSize}</span>
+                          </div>
+                          <Badge variant="outline" className="capitalize text-xs">
+                            {tour.difficulty}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-3 border-t">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Starting from</p>
+                            <p className="text-xl font-bold text-primary">
+                              {formatCurrency(tour.price)}
+                            </p>
+                          </div>
+                          <Button size="sm" className="rounded-full">
+                            View Details
+                            <ArrowRight className="ml-1 group-hover:translate-x-1 transition-transform" size={14} />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
         </div>
-      )}
+      </section>
     </div>
   );
 }

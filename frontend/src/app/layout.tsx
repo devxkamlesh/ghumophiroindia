@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Header } from '@/components/public/Header';
-import { Footer } from '@/components/public/Footer';
+import { ConditionalLayout } from '@/components/ConditionalLayout';
+import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -19,9 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Header />
-        <main className="min-h-screen">{children}</main>
-        <Footer />
+        <SmoothScrollProvider>
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </SmoothScrollProvider>
       </body>
     </html>
   );
