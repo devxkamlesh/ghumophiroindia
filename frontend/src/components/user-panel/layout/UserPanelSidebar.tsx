@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Calendar, Heart, MessageSquare, User, Settings } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { bookingService } from '@/services/api'
-import type { Booking } from '@/types'
+import { usePathname, useRouter } from 'next/navigation'
+import {
+  LayoutDashboard, Calendar, User,
+  MessageSquare, Settings, LogOut, ExternalLink, Home,
+} from 'lucide-react'
+import { clearAuth } from '@/lib/auth'
+import { cn } from '@/lib/utils'
 
 const navigation = [
   { name: 'Dashboard', href: '/my-account', icon: LayoutDashboard },
@@ -17,57 +19,68 @@ const navigation = [
 
 export default function UserPanelSidebar() {
   const pathname = usePathname()
-  const [stats, setStats] = useState({ total: 0, upcoming: 0 })
+  const router = useRouter()
 
-  useEffect(() => {
-    bookingService
-      .getMyBookings()
-      .then((bookings: Booking[]) => {
-        const upcoming = bookings.filter(
-          (b) => new Date(b.startDate) > new Date() && b.status !== 'cancelled'
-        ).length
-        setStats({ total: bookings.length, upcoming })
-      })
-      .catch(() => {}) // silently fail — sidebar stats are non-critical
-  }, [])
+  const handleLogout = () => {
+    clearAuth()
+    router.push('/login')
+  }
 
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto z-40 hidden lg:block">
-      <nav className="p-4 space-y-1">
-        {navigation.map((item) => {
-          const isActive = pathname === item.href
-          const Icon = item.icon
+    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 hidden lg:flex flex-col z-40">
+
+      {/* Section label */}
+      <div className="px-5 py-3 border-b border-gray-100">
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">My Account</p>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+        {navigation.map(({ name, href, icon: Icon }) => {
+          const active = pathname === href
           return (
             <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-primary-50 text-primary-700 font-semibold'
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
+              key={href}
+              href={href}
+              className={cn(
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border-l-2 pl-[10px]',
+                active
+                  ? 'bg-primary-50 text-primary-700 border-primary-600'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'
+              )}
             >
-              <Icon className="w-5 h-5 flex-shrink-0" />
-              <span>{item.name}</span>
+              <Icon className={cn('w-4 h-4 flex-shrink-0', active ? 'text-primary-600' : 'text-gray-400')} />
+              {name}
             </Link>
           )
         })}
       </nav>
 
-      {/* Account Status */}
-      <div className="p-4 mt-4 border-t border-gray-200">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Account Status</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Total Bookings</span>
-            <span className="font-bold text-gray-900">{stats.total}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Upcoming Trips</span>
-            <span className="font-bold text-primary-600">{stats.upcoming}</span>
-          </div>
-        </div>
+      {/* Bottom */}
+      <div className="px-3 py-3 border-t border-gray-100 space-y-0.5">
+        <Link
+          href="/"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors border-l-2 border-transparent pl-[10px]"
+        >
+          <Home className="w-4 h-4 flex-shrink-0 text-gray-400" />
+          Go to Home
+        </Link>
+        <Link
+          href="/tours"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors border-l-2 border-transparent pl-[10px]"
+        >
+          <ExternalLink className="w-4 h-4 flex-shrink-0 text-gray-400" />
+          Browse Tours
+        </Link>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors w-full border-l-2 border-transparent pl-[10px]"
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          Sign out
+        </button>
       </div>
+
     </aside>
   )
 }

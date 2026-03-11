@@ -21,3 +21,12 @@ export const bookingLimiter = rateLimit({
   max: 10, // 10 bookings per hour
   message: 'Too many booking requests, please try again later',
 })
+
+// Map API — heavy traffic endpoint, tighter limit
+export const mapLimiter = rateLimit({
+  windowMs: 60 * 1000,  // 1 minute
+  max: 50,              // 50 req/min per IP
+  message: 'Too many map requests, please slow down',
+  standardHeaders: true,
+  legacyHeaders: false,
+})
