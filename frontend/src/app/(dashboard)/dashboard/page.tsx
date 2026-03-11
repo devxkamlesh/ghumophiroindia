@@ -1,151 +1,103 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import { Package, Calendar, MessageSquare, FileText, TrendingUp, Users } from 'lucide-react';
+import { Calendar, DollarSign, MapPin, MessageSquare, TrendingUp, Users, Wand2, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import RecentBookings from '@/components/dashboard/bookings/RecentBookings'
+import PopularToursWidget from '@/components/dashboard/tours/PopularToursWidget'
+import { useEffect, useState } from 'react'
+import { bookingService } from '@/services/api'
+
+interface Stats {
+  total: number
+  pending: number
+  confirmed: number
+  completed: number
+  cancelled: number
+  totalRevenue: number
+}
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
-    totalTours: 0,
-    totalBookings: 0,
-    totalInquiries: 0,
-    totalCustomRequests: 0,
-    revenue: 0,
-    activeUsers: 0,
-  });
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: Fetch real stats from API
-    setStats({
-      totalTours: 24,
-      totalBookings: 156,
-      totalInquiries: 43,
-      totalCustomRequests: 18,
-      revenue: 450000,
-      activeUsers: 89,
-    });
-  }, []);
+    bookingService.getStats()
+      .then(setStats)
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
 
-  const statCards = [
-    {
-      title: 'Total Tours',
-      value: stats.totalTours,
-      icon: Package,
-      color: 'from-blue-500 to-blue-600',
-      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
-    },
-    {
-      title: 'Total Bookings',
-      value: stats.totalBookings,
-      icon: Calendar,
-      color: 'from-green-500 to-green-600',
-      bgColor: 'bg-green-50 dark:bg-green-900/20',
-    },
-    {
-      title: 'Inquiries',
-      value: stats.totalInquiries,
-      icon: MessageSquare,
-      color: 'from-purple-500 to-purple-600',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
-    },
-    {
-      title: 'Custom Requests',
-      value: stats.totalCustomRequests,
-      icon: FileText,
-      color: 'from-orange-500 to-orange-600',
-      bgColor: 'bg-orange-50 dark:bg-orange-900/20',
-    },
-    {
-      title: 'Revenue',
-      value: `₹${(stats.revenue / 1000).toFixed(0)}K`,
-      icon: TrendingUp,
-      color: 'from-pink-500 to-pink-600',
-      bgColor: 'bg-pink-50 dark:bg-pink-900/20',
-    },
-    {
-      title: 'Active Users',
-      value: stats.activeUsers,
-      icon: Users,
-      color: 'from-indigo-500 to-indigo-600',
-      bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
-    },
-  ];
+  const fmt = (n: number) => loading ? '…' : String(n ?? 0)
+  const fmtMoney = (n: number) => loading ? '…' : `₹${Number(n ?? 0).toLocaleString('en-IN')}`
+
+  const cards = [
+    { title: 'Total Revenue', value: fmtMoney(stats?.totalRevenue ?? 0), icon: DollarSign, color: 'bg-green-50 text-green-600' },
+    { title: 'Total Bookings', value: fmt(stats?.total ?? 0), icon: Calendar, color: 'bg-blue-50 text-blue-600' },
+    { title: 'Pending', value: fmt(stats?.pending ?? 0), icon: MapPin, color: 'bg-yellow-50 text-yellow-600' },
+    { title: 'Confirmed', value: fmt(stats?.confirmed ?? 0), icon: TrendingUp, color: 'bg-primary-50 text-primary-600' },
+    { title: 'Completed', value: fmt(stats?.completed ?? 0), icon: Users, color: 'bg-purple-50 text-purple-600' },
+    { title: 'Cancelled', value: fmt(stats?.cancelled ?? 0), icon: MessageSquare, color: 'bg-red-50 text-red-600' },
+  ]
 
   return (
-    <DashboardLayout>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard Overview</h1>
-          <p className="text-gray-600 dark:text-gray-400">Welcome back! Here's what's happening with your tours.</p>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-500 mt-1 text-sm">Here's what's happening with your tours today.</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {cards.map(({ title, value, icon: Icon, color }) => (
+          <div key={title} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-4">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${color}`}>
+              <Icon className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{value}</p>
+              <p className="text-xs text-gray-500">{title}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-gray-900">Recent Bookings</h2>
+            <Link href="/dashboard/bookings" className="text-sm text-primary-600 hover:underline font-medium">View all</Link>
+          </div>
+          <RecentBookings />
         </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {statCards.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.title}</p>
-                      <p className="text-3xl font-bold">{stat.value}</p>
-                    </div>
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
-                      <Icon className="text-white" size={24} />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4">Recent Bookings</h2>
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center text-white font-bold">
-                      U
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">User Name</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Jaipur City Tour • 2 people</p>
-                    </div>
-                    <span className="text-xs font-medium text-green-600 dark:text-green-400">Confirmed</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-bold mb-4">Recent Inquiries</h2>
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center">
-                      <MessageSquare className="text-white" size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">Inquiry #{i}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Question about tour packages...</p>
-                    </div>
-                    <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Pending</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-base font-semibold text-gray-900">Top Tours</h2>
+            <Link href="/dashboard/tours" className="text-sm text-primary-600 hover:underline font-medium">View all</Link>
+          </div>
+          <PopularToursWidget />
         </div>
       </div>
-    </DashboardLayout>
-  );
+
+      {/* Quick actions */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-6 text-white">
+        <h2 className="text-lg font-bold mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { href: '/dashboard/tours/new', icon: MapPin, title: 'New Tour', desc: 'Add a tour package' },
+            { href: '/dashboard/bookings', icon: Calendar, title: 'Bookings', desc: 'Manage reservations' },
+            { href: '/dashboard/inquiries', icon: MessageSquare, title: 'Inquiries', desc: 'Respond to customers' },
+            { href: '/dashboard/custom-requests', icon: Wand2, title: 'Custom Requests', desc: 'Review requests' },
+          ].map(({ href, icon: Icon, title, desc }) => (
+            <Link key={href} href={href}
+              className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors">
+              <Icon className="w-6 h-6 mb-2" />
+              <p className="font-semibold text-sm">{title}</p>
+              <p className="text-xs text-primary-100 mt-0.5">{desc}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }

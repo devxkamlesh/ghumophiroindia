@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import tourService from './tour.service'
-import { sendSuccess, sendPaginated } from '../../shared/response'
+import { sendSuccess } from '../../shared/response'
 import type { CreateTourInput, UpdateTourInput, TourQueryInput } from './tour.validator'
 
 export class TourController {
@@ -10,17 +10,13 @@ export class TourController {
    */
   async getTours(req: Request, res: Response, next: NextFunction) {
     try {
-      const query: TourQueryInput = req.query as any
+      const query = req.query as unknown as TourQueryInput
       const result = await tourService.getTours(query)
-      
-      sendPaginated(
-        res,
-        result.tours,
-        result.pagination.page,
-        result.pagination.limit,
-        result.pagination.total,
-        'Tours retrieved successfully'
-      )
+
+      sendSuccess(res, {
+        tours: result.tours,
+        pagination: result.pagination,
+      }, 'Tours retrieved successfully')
     } catch (error) {
       next(error)
     }

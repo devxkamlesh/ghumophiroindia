@@ -1,301 +1,153 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { UserPanelLayout } from '@/components/user-panel/UserPanelLayout';
-import { authService } from '@/services/api';
-import { User, Mail, Phone, Calendar, Shield, Edit2, Check, X, MapPin, TrendingUp } from 'lucide-react';
+import { Calendar, Heart, Star, MapPin, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { getUser } from '@/lib/auth'
+import { bookingService } from '@/services/api'
+import type { Booking } from '@/types'
 
 export default function MyAccountPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-  });
+  const router = useRouter()
+  const [userName, setUserName] = useState('Traveler')
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          router.push('/login');
-          return;
-        }
+    const user = getUser()
+    if (user?.name) setUserName(user.name)
 
-        const profile = await authService.getProfile();
-        setUser(profile);
-        setFormData({
-          name: profile.name,
-          phone: profile.phone || '',
-        });
-      } catch (err: any) {
-        console.error('Failed to fetch profile:', err);
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          router.push('/login');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+    bookingService
+      .getMyBookings()
+      .then(setBookings)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
 
-    fetchProfile();
-  }, [router]);
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
-    try {
-      const updatedUser = { ...user, ...formData };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      setSuccess('Profile updated successfully!');
-      setEditing(false);
-      setTimeout(() => setSuccess(''), 3000);
-    } catch (err) {
-      setError('Failed to update profile. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const upcomingBookings = bookings.filter(
+    (b) => new Date(b.startDate) > new Date() && b.status !== 'cancelled'
+  )
 
   if (loading) {
     return (
-      <UserPanelLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
-        </div>
-      </UserPanelLayout>
-    );
-  }
-
-  if (!user) {
-    return null;
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+      </div>
+    )
   }
 
   return (
-    <UserPanelLayout>
-      <div className="max-w-6xl mx-auto">
-        {/* Welcome Section */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">Welcome back, {user.name}!</h1>
-          <p className="text-sm text-muted-foreground">Manage your profile and view your travel statistics</p>
-        </div>
-
-        {/* Alerts */}
-        {success && (
-          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl flex items-center gap-2">
-            <Check size={16} className="text-green-600 dark:text-green-400" />
-            <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-2">
-            <X size={16} className="text-red-600 dark:text-red-400" />
-            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-          </div>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Total Bookings</p>
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1 mt-1">
-                    <TrendingUp size={12} />
-                    <span>All time</span>
-                  </p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
-                  <Calendar className="text-white" size={20} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Upcoming Tours</p>
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-xs text-muted-foreground mt-1">Next 30 days</p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-                  <MapPin className="text-white" size={20} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Total Spent</p>
-                  <p className="text-2xl font-bold">₹0</p>
-                  <p className="text-xs text-muted-foreground mt-1">Lifetime value</p>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
-                  <TrendingUp className="text-white" size={20} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Profile Information */}
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold">Personal Information</h2>
-                <p className="text-sm text-muted-foreground">Update your personal details</p>
-              </div>
-              {!editing && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEditing(true)}
-                  className="gap-2 h-9 rounded-lg"
-                >
-                  <Edit2 size={14} />
-                  Edit Profile
-                </Button>
-              )}
-            </div>
-
-            {editing ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="mt-1.5 h-10 rounded-lg"
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="mt-1.5 h-10 rounded-lg"
-                      placeholder="Enter your phone number"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    onClick={handleSave} 
-                    disabled={saving} 
-                    className="gap-2 h-10 rounded-lg bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
-                  >
-                    <Check size={16} />
-                    {saving ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setEditing(false);
-                      setFormData({
-                        name: user.name,
-                        phone: user.phone || '',
-                      });
-                    }}
-                    className="gap-2 h-10 rounded-lg"
-                  >
-                    <X size={16} />
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 border border-blue-100 dark:border-blue-800/30">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
-                    <User className="text-white" size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">Full Name</p>
-                    <p className="text-sm font-semibold truncate">{user.name}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 border border-green-100 dark:border-green-800/30">
-                  <div className="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center flex-shrink-0">
-                    <Mail className="text-white" size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">Email Address</p>
-                    <p className="text-sm font-semibold truncate">{user.email}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 border border-purple-100 dark:border-purple-800/30">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center flex-shrink-0">
-                    <Phone className="text-white" size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">Phone Number</p>
-                    <p className="text-sm font-semibold truncate">{user.phone || 'Not provided'}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10 border border-orange-100 dark:border-orange-800/30">
-                  <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0">
-                    <Shield className="text-white" size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">Account Type</p>
-                    <p className="text-sm font-semibold capitalize">{user.role}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-pink-50 to-pink-100/50 dark:from-pink-900/20 dark:to-pink-800/10 border border-pink-100 dark:border-pink-800/30 md:col-span-2">
-                  <div className="w-10 h-10 rounded-lg bg-pink-500 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="text-white" size={18} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-pink-600 dark:text-pink-400 mb-1">Member Since</p>
-                    <p className="text-sm font-semibold">
-                      {new Date(user.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* Welcome */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl p-6 text-white">
+        <h1 className="text-3xl font-bold mb-1">Welcome back, {userName}!</h1>
+        <p className="text-primary-100">Ready for your next adventure?</p>
       </div>
-    </UserPanelLayout>
-  );
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Bookings', value: bookings.length, icon: Calendar, color: 'blue' },
+          { label: 'Upcoming Trips', value: upcomingBookings.length, icon: MapPin, color: 'green' },
+          { label: 'Wishlist', value: 0, icon: Heart, color: 'pink' },
+          { label: 'Reviews', value: 0, icon: Star, color: 'yellow' },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center space-x-3">
+              <div className={`w-12 h-12 bg-${color}-100 rounded-lg flex items-center justify-center`}>
+                <Icon className={`w-6 h-6 text-${color}-600`} />
+              </div>
+              <div>
+                <div className="text-2xl font-bold">{value}</div>
+                <div className="text-sm text-gray-600">{label}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Upcoming Bookings */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">Upcoming Trips</h2>
+          <Link href="/my-account/bookings" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+            View all
+          </Link>
+        </div>
+
+        {upcomingBookings.length > 0 ? (
+          <div className="space-y-3">
+            {upcomingBookings.slice(0, 3).map((booking) => (
+              <div
+                key={booking.id}
+                className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors"
+              >
+                <div className="w-16 h-16 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-7 h-7 text-primary-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 truncate">
+                    {booking.tour?.title ?? `Booking #${booking.id}`}
+                  </h3>
+                  <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {new Date(booking.startDate).toLocaleDateString()}
+                    </span>
+                    <span>{booking.numberOfTravelers} traveler{booking.numberOfTravelers !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+                <span
+                  className={`px-3 py-1 text-xs font-medium rounded-full flex-shrink-0 ${
+                    booking.status === 'confirmed'
+                      ? 'bg-green-100 text-green-700'
+                      : booking.status === 'pending'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {booking.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10 text-gray-500">
+            <Calendar className="w-12 h-12 mx-auto mb-3 opacity-30" />
+            <p className="font-medium">No upcoming trips</p>
+            <Link href="/tours" className="text-primary-600 hover:text-primary-700 font-medium text-sm mt-2 inline-block">
+              Browse tours →
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {[
+          { href: '/tours', icon: MapPin, title: 'Browse Tours', desc: 'Discover amazing destinations' },
+          { href: '/custom-tour', icon: Star, title: 'Custom Tour', desc: 'Build your perfect itinerary' },
+          { href: '/contact', icon: Calendar, title: 'Contact Us', desc: 'Get help from our team' },
+        ].map(({ href, icon: Icon, title, desc }) => (
+          <Link
+            key={href}
+            href={href}
+            className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:border-primary-300 hover:shadow-md transition-all"
+          >
+            <Icon className="w-8 h-8 text-primary-600 mb-3" />
+            <h3 className="font-semibold text-lg mb-1">{title}</h3>
+            <p className="text-sm text-gray-600">{desc}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
 }

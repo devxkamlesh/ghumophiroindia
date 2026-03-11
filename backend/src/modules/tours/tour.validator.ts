@@ -27,18 +27,18 @@ export const createTourSchema = z.object({
 export const updateTourSchema = createTourSchema.partial()
 
 export const tourQuerySchema = z.object({
-  page: z.string().optional().transform(val => val ? parseInt(val, 10) : 1),
-  limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 10),
-  category: z.enum(['city', 'heritage', 'desert', 'custom']).optional(),
-  difficulty: z.enum(['easy', 'moderate', 'challenging']).optional(),
-  minPrice: z.string().optional().transform(val => val ? parseFloat(val) : undefined),
-  maxPrice: z.string().optional().transform(val => val ? parseFloat(val) : undefined),
-  minDuration: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
-  maxDuration: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
-  featured: z.string().optional().transform(val => val === 'true'),
-  search: z.string().optional(),
-  sortBy: z.enum(['price', 'duration', 'rating', 'createdAt']).optional(),
-  sortOrder: z.enum(['asc', 'desc']).optional(),
+  page:        z.coerce.number().int().positive().optional().default(1),
+  limit:       z.coerce.number().int().positive().max(100).optional().default(10),
+  category:    z.enum(['city', 'heritage', 'desert', 'custom']).optional(),
+  difficulty:  z.enum(['easy', 'moderate', 'challenging']).optional(),
+  minPrice:    z.coerce.number().positive().optional(),
+  maxPrice:    z.coerce.number().positive().optional(),
+  minDuration: z.coerce.number().int().positive().optional(),
+  maxDuration: z.coerce.number().int().positive().optional(),
+  featured:    z.enum(['true', 'false']).optional().transform(v => v === undefined ? undefined : v === 'true'),
+  search:      z.string().max(200).optional(),
+  sortBy:      z.enum(['price', 'duration', 'rating', 'createdAt']).optional().default('createdAt'),
+  sortOrder:   z.enum(['asc', 'desc']).optional().default('desc'),
 })
 
 export const tourIdSchema = z.object({

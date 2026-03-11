@@ -8,11 +8,23 @@ import bookingRoutes from './modules/bookings/booking.routes'
 import destinationRoutes from './modules/destinations/destination.routes'
 import inquiryRoutes from './modules/inquiries/inquiry.routes'
 import customTourRoutes from './modules/custom-tour/customTour.routes'
+import locationRoutes from './modules/locations/location.routes'
+import { setupCacheInvalidation } from './core/cache-invalidator'
 import config from './core/config'
 import logger from './core/logger'
 
 // Create Express app
 const app = createServer()
+
+// Register event-based cache invalidation listeners
+setupCacheInvalidation()
+
+// Start background workers (non-blocking)
+import('./jobs/workers').then(({ startScheduledJobs }) => {
+  startScheduledJobs().catch(err =>
+    logger.warn(`Background workers not started (Redis may be unavailable): ${err.message}`)
+  )
+}).catch(err => logger.warn(`Workers module load failed: ${err.message}`))
 
 // API routes
 const apiRouter = require('express').Router()
@@ -55,6 +67,7 @@ apiRouter.use('/bookings', bookingRoutes)
 apiRouter.use('/destinations', destinationRoutes)
 apiRouter.use('/inquiries', inquiryRoutes)
 apiRouter.use('/custom-tours', customTourRoutes)
+apiRouter.use('/locations', locationRoutes)
 
 // Mount API router
 app.use(`/api/${config.apiVersion}`, apiRouter)

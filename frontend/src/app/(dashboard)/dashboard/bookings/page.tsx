@@ -1,173 +1,69 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { bookingService } from '@/services/api';
-import { formatCurrency } from '@/lib/utils';
-import { Calendar, MapPin, Users, Eye } from 'lucide-react';
+import { useState } from 'react'
+import { Search, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react'
+import BookingsTable from '@/components/dashboard/bookings/BookingsTable'
 
-interface Booking {
-  id: number;
-  tourId: number;
-  userId: number;
-  numberOfPeople: number;
-  totalPrice: string;
-  bookingDate: string;
-  status: string;
-  paymentStatus: string;
-  specialRequests?: string;
-  createdAt: string;
-  tour?: {
-    id: number;
-    title: string;
-    destination: string;
-    duration: number;
-  };
-  user?: {
-    id: number;
-    name: string;
-    email: string;
-  };
-}
-
-export default function BookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchBookings();
-  }, []);
-
-  const fetchBookings = async () => {
-    try {
-      // TODO: Create admin endpoint to get all bookings
-      const data = await bookingService.getMyBookings();
-      setBookings(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error('Failed to fetch bookings:', error);
-      setBookings([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-    }
-  };
-
-  if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+export default function BookingsManagementPage() {
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [stats, setStats] = useState({ total: 0, pending: 0, confirmed: 0, cancelled: 0 })
 
   return (
-    <DashboardLayout>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Bookings Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">View and manage all tour bookings</p>
-        </div>
-
-        {/* Bookings List */}
-        {bookings.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Calendar className="mx-auto mb-4 text-gray-400" size={48} />
-              <h3 className="text-lg font-semibold mb-2">No Bookings Found</h3>
-              <p className="text-gray-600 dark:text-gray-400">Bookings will appear here once customers make reservations</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-4">
-            {bookings.map((booking) => (
-              <Card key={booking.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="text-lg font-bold mb-1">
-                            {booking.tour?.title || 'Tour Details'}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Booking #{booking.id} • {booking.user?.name || 'Customer'}
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Badge className={getStatusColor(booking.status)}>
-                            {booking.status}
-                          </Badge>
-                          <Badge className={getStatusColor(booking.paymentStatus)}>
-                            {booking.paymentStatus}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <MapPin size={16} className="text-gray-400" />
-                          <span>{booking.tour?.destination || 'N/A'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Calendar size={16} className="text-gray-400" />
-                          <span>
-                            {new Date(booking.bookingDate).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Users size={16} className="text-gray-400" />
-                          <span>{booking.numberOfPeople} {booking.numberOfPeople === 1 ? 'person' : 'people'}</span>
-                        </div>
-                        <div className="font-bold text-primary">
-                          {formatCurrency(parseFloat(booking.totalPrice))}
-                        </div>
-                      </div>
-
-                      {booking.specialRequests && (
-                        <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Special Requests:</p>
-                          <p className="text-sm">{booking.specialRequests}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex md:flex-col gap-2">
-                      <Button size="sm" variant="outline" className="flex-1 md:flex-none">
-                        <Eye size={16} className="mr-2" />
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Bookings</h1>
+        <p className="text-gray-500 mt-1 text-sm">Manage all tour bookings</p>
       </div>
-    </DashboardLayout>
-  );
+
+      {/* Live stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Total', value: stats.total, icon: Calendar, color: 'text-gray-700', bg: 'bg-gray-50' },
+          { label: 'Pending', value: stats.pending, icon: Clock, color: 'text-yellow-700', bg: 'bg-yellow-50' },
+          { label: 'Confirmed', value: stats.confirmed, icon: CheckCircle, color: 'text-green-700', bg: 'bg-green-50' },
+          { label: 'Cancelled', value: stats.cancelled, icon: XCircle, color: 'text-red-700', bg: 'bg-red-50' },
+        ].map(({ label, value, icon: Icon, color, bg }) => (
+          <div key={label} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center`}>
+              <Icon className={`w-5 h-5 ${color}`} />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{value}</p>
+              <p className="text-xs text-gray-500">{label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by customer name, email or booking ID…"
+            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+          className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+        >
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <BookingsTable search={search} statusFilter={statusFilter} onStatsChange={setStats} />
+      </div>
+    </div>
+  )
 }

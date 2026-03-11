@@ -1,28 +1,41 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import './globals.css';
-import { ConditionalLayout } from '@/components/ConditionalLayout';
-import { SmoothScrollProvider } from '@/components/providers/SmoothScrollProvider';
+import type { Metadata } from 'next'
+import { Inter, Playfair_Display } from 'next/font/google'
+import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  variable: '--font-playfair',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
-  title: 'Ghumo Firo India - Explore Rajasthan Tours',
-  description: 'Discover the beauty of Rajasthan with our curated tour packages. Book your dream vacation today!',
-};
+  title: 'Ghumo Phiro India - Custom Tours from Jaipur | Explore Rajasthan',
+  description: 'Discover the magic of Rajasthan with custom tours from Jaipur. Golden Triangle, city tours, and personalized itineraries across India.',
+  keywords: 'Rajasthan tours, Jaipur tours, Golden Triangle, India travel, custom tours, Ghumo Phiro India',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://ghumophiroindia.com',
+    siteName: 'Ghumo Phiro India',
+  },
+}
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <SmoothScrollProvider>
-          <ConditionalLayout>{children}</ConditionalLayout>
-        </SmoothScrollProvider>
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+      <body className="font-sans">
+        {children}
       </body>
     </html>
-  );
+  )
 }
