@@ -2,11 +2,23 @@ import { eq, desc, sql } from 'drizzle-orm'
 import db from '../../core/database'
 import { inquiries } from '../../core/database/schema'
 import { NotFoundError } from '../../shared/errors'
+import emailService from '../../shared/email'
+import logger from '../../core/logger'
 import type { CreateInquiryInput, UpdateInquiryStatusInput } from './inquiry.validator'
 
 export class InquiryService {
   async create(data: CreateInquiryInput) {
     const [inquiry] = await db.insert(inquiries).values(data).returning()
+
+    // Send acknowledgement email (non-blocking)
+    emailService.sendInquiryAcknowledgement({
+      name:         data.name,
+      email:        data.email,
+      phone:        data.phone,
+      tourInterest: data.tourInterest,
+      message:      data.message,
+    }).catch(err => logger.warn(`[email] Inquiry ack failed: ${err.message}`))
+
     return inquiry
   }
 

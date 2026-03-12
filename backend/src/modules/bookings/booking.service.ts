@@ -2,6 +2,7 @@ import { eq, and, desc, sql } from 'drizzle-orm'
 import db from '../../core/database'
 import { bookings, tours } from '../../core/database/schema'
 import { NotFoundError } from '../../shared/errors'
+import emailService from '../../shared/email'
 import events from '../../core/events'
 import logger from '../../core/logger'
 import type { CreateBookingInput, UpdateBookingStatusInput, UpdatePaymentStatusInput, BookingQueryInput } from './booking.validator'
@@ -39,6 +40,20 @@ export class BookingService {
 
     logger.info(`Booking ${booking.id} created for tour ${data.tourId}`)
     events.emitBookingCreated({ tourId: data.tourId })
+
+    // Send confirmation email (non-blocking — don't fail booking if email fails)
+    emailService.sendBookingConfirmation({
+      id:                booking.id,
+      customerName:      booking.customerName,
+      customerEmail:     booking.customerEmail,
+      tourTitle:         tour.title,
+      startDate:         booking.startDate,
+      endDate:           booking.endDate,
+      numberOfTravelers: booking.numberOfTravelers,
+      totalPrice:        booking.totalPrice,
+      status:            booking.status,
+    }).catch(err => logger.warn(`[email] Booking confirmation failed: ${err.message}`))
+
     return booking
   }
 
