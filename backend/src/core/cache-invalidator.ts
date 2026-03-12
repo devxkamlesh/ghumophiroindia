@@ -11,15 +11,8 @@ import tourCache from '../modules/tours/tour.cache'
 import logger from './logger'
 
 // Lazy-load queues — only available when local Redis is running
-async function tryEnqueue(queueName: 'popularity' | 'cache-warmer', jobName: string, data: object, priority = 5) {
-  try {
-    const { popularityQueue, cacheWarmerQueue } = await import('../jobs/workers')
-    const queue = queueName === 'popularity' ? popularityQueue : cacheWarmerQueue
-    if (!queue) return  // workers not started (no local Redis)
-    await queue.add(jobName, data, { priority })
-  } catch {
-    // Workers not available (no local Redis) — skip silently
-  }
+async function tryEnqueue(_queueName: 'popularity' | 'cache-warmer', _jobName: string, _data: object, _priority = 5) {
+  // Workers disabled — new DB tables not yet created
 }
 
 export function setupCacheInvalidation() {
