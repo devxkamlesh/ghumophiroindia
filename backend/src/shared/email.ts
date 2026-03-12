@@ -17,7 +17,9 @@ const resend = config.email.resendApiKey
   ? new Resend(config.email.resendApiKey)
   : null
 
-const FROM = config.email.from
+const FROM = config.email.resendApiKey
+  ? (config.email.from || 'onboarding@resend.dev')  // use verified domain or sandbox
+  : config.email.from
 const BRAND = 'Ghumo Phiro India'
 const ADMIN_EMAIL = 'info@ghumophiroindia.com'
 
