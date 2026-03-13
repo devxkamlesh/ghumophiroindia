@@ -22,68 +22,68 @@ const LIGHT  = '#f9fafb'
 const BORDER = '#e5e7eb'
 
 const s = StyleSheet.create({
-  page:        { fontFamily: 'Helvetica', fontSize: 10, color: DARK, backgroundColor: '#fff', padding: 40 },
+  page:        { fontFamily: 'Helvetica', fontSize: 9, color: DARK, backgroundColor: '#fff', padding: 30 },
 
   // Header
-  header:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, paddingBottom: 18, borderBottomWidth: 2, borderBottomColor: GREEN },
-  brandName:   { fontSize: 20, fontFamily: 'Helvetica-Bold', color: GREEN },
-  brandSub:    { fontSize: 8.5, color: GRAY, marginTop: 2 },
-  invoiceTitle:{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: DARK, textAlign: 'right' },
-  invoiceNum:  { fontSize: 9, color: GRAY, textAlign: 'right', marginTop: 2 },
+  header:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16, paddingBottom: 12, borderBottomWidth: 2, borderBottomColor: GREEN },
+  brandName:   { fontSize: 16, fontFamily: 'Helvetica-Bold', color: GREEN },
+  brandSub:    { fontSize: 7.5, color: GRAY, marginTop: 1.5 },
+  invoiceTitle:{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: DARK, textAlign: 'right' },
+  invoiceNum:  { fontSize: 8, color: GRAY, textAlign: 'right', marginTop: 1.5 },
 
   // Payment status banner
-  paidBanner:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20 },
-  pendingBanner:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fefce8', borderWidth: 1, borderColor: '#fde68a', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20 },
-  bannerLabel: { fontSize: 9, color: GRAY },
-  bannerValue: { fontSize: 11, fontFamily: 'Helvetica-Bold' },
+  paidBanner:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 5, paddingHorizontal: 10, paddingVertical: 7, marginBottom: 12 },
+  pendingBanner:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fefce8', borderWidth: 1, borderColor: '#fde68a', borderRadius: 5, paddingHorizontal: 10, paddingVertical: 7, marginBottom: 12 },
+  bannerLabel: { fontSize: 7.5, color: GRAY },
+  bannerValue: { fontSize: 9.5, fontFamily: 'Helvetica-Bold' },
   bannerRight: { alignItems: 'flex-end' },
 
   // 2-col
-  row2:        { flexDirection: 'row', gap: 14 },
+  row2:        { flexDirection: 'row', gap: 10 },
   col:         { flex: 1 },
 
   // Section
-  secTitle:    { fontSize: 8, fontFamily: 'Helvetica-Bold', color: GRAY, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 7 },
+  secTitle:    { fontSize: 7, fontFamily: 'Helvetica-Bold', color: GRAY, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 5 },
 
   // Card
-  card:        { backgroundColor: LIGHT, borderRadius: 5, padding: 11, borderWidth: 1, borderColor: BORDER, marginBottom: 16 },
-  cardLabel:   { fontSize: 7.5, color: '#9ca3af', marginBottom: 2 },
-  cardVal:     { fontSize: 10, fontFamily: 'Helvetica-Bold', color: DARK },
-  cardSm:      { fontSize: 9, color: MID, marginTop: 2 },
+  card:        { backgroundColor: LIGHT, borderRadius: 4, padding: 8, borderWidth: 1, borderColor: BORDER, marginBottom: 10 },
+  cardLabel:   { fontSize: 7, color: '#9ca3af', marginBottom: 1.5 },
+  cardVal:     { fontSize: 9, fontFamily: 'Helvetica-Bold', color: DARK },
+  cardSm:      { fontSize: 8, color: MID, marginTop: 1.5 },
 
   // 4-col schedule
-  scheduleRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-  scheduleBox: { flex: 1, backgroundColor: LIGHT, borderRadius: 5, padding: 9, borderWidth: 1, borderColor: BORDER },
+  scheduleRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  scheduleBox: { flex: 1, backgroundColor: LIGHT, borderRadius: 4, padding: 7, borderWidth: 1, borderColor: BORDER },
 
   // Table
-  table:       { borderWidth: 1, borderColor: BORDER, borderRadius: 5, overflow: 'hidden', marginBottom: 14 },
-  tHead:       { flexDirection: 'row', backgroundColor: '#f3f4f6', paddingHorizontal: 11, paddingVertical: 7 },
-  tRow:        { flexDirection: 'row', paddingHorizontal: 11, paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  table:       { borderWidth: 1, borderColor: BORDER, borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
+  tHead:       { flexDirection: 'row', backgroundColor: '#f3f4f6', paddingHorizontal: 9, paddingVertical: 5 },
+  tRow:        { flexDirection: 'row', paddingHorizontal: 9, paddingVertical: 6, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
   tRowAlt:     { backgroundColor: '#fafafa' },
-  th:          { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: GRAY, textTransform: 'uppercase' },
-  td:          { fontSize: 9, color: MID },
-  tdB:         { fontSize: 9, fontFamily: 'Helvetica-Bold', color: DARK },
+  th:          { fontSize: 7, fontFamily: 'Helvetica-Bold', color: GRAY, textTransform: 'uppercase' },
+  td:          { fontSize: 8, color: MID },
+  tdB:         { fontSize: 8, fontFamily: 'Helvetica-Bold', color: DARK },
 
   // Totals
-  totalsWrap:  { marginLeft: 'auto', width: 210, borderWidth: 1, borderColor: BORDER, borderRadius: 5, overflow: 'hidden', marginBottom: 16 },
-  totRow:      { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 11, paddingVertical: 7 },
-  totRowFinal: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 11, paddingVertical: 9, backgroundColor: GREEN },
-  totLabel:    { fontSize: 9, color: GRAY },
-  totVal:      { fontSize: 9, fontFamily: 'Helvetica-Bold', color: DARK },
-  totLabelF:   { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#fff' },
-  totValF:     { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#fff' },
+  totalsWrap:  { marginLeft: 'auto', width: 190, borderWidth: 1, borderColor: BORDER, borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
+  totRow:      { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 9, paddingVertical: 5 },
+  totRowFinal: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 9, paddingVertical: 7, backgroundColor: GREEN },
+  totLabel:    { fontSize: 8, color: GRAY },
+  totVal:      { fontSize: 8, fontFamily: 'Helvetica-Bold', color: DARK },
+  totLabelF:   { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#fff' },
+  totValF:     { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#fff' },
 
   // Policy box
-  policyBox:   { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: BORDER, borderRadius: 5, padding: 10, marginBottom: 14 },
-  policyTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: MID, marginBottom: 5 },
-  policyItem:  { fontSize: 8, color: GRAY, marginBottom: 3 },
+  policyBox:   { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: BORDER, borderRadius: 4, padding: 8, marginBottom: 10 },
+  policyTitle: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: MID, marginBottom: 4 },
+  policyItem:  { fontSize: 7, color: GRAY, marginBottom: 2 },
 
   // Footer
-  footer:      { marginTop: 20, paddingTop: 14, borderTopWidth: 1, borderTopColor: BORDER },
+  footer:      { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: BORDER },
   footerRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  footerLabel: { fontSize: 8, color: GRAY },
-  footerBrand: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: GREEN },
-  footerNote:  { fontSize: 7.5, color: '#9ca3af', marginTop: 8, textAlign: 'center' },
+  footerLabel: { fontSize: 7, color: GRAY },
+  footerBrand: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: GREEN },
+  footerNote:  { fontSize: 6.5, color: '#9ca3af', marginTop: 6, textAlign: 'center' },
 })
 
 function fmt(d: string) {
@@ -134,7 +134,7 @@ export function BookingInvoicePDF({ booking }: { booking: Booking }) {
         </View>
 
         {/* ── Payment status banner ── */}
-        <View style={{ backgroundColor: payment.bg, borderWidth: 1, borderColor: payment.border, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ backgroundColor: payment.bg, borderWidth: 1, borderColor: payment.border, borderRadius: 5, paddingHorizontal: 10, paddingVertical: 7, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View>
             <Text style={[s.bannerLabel, { marginBottom: 2 }]}>Payment Status</Text>
             <Text style={[s.bannerValue, { color: payment.color }]}>{payment.text}</Text>
@@ -227,13 +227,13 @@ export function BookingInvoicePDF({ booking }: { booking: Booking }) {
           <Text style={s.policyItem}>• Free cancellation up to 48 hours before the tour start date.</Text>
           <Text style={s.policyItem}>• 50% refund for cancellations between 24–48 hours before start.</Text>
           <Text style={s.policyItem}>• No refund for cancellations within 24 hours of start.</Text>
-          <Text style={s.policyItem}>• Refunds are processed within 5–7 business days.</Text>
+          <Text style={s.policyItem}>• Refunds processed within 5–7 business days.</Text>
         </View>
 
         {/* ── Confirmation note ── */}
         {(booking.status === 'confirmed' || booking.status === 'completed') && (
-          <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 5, padding: 10, marginBottom: 14 }}>
-            <Text style={{ fontSize: 9, color: DGREEN }}>
+          <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 4, padding: 8, marginBottom: 10 }}>
+            <Text style={{ fontSize: 8, color: DGREEN }}>
               ✓ Your booking is confirmed. Please carry this invoice and a valid government-issued photo ID on the day of your tour.
             </Text>
           </View>
