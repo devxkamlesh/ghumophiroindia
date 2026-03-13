@@ -189,15 +189,36 @@ export default function BookingModal({ tour, onClose }: Props) {
         ) : (
           <form onSubmit={handleSubmit} className="p-5 space-y-4">
 
+            {/* Step indicator */}
+            <div className="flex items-center gap-0 mb-1">
+              {['Your Details', 'Trip Info', 'Confirm'].map((step, i) => (
+                <div key={step} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center gap-1">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-primary-600 text-white' : i === 1 ? 'bg-primary-100 text-primary-600' : 'bg-gray-100 text-gray-400'}`}>
+                      {i + 1}
+                    </div>
+                    <span className={`text-[10px] whitespace-nowrap ${i === 0 ? 'text-primary-600 font-semibold' : 'text-gray-400'}`}>{step}</span>
+                  </div>
+                  {i < 2 && <div className="flex-1 h-0.5 bg-gray-100 mb-4 mx-1" />}
+                </div>
+              ))}
+            </div>
+
             {/* Price summary */}
-            <div className="bg-primary-50 rounded-xl p-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-primary-600 font-medium">Price per person</p>
-                <p className="text-xl font-bold text-gray-900">₹{price.toLocaleString('en-IN')}</p>
+            <div className="bg-primary-50 rounded-xl p-4 border border-primary-100">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-xs text-primary-600 font-medium">Price per person</p>
+                  <p className="text-xl font-bold text-gray-900">₹{price.toLocaleString('en-IN')}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">Total ({form.numberOfTravelers} pax)</p>
+                  <p className="text-xl font-bold text-primary-600">₹{totalPrice.toLocaleString('en-IN')}</p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">Total ({form.numberOfTravelers} pax)</p>
-                <p className="text-xl font-bold text-primary-600">₹{totalPrice.toLocaleString('en-IN')}</p>
+              <div className="border-t border-primary-100 pt-2 flex items-center justify-between text-xs text-primary-700">
+                <span>Includes 5% GST · No hidden charges</span>
+                <span className="font-semibold text-green-700">✓ Pay on confirmation</span>
               </div>
             </div>
 
@@ -302,8 +323,15 @@ export default function BookingModal({ tour, onClose }: Props) {
             </button>
 
             <p className="text-center text-xs text-gray-400">
-              No payment required now · Our team will contact you to confirm
+              No payment required now · Our team will contact you within 24 hours to confirm
             </p>
+
+            {/* Trust row */}
+            <div className="flex items-center justify-center gap-4 pt-1">
+              {['🔒 Secure', '✓ No spam', '📞 24/7 support'].map(t => (
+                <span key={t} className="text-xs text-gray-400">{t}</span>
+              ))}
+            </div>
           </form>
         )}
       </div>

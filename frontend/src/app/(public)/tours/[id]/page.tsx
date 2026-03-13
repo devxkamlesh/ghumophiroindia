@@ -7,7 +7,7 @@ import Image from 'next/image'
 import {
   Clock, Users, MapPin, Star, Check, X, Calendar,
   ArrowLeft, ChevronRight, AlertCircle, Loader2,
-  Shield, Phone,
+  Shield, Phone, MessageCircle, Award, ThumbsUp, HeartHandshake,
 } from 'lucide-react'
 import { tourService } from '@/services/api'
 import BookingModal from '@/components/public/shared/BookingModal'
@@ -219,21 +219,29 @@ export default function TourDetailPage() {
 
             {(tour.itinerary ?? []).length > 0 && (
               <Section title={`Itinerary — ${(tour.itinerary ?? []).length} Days`}>
-                <div className="space-y-4">
+                <div className="space-y-0">
                   {(tour.itinerary ?? []).map((day, i) => (
                     <div key={i} className="flex gap-4">
-                      <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-sm font-bold">{day.day}</div>
-                      <div className="flex-1 pb-4 border-b border-gray-100 last:border-0">
+                      {/* Timeline spine */}
+                      <div className="flex flex-col items-center flex-shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold z-10">
+                          {day.day}
+                        </div>
+                        {i < (tour.itinerary ?? []).length - 1 && (
+                          <div className="w-0.5 flex-1 bg-primary-100 my-1" />
+                        )}
+                      </div>
+                      <div className={`flex-1 pb-5 ${i < (tour.itinerary ?? []).length - 1 ? '' : ''}`}>
                         <h4 className="font-semibold text-gray-900 text-sm mb-1">{day.title}</h4>
                         <p className="text-gray-500 text-sm mb-2">{day.description}</p>
                         {(day.activities ?? []).length > 0 && (
-                          <ul className="space-y-1">
+                          <div className="flex flex-wrap gap-1.5">
                             {(day.activities ?? []).map((a, j) => (
-                              <li key={j} className="flex items-center gap-1.5 text-xs text-gray-500">
-                                <ChevronRight className="w-3 h-3 text-primary-400 flex-shrink-0" />{a}
-                              </li>
+                              <span key={j} className="inline-flex items-center gap-1 text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-100">
+                                <ChevronRight className="w-3 h-3" />{a}
+                              </span>
                             ))}
-                          </ul>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -241,13 +249,64 @@ export default function TourDetailPage() {
                 </div>
               </Section>
             )}
+
+            {/* Why choose this tour */}
+            <div className="bg-gradient-to-br from-primary-50 to-green-50 rounded-2xl border border-primary-100 p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <Award className="w-5 h-5 text-primary-600" />
+                Why Choose This Tour?
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { icon: '🏆', title: 'Expert Local Guides', desc: 'Certified guides with 10+ years experience' },
+                  { icon: '💰', title: 'Best Price Guarantee', desc: 'We match any lower price you find' },
+                  { icon: '🔒', title: 'Secure Booking', desc: 'Your data and payment are fully protected' },
+                  { icon: '📞', title: '24/7 Support', desc: 'We\'re available before, during & after your trip' },
+                  { icon: '🚌', title: 'All Transfers Included', desc: 'Airport pickup, hotel drops, sightseeing' },
+                  { icon: '⭐', title: 'Trusted by 1000+ Travelers', desc: 'Verified reviews from real customers' },
+                ].map(({ icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-3 bg-white/70 rounded-xl p-3 border border-white">
+                    <span className="text-xl flex-shrink-0">{icon}</span>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reviews placeholder */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-1">Traveler Reviews</h2>
+              {(tour.reviewCount ?? 0) > 0 && rating ? (
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="flex">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} className={`w-4 h-4 ${s <= Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`} />
+                    ))}
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">{Number(rating).toFixed(1)}</span>
+                  <span className="text-sm text-gray-400">({tour.reviewCount} reviews)</span>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="flex justify-center mb-2">
+                    {[1,2,3,4,5].map(s => <Star key={s} className="w-6 h-6 text-gray-200" />)}
+                  </div>
+                  <p className="text-sm text-gray-500">No reviews yet — be the first to review!</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Sidebar */}
           <div>
             <div className="sticky top-24 space-y-4">
+
+              {/* Booking card */}
               <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-                <div className="mb-5">
+                <div className="mb-4">
                   <p className="text-xs text-gray-400 mb-0.5">Price per person</p>
                   <p className="text-3xl font-bold text-gray-900">₹{p.toLocaleString('en-IN')}</p>
                   {rating && (
@@ -259,7 +318,23 @@ export default function TourDetailPage() {
                   )}
                 </div>
 
-                <div className="divide-y divide-gray-100 mb-5 text-sm">
+                {/* Price breakdown */}
+                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs space-y-1.5">
+                  <div className="flex justify-between text-gray-500">
+                    <span>Base fare (incl. 5% GST)</span>
+                    <span className="font-medium text-gray-700">₹{p.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-400">
+                    <span>No hidden charges</span>
+                    <span className="text-green-600 font-medium">₹0</span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-1.5 flex justify-between font-semibold text-gray-800">
+                    <span>Total per person</span>
+                    <span>₹{p.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-gray-100 mb-4 text-sm">
                   <Row label="Duration"   value={`${tour.duration} days`} />
                   <Row label="Group size" value={`Max ${tour.maxGroupSize}`} />
                   <Row label="Difficulty" value={tour.difficulty} cap />
@@ -274,24 +349,54 @@ export default function TourDetailPage() {
                 </button>
 
                 <a href="tel:+919876543210"
-                  className="w-full flex items-center justify-center gap-2 mt-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 py-3 rounded-xl text-sm font-medium transition-colors">
-                  <Phone className="w-4 h-4" /> Call to Book
+                  className="w-full flex items-center justify-center gap-2 mt-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl text-sm font-medium transition-colors">
+                  <Phone className="w-4 h-4 text-primary-600" /> +91 98765 43210
                 </a>
+
+                <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 mt-2 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 py-2.5 rounded-xl text-sm font-medium transition-colors">
+                  <MessageCircle className="w-4 h-4" /> WhatsApp Us
+                </a>
+
+                <p className="text-center text-xs text-gray-400 mt-3">
+                  No payment now · Pay on confirmation
+                </p>
               </div>
 
-              <div className="bg-gray-50 rounded-2xl border border-gray-200 p-4">
+              {/* Trust badges */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <Shield className="w-4 h-4 text-primary-600" />
                   <span className="text-xs font-semibold text-gray-700">Why book with us?</span>
                 </div>
-                <ul className="space-y-2 text-xs text-gray-500">
-                  {['Best price guarantee', 'Free cancellation (48h)', 'Expert local guides', '24/7 support'].map(t => (
-                    <li key={t} className="flex items-center gap-2">
-                      <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />{t}
+                <ul className="space-y-2.5">
+                  {[
+                    { icon: ThumbsUp,       text: 'Best price guarantee' },
+                    { icon: Check,          text: 'Free cancellation (48h)' },
+                    { icon: Award,          text: 'Expert local guides' },
+                    { icon: HeartHandshake, text: '24/7 customer support' },
+                    { icon: Shield,         text: 'Verified & trusted operator' },
+                  ].map(({ icon: Icon, text }) => (
+                    <li key={text} className="flex items-center gap-2 text-xs text-gray-600">
+                      <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-3 h-3 text-green-600" />
+                      </div>
+                      {text}
                     </li>
                   ))}
                 </ul>
               </div>
+
+              {/* Cancellation policy */}
+              <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4">
+                <p className="text-xs font-semibold text-amber-800 mb-2">Cancellation Policy</p>
+                <ul className="space-y-1.5 text-xs text-amber-700">
+                  <li>• Free cancel up to 48h before</li>
+                  <li>• 50% refund: 24–48h before</li>
+                  <li>• No refund within 24h</li>
+                </ul>
+              </div>
+
             </div>
           </div>
         </div>
