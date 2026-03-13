@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { bookingService } from '@/services/api'
 import { cn } from '@/lib/utils'
 import type { Booking, BookingStatus } from '@/types'
+import { DownloadInvoiceButton } from '@/components/pdf/DownloadInvoiceButton'
 
 // ── Status config ─────────────────────────────────────────────────────────────
 const STATUS: Record<BookingStatus, { label: string; badge: string; icon: React.ElementType; bar: string }> = {
@@ -119,6 +120,7 @@ function BookingCard({ booking }: { booking: Booking }) {
             Booked {new Date(booking.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
           <div className="flex items-center gap-2">
+            <DownloadInvoiceButton booking={booking} />
             {booking.tourId && booking.status !== 'cancelled' && (
               <Link
                 href={`/tours/${booking.tourId}`}

@@ -6,6 +6,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { bookingService } from '@/services/api'
 import { cn } from '@/lib/utils'
 import type { Booking, BookingStatus } from '@/types'
+import { DownloadInvoiceButton } from '@/components/pdf/DownloadInvoiceButton'
 
 const STATUS_STYLES: Record<BookingStatus, string> = {
   confirmed: 'bg-green-100 text-green-700',
@@ -161,6 +162,7 @@ export default function BookingsTable({ search = '', statusFilter = '', onStatsC
                 </td>
                 <td className="px-5 py-4">
                   <div className="flex items-center justify-end gap-1">
+                    <DownloadInvoiceButton booking={b} />
                     <Link href={`/dashboard/bookings/${b.id}`} className="p-1.5 hover:bg-primary-50 rounded-lg" title="View">
                       <Eye className="w-4 h-4 text-primary-600" />
                     </Link>
