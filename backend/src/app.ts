@@ -9,6 +9,7 @@ import destinationRoutes from './modules/destinations/destination.routes'
 import inquiryRoutes from './modules/inquiries/inquiry.routes'
 import customTourRoutes from './modules/custom-tour/customTour.routes'
 import locationRoutes from './modules/locations/location.routes'
+import uploadRoutes from './modules/upload/upload.routes'
 import { setupCacheInvalidation } from './core/cache-invalidator'
 import config from './core/config'
 import logger from './core/logger'
@@ -68,6 +69,7 @@ apiRouter.use('/destinations', destinationRoutes)
 apiRouter.use('/inquiries', inquiryRoutes)
 apiRouter.use('/custom-tours', customTourRoutes)
 apiRouter.use('/locations', locationRoutes)
+apiRouter.use('/upload', uploadRoutes)
 
 // Mount API router
 app.use(`/api/${config.apiVersion}`, apiRouter)

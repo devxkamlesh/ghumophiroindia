@@ -384,6 +384,19 @@ export const mapService = {
   },
 }
 
+// ─── Upload ───────────────────────────────────────────────────────────────────
+
+export const uploadService = {
+  image: async (file: File): Promise<string> => {
+    const formData = new FormData()
+    formData.append('image', file)
+    const { data } = await api.post('/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data.data.url as string
+  },
+}
+
 // ─── Destinations ─────────────────────────────────────────────────────────────
 
 export const destinationService = {
