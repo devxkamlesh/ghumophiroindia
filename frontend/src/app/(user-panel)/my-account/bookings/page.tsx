@@ -17,19 +17,22 @@ type TripPhase = 'awaiting' | 'confirmed-upcoming' | 'on-trip' | 'completed' | '
 
 function getTripPhase(booking: Booking): TripPhase {
   if (booking.status === 'cancelled') return 'cancelled'
-  if (booking.status === 'completed') return 'completed'
-  if (booking.status === 'pending')   return 'awaiting'
 
-  // confirmed — use dates only to detect "currently on trip"
-  if (booking.status === 'confirmed') {
-    const now   = new Date()
-    const start = new Date(booking.startDate)
-    const end   = new Date(booking.endDate)
-    if (now >= start && now <= end) return 'on-trip'
-    // past end date but admin hasn't marked completed yet → still show confirmed
-    return 'confirmed-upcoming'
-  }
-  return 'awaiting'
+  const now   = new Date()
+  const start = new Date(booking.startDate)
+  const end   = new Date(booking.endDate)
+
+  // Guard: never show "completed" if trip hasn't started yet — data could be wrong
+  if (booking.status === 'completed' && now >= start) return 'completed'
+
+  if (booking.status === 'pending') return 'awaiting'
+
+  // confirmed OR completed-but-future (treat as confirmed-upcoming as safeguard)
+  if (now >= start && now <= end) return 'on-trip'
+  if (now < start)                return 'confirmed-upcoming'
+
+  // past end date — only completed if DB says so
+  return booking.status === 'completed' ? 'completed' : 'confirmed-upcoming'
 }
 
 const PHASE_CONFIG: Record<TripPhase, {
@@ -345,8 +348,8 @@ export default function MyBookingsPage() {
 
   const stats = {
     total:     bookings.length,
-    upcoming:  bookings.filter(b => b.status === 'confirmed' || b.status === 'pending').length,
-    completed: bookings.filter(b => b.status === 'completed').length,
+    upcoming:  bookings.filter(b => b.status !== 'cancelled' && new Date(b.startDate) > new Date()).length,
+    completed: bookings.filter(b => b.status === 'completed' && new Date(b.startDate) <= new Date()).length,
     cancelled: bookings.filter(b => b.status === 'cancelled').length,
   }
 
