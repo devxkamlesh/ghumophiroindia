@@ -17,14 +17,29 @@ async function invalidateAll() {
   await deleteCachePattern('destinations:*')
 }
 
+// Explicit column selection — avoids crashing on missing DB columns
+const cols = {
+  id:          destinations.id,
+  name:        destinations.name,
+  slug:        destinations.slug,
+  subtitle:    destinations.subtitle,
+  description: destinations.description,
+  image:       destinations.image,
+  tourCount:   destinations.tourCount,
+  isPopular:   destinations.isPopular,
+  createdAt:   destinations.createdAt,
+}
+
 export class DestinationService {
   async getAll() {
     const cached = await getCache(KEY.all())
     if (cached) return cached
 
-    const result = await db.query.destinations.findMany({
-      orderBy: desc(destinations.isPopular),
-    })
+    const result = await db
+      .select(cols)
+      .from(destinations)
+      .orderBy(desc(destinations.isPopular))
+
     await setCache(KEY.all(), result, CACHE_TTL.HOT)
     return result
   }
@@ -33,10 +48,12 @@ export class DestinationService {
     const cached = await getCache(KEY.popular())
     if (cached) return cached
 
-    const result = await db.query.destinations.findMany({
-      where: eq(destinations.isPopular, true),
-      limit: 6,
-    })
+    const result = await db
+      .select(cols)
+      .from(destinations)
+      .where(eq(destinations.isPopular, true))
+      .limit(6)
+
     await setCache(KEY.popular(), result, CACHE_TTL.HOT)
     return result
   }
@@ -45,11 +62,13 @@ export class DestinationService {
     const cached = await getCache(KEY.id(id))
     if (cached) return cached
 
-    const destination = await db.query.destinations.findFirst({
-      where: eq(destinations.id, id),
-    })
-    if (!destination) throw new NotFoundError('Destination not found')
+    const [destination] = await db
+      .select(cols)
+      .from(destinations)
+      .where(eq(destinations.id, id))
+      .limit(1)
 
+    if (!destination) throw new NotFoundError('Destination not found')
     await setCache(KEY.id(id), destination, CACHE_TTL.WARM)
     return destination
   }
@@ -58,19 +77,24 @@ export class DestinationService {
     const cached = await getCache(KEY.slug(slug))
     if (cached) return cached
 
-    const destination = await db.query.destinations.findFirst({
-      where: eq(destinations.slug, slug),
-    })
-    if (!destination) throw new NotFoundError('Destination not found')
+    const [destination] = await db
+      .select(cols)
+      .from(destinations)
+      .where(eq(destinations.slug, slug))
+      .limit(1)
 
+    if (!destination) throw new NotFoundError('Destination not found')
     await setCache(KEY.slug(slug), destination, CACHE_TTL.WARM)
     return destination
   }
 
   async create(data: CreateDestinationInput) {
-    const existing = await db.query.destinations.findFirst({
-      where: eq(destinations.slug, data.slug),
-    })
+    const [existing] = await db
+      .select({ id: destinations.id })
+      .from(destinations)
+      .where(eq(destinations.slug, data.slug))
+      .limit(1)
+
     if (existing) throw new ConflictError('Destination with this slug already exists')
 
     const [destination] = await db.insert(destinations).values(data).returning()
@@ -80,25 +104,30 @@ export class DestinationService {
   }
 
   async update(id: number, data: UpdateDestinationInput) {
-    const existing = await db.query.destinations.findFirst({
-      where: eq(destinations.id, id),
-    })
+    const [existing] = await db
+      .select(cols)
+      .from(destinations)
+      .where(eq(destinations.id, id))
+      .limit(1)
+
     if (!existing) throw new NotFoundError('Destination not found')
 
     if (data.slug && data.slug !== existing.slug) {
-      const slugExists = await db.query.destinations.findFirst({
-        where: eq(destinations.slug, data.slug),
-      })
+      const [slugExists] = await db
+        .select({ id: destinations.id })
+        .from(destinations)
+        .where(eq(destinations.slug, data.slug))
+        .limit(1)
+
       if (slugExists) throw new ConflictError('Destination with this slug already exists')
     }
 
     const [updated] = await db
       .update(destinations)
-      .set({ ...data, updatedAt: new Date() })
+      .set(data)
       .where(eq(destinations.id, id))
       .returning()
 
-    // Invalidate specific keys + list caches
     await deleteCache(KEY.id(id))
     await deleteCache(KEY.slug(existing.slug))
     if (data.slug && data.slug !== existing.slug) await deleteCache(KEY.slug(data.slug))
@@ -110,9 +139,12 @@ export class DestinationService {
   }
 
   async delete(id: number) {
-    const existing = await db.query.destinations.findFirst({
-      where: eq(destinations.id, id),
-    })
+    const [existing] = await db
+      .select({ id: destinations.id })
+      .from(destinations)
+      .where(eq(destinations.id, id))
+      .limit(1)
+
     if (!existing) throw new NotFoundError('Destination not found')
 
     await db.delete(destinations).where(eq(destinations.id, id))
