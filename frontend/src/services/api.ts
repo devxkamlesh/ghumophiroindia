@@ -420,6 +420,16 @@ export const destinationService = {
     return data.data.destination
   },
 
+  create: async (input: Partial<Destination>): Promise<Destination> => {
+    const { data } = await api.post('/destinations', input)
+    return data.data.destination
+  },
+
+  update: async (id: number, input: Partial<Destination>): Promise<Destination> => {
+    const { data } = await api.patch(`/destinations/${id}`, input)
+    return data.data.destination
+  },
+
   delete: async (id: number): Promise<void> => {
     await api.delete(`/destinations/${id}`)
   },

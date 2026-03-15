@@ -304,6 +304,12 @@ export default function BookingOrderPage() {
             booking={booking}
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-xl text-sm font-medium transition-colors"
           />
+          {booking.tourId && (
+            <Link href={`/tours/${booking.tourId}`}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-medium transition-colors">
+              <MapPin className="w-4 h-4" /> View Tour Page
+            </Link>
+          )}
           <a href={`mailto:support@ghumophiroindia.com?subject=Booking %23${booking.id}`}
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors">
             <Mail className="w-4 h-4" /> Contact Support
