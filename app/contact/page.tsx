@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail, Phone, MapPin, Clock } from 'lucide-react'
+import { Mail, Phone, MapPin, Clock, Loader2 } from 'lucide-react'
+import SuccessModal from '@/components/public/shared/SuccessModal'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -13,12 +14,13 @@ export default function ContactPage() {
     message: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [message, setMessage] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    setMessage('')
+    setErrorMessage('')
 
     try {
       const response = await fetch('/api/inquiries', {
@@ -28,13 +30,13 @@ export default function ContactPage() {
       })
 
       if (response.ok) {
-        setMessage('Thank you! We will get back to you soon.')
+        setShowSuccess(true)
         setFormData({ name: '', email: '', phone: '', country: '', tourInterest: '', message: '' })
       } else {
-        setMessage('Failed to send message. Please try again.')
+        setErrorMessage('Failed to send message. Please try again.')
       }
     } catch (error) {
-      setMessage('An error occurred. Please try again.')
+      setErrorMessage('An error occurred. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -75,7 +77,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-lg mb-1">Email</h3>
-                  <p className="text-gray-600">info@rajasthantours.com</p>
+                  <p className="text-gray-600">info@ghumophiroindia.com</p>
                   <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
                 </div>
               </div>
@@ -179,20 +181,29 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full btn-primary disabled:opacity-50"
+                className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
               >
-                {isSubmitting ? 'Sending...' : 'Send Message'}
+                {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}
+                <span>{isSubmitting ? 'Sending...' : 'Send Message'}</span>
               </button>
 
-              {message && (
-                <p className={`text-center ${message.includes('Thank') ? 'text-green-600' : 'text-red-600'}`}>
-                  {message}
+              {errorMessage && (
+                <p className="text-center text-red-600">
+                  {errorMessage}
                 </p>
               )}
             </form>
           </div>
         </div>
       </div>
+
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        title="Message Sent Successfully!"
+        message="Thank you for contacting us! Our team will get back to you within 24 hours."
+        type="inquiry"
+      />
     </div>
   )
 }
