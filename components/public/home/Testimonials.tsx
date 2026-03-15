@@ -1,6 +1,7 @@
 'use client'
 
 import { Star, Quote, MapPin, Calendar, MessageCircle } from 'lucide-react'
+import Image from 'next/image'
 
 const testimonials = [
   {
@@ -71,11 +72,15 @@ export default function Testimonials() {
               {/* Header */}
               <div className="flex items-start justify-between mb-4 relative z-10">
                 <div className="flex items-center space-x-3">
-                  <img
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    className="w-14 h-14 rounded-full object-cover ring-4 ring-white shadow-md"
-                  />
+                  <div className="relative w-14 h-14 rounded-full ring-4 ring-white shadow-md overflow-hidden flex-shrink-0">
+                    <Image
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  </div>
                   <div>
                     <div className="flex items-center space-x-2">
                       <h4 className="font-bold text-lg text-gray-900">{testimonial.name}</h4>
@@ -104,7 +109,7 @@ export default function Testimonials() {
 
               {/* Review Text */}
               <p className="text-gray-700 mb-6 leading-relaxed relative z-10">
-                "{testimonial.text}"
+                &quot;{testimonial.text}&quot;
               </p>
 
               {/* Footer */}

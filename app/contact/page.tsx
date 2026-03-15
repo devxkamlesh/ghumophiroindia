@@ -47,7 +47,7 @@ export default function ContactPage() {
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-16">
         <div className="container-custom text-center">
           <h1 className="font-display text-5xl font-bold mb-4">Contact Us</h1>
-          <p className="text-xl text-primary-100">We're here to help plan your perfect journey</p>
+          <p className="text-xl text-primary-100">We&apos;re here to help plan your perfect journey</p>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-bold text-lg mb-1">Email</h3>
                   <p className="text-gray-600">info@ghumophiroindia.com</p>
-                  <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
+                  <p className="text-sm text-gray-500">We&apos;ll respond within 24 hours</p>
                 </div>
               </div>
 

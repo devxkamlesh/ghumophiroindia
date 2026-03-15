@@ -134,7 +134,7 @@ export default function PopularDestinations() {
         <div className="mt-12 md:mt-16 text-center">
           <div className="bg-gradient-to-r from-primary-50 to-orange-50 rounded-2xl p-8 md:p-12">
             <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-              Can't Find Your Dream Destination?
+              Can&apos;t Find Your Dream Destination?
             </h3>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
               Create a custom tour tailored to your preferences. Choose your destinations, duration, and experiences.

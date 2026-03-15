@@ -16,7 +16,7 @@ export default function NotFound() {
           Oops! Page Not Found
         </h1>
         <p className="text-xl text-gray-600 mb-8">
-          Looks like you've wandered off the beaten path. This page doesn't exist or has been moved.
+          Looks like you&apos;ve wandered off the beaten path. This page doesn&apos;t exist or has been moved.
         </p>
 
         {/* Action Buttons */}

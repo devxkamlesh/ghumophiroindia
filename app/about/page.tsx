@@ -21,10 +21,10 @@ export default function AboutPage() {
                 Founded in 2010 by passionate travel enthusiasts, Rajasthan Tours has grown from a small local operator to one of the most trusted names in Rajasthan tourism. Our journey began with a simple mission: to share the magic of Rajasthan with travelers from around the world.
               </p>
               <p className="text-gray-700 mb-4">
-                Over the years, we've helped thousands of travelers discover the royal heritage, vibrant culture, and breathtaking landscapes of Rajasthan. From the pink palaces of Jaipur to the golden dunes of Jaisalmer, we create experiences that go beyond typical tourism.
+                Over the years, we&apos;ve helped thousands of travelers discover the royal heritage, vibrant culture, and breathtaking landscapes of Rajasthan. From the pink palaces of Jaipur to the golden dunes of Jaisalmer, we create experiences that go beyond typical tourism.
               </p>
               <p className="text-gray-700">
-                Today, we're proud to be a team of local experts, professional guides, and travel specialists dedicated to creating personalized journeys that exceed expectations.
+                Today, we&apos;re proud to be a team of local experts, professional guides, and travel specialists dedicated to creating personalized journeys that exceed expectations.
               </p>
             </div>
           </section>
@@ -79,7 +79,7 @@ export default function AboutPage() {
               </div>
               <div>
                 <h3 className="font-bold text-lg mb-2">Sustainability</h3>
-                <p className="text-gray-700">We're committed to responsible tourism that benefits local communities.</p>
+                <p className="text-gray-700">We&apos;re committed to responsible tourism that benefits local communities.</p>
               </div>
               <div>
                 <h3 className="font-bold text-lg mb-2">Excellence</h3>

@@ -1,5 +1,6 @@
 import { Calendar, MapPin, Users, Download } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export const metadata = {
   title: 'My Bookings | Ghumo Phiro India',
@@ -61,7 +62,15 @@ export default function MyBookingsPage() {
         {bookings.map((booking) => (
           <div key={booking.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
             <div className="flex flex-col md:flex-row">
-              <img src={booking.image} alt={booking.tour} className="w-full md:w-48 h-48 object-cover" />
+              <div className="relative w-full md:w-48 h-48 flex-shrink-0">
+                <Image 
+                  src={booking.image} 
+                  alt={booking.tour} 
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 192px"
+                />
+              </div>
               <div className="flex-1 p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
