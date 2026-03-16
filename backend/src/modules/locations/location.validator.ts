@@ -8,10 +8,10 @@ export const createLocationSchema = z.object({
   type:        z.enum(LOCATION_TYPES),
   parentId:    z.number().int().positive().optional(),
   subtitle:    z.string().max(200).optional(),
-  description: z.string().max(5000).optional(),
+  description: z.string().max(5000).nullable().optional(),
   image:       z.string().url().optional(),
-  lat:         z.number().optional(),
-  lng:         z.number().optional(),
+  lat:         z.coerce.number().optional().nullable(),
+  lng:         z.coerce.number().optional().nullable(),
   isPopular:   z.boolean().optional().default(false),
 })
 
