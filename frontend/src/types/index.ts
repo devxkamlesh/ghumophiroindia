@@ -16,13 +16,26 @@ export interface Tour {
   included: string[]
   excluded: string[]
   itinerary: Itinerary[]
-  destinations: string[]
+  destinations: string[]      // legacy text array — kept for backward compat
+  locationIds?: number[]      // new: linked location IDs
+  tourLocations?: TourLocation[] // new: full location objects (joined)
   rating?: string | number | null
   reviewCount?: number
   isActive: boolean
   isFeatured: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface TourLocation {
+  id:       number
+  name:     string
+  slug:     string
+  type:     LocationType
+  path:     string
+  lat:      string | null
+  lng:      string | null
+  parentId: number | null
 }
 
 export interface Itinerary {
