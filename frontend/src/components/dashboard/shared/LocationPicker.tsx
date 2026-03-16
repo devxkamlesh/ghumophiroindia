@@ -19,9 +19,10 @@ const TYPE_COLOR: Record<LocationType, string> = {
 interface Props {
   selectedIds: number[]
   onChange: (ids: number[]) => void
+  singleSelect?: boolean
 }
 
-export function LocationPicker({ selectedIds, onChange }: Props) {
+export function LocationPicker({ selectedIds, onChange, singleSelect }: Props) {
   const [all,      setAll]      = useState<LocationNode[]>([])
   const [search,   setSearch]   = useState('')
   const [open,     setOpen]     = useState(false)
@@ -42,8 +43,14 @@ export function LocationPicker({ selectedIds, onChange }: Props) {
   )
 
   const toggle = (id: number) => {
-    if (selectedIds.includes(id)) onChange(selectedIds.filter(i => i !== id))
-    else onChange([...selectedIds, id])
+    if (singleSelect) {
+      // Single select: pick one, close dropdown
+      onChange(selectedIds.includes(id) ? [] : [id])
+      setOpen(false)
+    } else {
+      if (selectedIds.includes(id)) onChange(selectedIds.filter(i => i !== id))
+      else onChange([...selectedIds, id])
+    }
   }
 
   const remove = (id: number) => onChange(selectedIds.filter(i => i !== id))
@@ -51,7 +58,7 @@ export function LocationPicker({ selectedIds, onChange }: Props) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        Locations <span className="text-xs text-gray-400">(link to real locations)</span>
+        {singleSelect ? 'Location' : 'Locations'} <span className="text-xs text-gray-400">({singleSelect ? 'pick one' : 'link to real locations'})</span>
       </label>
 
       {/* Selected chips */}

@@ -182,6 +182,7 @@ export const locations = pgTable('locations', {
   description: text('description'),
   image:       text('image'),
   isActive:    boolean('is_active').default(true),
+  isPopular:   boolean('is_popular').default(false),
   createdAt:   timestamp('created_at').defaultNow(),
 }, (t) => ({
   slugIdx:   index('idx_locations_slug').on(t.slug),

@@ -17,6 +17,7 @@ const cols = {
   description: locations.description,
   image:       locations.image,
   isActive:    locations.isActive,
+  isPopular:   locations.isPopular,
   createdAt:   locations.createdAt,
 }
 

@@ -4,9 +4,9 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   Plus, Edit, Trash2, ChevronRight, ChevronDown,
   Loader2, AlertCircle, Check, X, MapPin, Globe,
-  Building2, Map as MapIcon, Landmark, RefreshCw,
+  Building2, Map as MapIcon, Landmark, RefreshCw, Upload, Link2, TrendingUp,
 } from 'lucide-react'
-import { locationAdminService } from '@/services/api'
+import { locationAdminService, uploadService } from '@/services/api'
 import { cn } from '@/lib/utils'
 import type { LocationNode, LocationType } from '@/types'
 
@@ -36,7 +36,7 @@ function buildTree(flat: LocationNode[]): LocationNode[] {
 }
 
 // ── Location form modal ───────────────────────────────────────────────────────
-const EMPTY: Partial<LocationNode> = { name: '', slug: '', type: 'country', parentId: null, lat: null, lng: null, description: null }
+const EMPTY: Partial<LocationNode> = { name: '', slug: '', type: 'country', parentId: null, lat: null, lng: null, description: null, image: null, isPopular: false }
 
 function LocationModal({
   initial, allLocations, onSave, onClose,
@@ -49,6 +49,7 @@ function LocationModal({
   const [form,   setForm]   = useState<Partial<LocationNode>>(initial ?? { ...EMPTY })
   const [saving, setSaving] = useState(false)
   const [error,  setError]  = useState('')
+  const [uploading, setUploading] = useState(false)
 
   const autoSlug = (name: string) =>
     name.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()
@@ -179,6 +180,59 @@ function LocationModal({
               onChange={e => set('description', e.target.value || null)}
               className={inputCls} placeholder="Brief description…" />
           </div>
+
+          {/* Image */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-medium text-gray-700">Image</label>
+            </div>
+            <input type="url" value={form.image ?? ''}
+              onChange={e => set('image', e.target.value || null)}
+              className={inputCls} placeholder="https://… or upload below" />
+            <label className={cn(
+              'mt-2 flex items-center justify-center gap-2 border-2 border-dashed rounded-xl p-3 cursor-pointer transition-colors text-xs',
+              uploading ? 'border-primary-300 bg-primary-50 text-primary-600' : 'border-gray-200 hover:border-primary-400 text-gray-400 hover:text-primary-600'
+            )}>
+              <input type="file" accept="image/*" className="hidden"
+                onChange={async e => {
+                  const file = e.target.files?.[0]; if (!file) return
+                  setUploading(true)
+                  try { set('image', await uploadService.image(file)) }
+                  catch (err: any) { setError(err.message || 'Upload failed') }
+                  finally { setUploading(false); e.target.value = '' }
+                }}
+                disabled={uploading} />
+              {uploading
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</>
+                : <><Upload className="w-4 h-4" /> Upload image</>
+              }
+            </label>
+            {form.image && (
+              <div className="mt-2 relative h-20 rounded-xl overflow-hidden border border-gray-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={form.image} alt="preview" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => set('image', null)}
+                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full">
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Mark as Popular */}
+          <label className="flex items-center gap-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:border-primary-300 transition-colors">
+            <div className={cn('w-10 h-6 rounded-full transition-colors relative flex-shrink-0', form.isPopular ? 'bg-primary-600' : 'bg-gray-200')}
+              onClick={() => set('isPopular', !form.isPopular)}>
+              <div className={cn('absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform', form.isPopular ? 'translate-x-5' : 'translate-x-1')} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-primary-600" />
+                Mark as Popular
+              </p>
+              <p className="text-xs text-gray-400">Shows on home page Popular Destinations section</p>
+            </div>
+          </label>
 
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose}

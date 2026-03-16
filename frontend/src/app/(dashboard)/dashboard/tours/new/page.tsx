@@ -79,8 +79,8 @@ export default function NewTourPage() {
     excluded:        [''] as string[],
     destinations:    [''] as string[],
     locationIds:     [] as number[],
-    itinerary:       [{ day: 1, title: '', description: '', activities: [''] }] as Array<{
-      day: number; title: string; description: string; activities: string[]
+    itinerary:       [{ day: 1, title: '', description: '', activities: [''], locationId: null as number | null }] as Array<{
+      day: number; title: string; description: string; activities: string[]; locationId: number | null
     }>,
     isFeatured: false,
   })
@@ -102,7 +102,7 @@ export default function NewTourPage() {
     setForm(p => ({ ...p, itinerary: p.itinerary.map((d, idx) => idx === i ? { ...d, [field]: val } : d) }))
 
   const addDay = () =>
-    setForm(p => ({ ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activities: [''] }] }))
+    setForm(p => ({ ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activities: [''], locationId: null }] }))
 
   const removeDay = (i: number) =>
     setForm(p => ({ ...p, itinerary: p.itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, day: idx + 1 })) }))
@@ -320,6 +320,17 @@ export default function NewTourPage() {
                   className={cls} placeholder="Day title e.g. Jaipur City Tour" />
                 <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)}
                   className={cls} placeholder="Day description…" />
+
+                {/* Location for this day */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Location for this day</p>
+                  <LocationPicker
+                    selectedIds={day.locationId ? [day.locationId] : []}
+                    onChange={ids => updateDay(i, 'locationId', ids[0] ?? null)}
+                    singleSelect
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-gray-500">Activities</p>
                   {day.activities.map((act, j) => (

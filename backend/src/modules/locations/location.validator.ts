@@ -12,8 +12,7 @@ export const createLocationSchema = z.object({
   image:       z.string().url().optional(),
   lat:         z.coerce.number().optional().nullable(),
   lng:         z.coerce.number().optional().nullable(),
-  isPopular:   z.boolean().optional().default(false),
-})
+  isPopular:   z.boolean().optional().default(false),})
 
 export const updateLocationSchema = createLocationSchema.partial()
 
