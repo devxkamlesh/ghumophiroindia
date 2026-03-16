@@ -52,7 +52,7 @@ const config: Config = {
   port: parseInt(process.env.PORT || '4000', 10),
   apiVersion: process.env.API_VERSION || 'v1',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
-  allowedOrigins: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+  allowedOrigins: (process.env.CORS_ORIGIN || process.env.ALLOWED_ORIGINS || 'http://localhost:3000').split(',').map(s => s.trim()),
   
   database: {
     url: process.env.DATABASE_URL || '',
