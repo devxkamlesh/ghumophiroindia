@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { MapPin, Calendar, Users, Search, Star, Award, Shield, Loader2 } from 'lucide-react'
 
@@ -216,18 +217,18 @@ export default function Hero() {
             <div className="mt-4 md:mt-6 pt-4 md:pt-6 border-t border-gray-200">
               <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3">Popular searches:</p>
               <div className="flex flex-wrap gap-2">
-                <a href="/tours?destination=golden-triangle" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
+                <Link href="/tours?destination=golden-triangle" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
                   Golden Triangle
-                </a>
-                <a href="/tours?destination=jaipur" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
+                </Link>
+                <Link href="/tours?destination=jaipur" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
                   Jaipur City Tour
-                </a>
-                <a href="/tours?destination=jaisalmer" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
+                </Link>
+                <Link href="/tours?destination=jaisalmer" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
                   Desert Safari
-                </a>
-                <a href="/custom-tour" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
+                </Link>
+                <Link href="/custom-tour" className="text-xs md:text-sm px-3 md:px-4 py-2 md:py-2 bg-gray-100 hover:bg-primary-50 text-gray-700 hover:text-primary-700 rounded-full transition-colors font-medium touch-manipulation min-h-[36px] flex items-center">
                   Custom Tour
-                </a>
+                </Link>
               </div>
             </div>
           </form>
