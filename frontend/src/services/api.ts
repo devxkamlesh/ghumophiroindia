@@ -384,6 +384,26 @@ export const mapService = {
   },
 }
 
+// ─── Locations ────────────────────────────────────────────────────────────────
+
+export const locationAdminService = {
+  getAll: async (): Promise<LocationNode[]> => {
+    const { data } = await api.get('/locations')
+    return data.data?.locations ?? []
+  },
+  create: async (input: Partial<LocationNode>): Promise<LocationNode> => {
+    const { data } = await api.post('/locations', input)
+    return data.data.location
+  },
+  update: async (id: number, input: Partial<LocationNode>): Promise<LocationNode> => {
+    const { data } = await api.patch(`/locations/${id}`, input)
+    return data.data.location
+  },
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/locations/${id}`)
+  },
+}
+
 // ─── Upload ───────────────────────────────────────────────────────────────────
 
 export const uploadService = {

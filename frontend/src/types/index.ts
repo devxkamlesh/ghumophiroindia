@@ -140,6 +140,27 @@ export interface Destination {
   updatedAt?: string
 }
 
+// ─── Locations ────────────────────────────────────────────────────────────────
+
+export type LocationType = 'country' | 'state' | 'city' | 'place'
+
+export interface LocationNode {
+  id:          number
+  name:        string
+  slug:        string
+  type:        LocationType
+  parentId:    number | null
+  path:        string
+  lat:         string | null
+  lng:         string | null
+  description: string | null
+  image:       string | null
+  isActive:    boolean
+  createdAt:   string
+  // client-only — built from flat list
+  children?:   LocationNode[]
+}
+
 // ─── Map ──────────────────────────────────────────────────────────────────────
 // Mirrors backend MapCore / MapPlace / MapTour / MapFull from map.cache.ts
 

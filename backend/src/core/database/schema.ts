@@ -168,7 +168,32 @@ export const reviews = pgTable('reviews', {
   publishedIdx: index('idx_reviews_published').on(t.isPublished),
 }))
 
-// ─── Relations ────────────────────────────────────────────────────────────────
+// ─── Locations (Hierarchy: Country → State → City → Place) ───────────────────
+
+export const locations = pgTable('locations', {
+  id:          serial('id').primaryKey(),
+  name:        text('name').notNull(),
+  slug:        text('slug').notNull().unique(),
+  type:        text('type').notNull(),          // country | state | city | place
+  parentId:    integer('parent_id'),            // null = root (country)
+  path:        text('path').notNull(),          // e.g. "india/rajasthan/jaipur"
+  lat:         decimal('lat',  { precision: 10, scale: 7 }),
+  lng:         decimal('lng',  { precision: 10, scale: 7 }),
+  description: text('description'),
+  image:       text('image'),
+  isActive:    boolean('is_active').default(true),
+  createdAt:   timestamp('created_at').defaultNow(),
+}, (t) => ({
+  slugIdx:   index('idx_locations_slug').on(t.slug),
+  parentIdx: index('idx_locations_parent_id').on(t.parentId),
+  typeIdx:   index('idx_locations_type').on(t.type),
+  pathIdx:   index('idx_locations_path').on(t.path),
+}))
+
+export const locationsRelations = relations(locations, ({ one, many }) => ({
+  parent:   one(locations,  { fields: [locations.parentId], references: [locations.id], relationName: 'children' }),
+  children: many(locations, { relationName: 'children' }),
+}))
 
 export const usersRelations = relations(users, ({ many }) => ({
   bookings: many(bookings),
