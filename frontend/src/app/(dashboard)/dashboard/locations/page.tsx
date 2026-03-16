@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   Plus, Edit, Trash2, ChevronRight, ChevronDown,
   Loader2, AlertCircle, Check, X, MapPin, Globe,
-  Building2, Map, Landmark, RefreshCw,
+  Building2, Map as MapIcon, Landmark, RefreshCw,
 } from 'lucide-react'
 import { locationAdminService } from '@/services/api'
 import { cn } from '@/lib/utils'
@@ -13,7 +13,7 @@ import type { LocationNode, LocationType } from '@/types'
 // ── Type config ───────────────────────────────────────────────────────────────
 const TYPE_CONFIG: Record<LocationType, { label: string; icon: React.ElementType; color: string; bg: string; indent: number }> = {
   country: { label: 'Country', icon: Globe,    color: 'text-blue-700',   bg: 'bg-blue-50 border-blue-200',   indent: 0 },
-  state:   { label: 'State',   icon: Map,      color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', indent: 1 },
+  state:   { label: 'State',   icon: MapIcon,      color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', indent: 1 },
   city:    { label: 'City',    icon: Building2, color: 'text-green-700',  bg: 'bg-green-50 border-green-200',  indent: 2 },
   place:   { label: 'Place',   icon: Landmark, color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200', indent: 3 },
 }
