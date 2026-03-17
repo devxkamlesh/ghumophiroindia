@@ -17,7 +17,7 @@ export default function AdminPage() {
       return
     }
 
-    if (user.role === 'admin') {
+    if (user.role === 'admin' || user.role === 'superadmin') {
       router.replace('/dashboard')
     } else {
       router.replace('/my-account')
