@@ -53,7 +53,7 @@ export interface AuthUser {
   id: number
   name: string
   email: string
-  role: 'admin' | 'user'
+  role: 'admin' | 'user' | 'superadmin'
   phone?: string
   avatar?: string
   address?: string

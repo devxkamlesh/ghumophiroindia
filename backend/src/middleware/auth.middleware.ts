@@ -42,20 +42,28 @@ export const authenticate = async (
 }
 
 /**
- * Authorize user by role
+ * Authorize user by role.
+ * superadmin passes ALL role checks automatically.
  */
 export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new UnauthorizedError('Authentication required'))
     }
-
+    // superadmin has all permissions
+    if (req.user.role === 'superadmin') return next()
     if (!roles.includes(req.user.role)) {
       return next(new ForbiddenError('Insufficient permissions'))
     }
-
     next()
   }
+}
+
+/** Only superadmin can access */
+export const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
+  if (!req.user) return next(new UnauthorizedError('Authentication required'))
+  if (req.user.role !== 'superadmin') return next(new ForbiddenError('Superadmin only'))
+  next()
 }
 
 /**

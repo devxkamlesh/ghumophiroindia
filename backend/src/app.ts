@@ -3,6 +3,7 @@ import { errorHandler } from './middleware/errorHandler'
 import { notFoundHandler } from './middleware/notFoundHandler'
 import { apiLimiter } from './middleware/rateLimiter'
 import authRoutes from './modules/auth/auth.routes'
+import adminManagementRoutes from './modules/auth/admin-management.routes'
 import tourRoutes from './modules/tours/tour.routes'
 import bookingRoutes from './modules/bookings/booking.routes'
 import inquiryRoutes from './modules/inquiries/inquiry.routes'
@@ -48,6 +49,7 @@ apiRouter.use((req: any, res: any, next: any) => {
 })
 
 apiRouter.use('/auth',         authRoutes)
+apiRouter.use('/admin',        adminManagementRoutes)
 apiRouter.use('/tours',        tourRoutes)
 apiRouter.use('/bookings',     bookingRoutes)
 apiRouter.use('/inquiries',    inquiryRoutes)

@@ -12,7 +12,7 @@ export const users = pgTable('users', {
   email:         text('email').notNull().unique(),
   password:      text('password').notNull(),
   phone:         text('phone'),
-  role:          text('role').notNull().default('user'),
+  role:          text('role').notNull().default('user'), // user | admin | superadmin
   avatar:        text('avatar'),
   address:       text('address'),
   city:          text('city'),
