@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
-import { tourService } from '@/services/api'
+import { tourService, locationAdminService } from '@/services/api'
 import { ImageField } from '@/components/dashboard/shared/ImageField'
 import { LocationPicker } from '@/components/dashboard/shared/LocationPicker'
+import type { LocationNode } from '@/types'
 
 // ── Shared input style ────────────────────────────────────────────────────────
 const cls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all'
@@ -79,8 +80,8 @@ export default function NewTourPage() {
     excluded:        [''] as string[],
     destinations:    [''] as string[],
     locationIds:     [] as number[],
-    itinerary:       [{ day: 1, title: '', description: '', activities: [''], locationId: null as number | null }] as Array<{
-      day: number; title: string; description: string; activities: string[]; locationId: number | null
+    itinerary:       [{ day: 1, title: '', description: '', activityLocationIds: [] as number[], locationId: null as number | null }] as Array<{
+      day: number; title: string; description: string; activityLocationIds: number[]; locationId: number | null
     }>,
     isFeatured: false,
   })
@@ -88,6 +89,14 @@ export default function NewTourPage() {
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState('')
   const [success, setSuccess] = useState(false)
+  const [allLocations, setAllLocations] = useState<LocationNode[]>([])
+
+  useEffect(() => {
+    locationAdminService.getAll().then(setAllLocations).catch(() => {})
+  }, [])
+
+  const locationName = (id: number | null) =>
+    id ? (allLocations.find(l => l.id === id)?.name ?? '') : ''
 
   // Auto-generate slug from title
   const handleTitleChange = (title: string) => {
@@ -102,24 +111,10 @@ export default function NewTourPage() {
     setForm(p => ({ ...p, itinerary: p.itinerary.map((d, idx) => idx === i ? { ...d, [field]: val } : d) }))
 
   const addDay = () =>
-    setForm(p => ({ ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activities: [''], locationId: null }] }))
+    setForm(p => ({ ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activityLocationIds: [], locationId: null }] }))
 
   const removeDay = (i: number) =>
     setForm(p => ({ ...p, itinerary: p.itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, day: idx + 1 })) }))
-
-  const updateActivity = (dayIdx: number, actIdx: number, val: string) =>
-    setForm(p => ({
-      ...p,
-      itinerary: p.itinerary.map((d, i) => i === dayIdx
-        ? { ...d, activities: d.activities.map((a, j) => j === actIdx ? val : a) }
-        : d)
-    }))
-
-  const addActivity    = (dayIdx: number) =>
-    setForm(p => ({ ...p, itinerary: p.itinerary.map((d, i) => i === dayIdx ? { ...d, activities: [...d.activities, ''] } : d) }))
-
-  const removeActivity = (dayIdx: number, actIdx: number) =>
-    setForm(p => ({ ...p, itinerary: p.itinerary.map((d, i) => i === dayIdx ? { ...d, activities: d.activities.filter((_, j) => j !== actIdx) } : d) }))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -152,8 +147,13 @@ export default function NewTourPage() {
         destinations:    clean(form.destinations),
         locationIds:     form.locationIds,
         itinerary:       form.itinerary.map(d => ({
-          ...d,
-          activities: d.activities.filter(a => a.trim()),
+          day:         d.day,
+          title:       d.title,
+          description: d.description,
+          locationId:  d.locationId,
+          activities:  d.activityLocationIds
+            .map(id => allLocations.find(l => l.id === id)?.name ?? '')
+            .filter(Boolean),
         })).filter(d => d.title.trim()),
         isFeatured: form.isFeatured,
       })
@@ -307,7 +307,7 @@ export default function NewTourPage() {
               <div key={i} className="border border-gray-100 rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-full">
-                    Day {day.day}
+                    Day {day.day}{day.title ? ` — ${day.title}` : ''}
                   </span>
                   {form.itinerary.length > 1 && (
                     <button type="button" onClick={() => removeDay(i)}
@@ -316,39 +316,43 @@ export default function NewTourPage() {
                     </button>
                   )}
                 </div>
-                <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)}
-                  className={cls} placeholder="Day title e.g. Jaipur City Tour" />
-                <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)}
-                  className={cls} placeholder="Day description…" />
 
-                {/* Location for this day */}
+                {/* Main location for this day → auto-fills title */}
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Location for this day</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Main Location (auto-fills title)</p>
                   <LocationPicker
                     selectedIds={day.locationId ? [day.locationId] : []}
-                    onChange={ids => updateDay(i, 'locationId', ids[0] ?? null)}
+                    onChange={ids => {
+                      const id = ids[0] ?? null
+                      const name = locationName(id)
+                      updateDay(i, 'locationId', id)
+                      if (name) updateDay(i, 'title', name)
+                    }}
                     singleSelect
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-500">Activities</p>
-                  {day.activities.map((act, j) => (
-                    <div key={j} className="flex gap-2">
-                      <input type="text" value={act} onChange={e => updateActivity(i, j, e.target.value)}
-                        className={cls} placeholder="Visit Hawa Mahal" />
-                      {day.activities.length > 1 && (
-                        <button type="button" onClick={() => removeActivity(i, j)}
-                          className="p-2.5 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0">
-                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => addActivity(i)}
-                    className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
-                    <Plus className="w-3.5 h-3.5" /> Add activity
-                  </button>
+                {/* Title — editable, pre-filled from location */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">Title</p>
+                  <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)}
+                    className={cls} placeholder="e.g. Amber Fort & City Palace" />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">Description</p>
+                  <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)}
+                    className={cls} placeholder="What happens this day…" />
+                </div>
+
+                {/* Activities = locations visited this day */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">🗺 Places to visit (activities)</p>
+                  <LocationPicker
+                    selectedIds={day.activityLocationIds}
+                    onChange={ids => updateDay(i, 'activityLocationIds', ids)}
+                  />
                 </div>
               </div>
             ))}

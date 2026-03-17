@@ -42,8 +42,9 @@ export interface Itinerary {
   day: number
   title: string
   description: string
-  activities: string[]
-  locationId?: number | null
+  activities: string[]           // location names (for display)
+  locationId?: number | null     // main location for this day
+  activityLocationIds?: number[] // location IDs for activities
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────

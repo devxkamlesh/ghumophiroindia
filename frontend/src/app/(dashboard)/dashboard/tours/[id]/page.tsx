@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
-import { tourService } from '@/services/api'
-import type { Tour } from '@/types'
+import { tourService, locationAdminService } from '@/services/api'
+import type { Tour, LocationNode } from '@/types'
 import { ImageField } from '@/components/dashboard/shared/ImageField'
 import { LocationPicker } from '@/components/dashboard/shared/LocationPicker'
 
@@ -54,7 +54,7 @@ type FormState = {
   images: string[]; highlights: string[]; included: string[]; excluded: string[]
   destinations: string[]
   locationIds: number[]
-  itinerary: Array<{ day: number; title: string; description: string; activities: string[]; locationId: number | null }>
+  itinerary: Array<{ day: number; title: string; description: string; activityLocationIds: number[]; locationId: number | null }>
   isFeatured: boolean; isActive: boolean
 }
 
@@ -76,8 +76,8 @@ function tourToForm(t: Tour): FormState {
     destinations:    (t.destinations ?? []).length > 0 ? t.destinations : [''],
     locationIds:     t.locationIds ?? [],
     itinerary:       (t.itinerary ?? []).length > 0
-      ? t.itinerary.map(d => ({ ...d, activities: d.activities?.length > 0 ? d.activities : [''], locationId: d.locationId ?? null }))
-      : [{ day: 1, title: '', description: '', activities: [''], locationId: null }],
+      ? t.itinerary.map(d => ({ ...d, activityLocationIds: d.activityLocationIds ?? [], locationId: d.locationId ?? null }))
+      : [{ day: 1, title: '', description: '', activityLocationIds: [], locationId: null }],
     isFeatured: t.isFeatured,
     isActive:   t.isActive,
   }
@@ -92,6 +92,14 @@ export default function EditTourPage() {
   const [saving,  setSaving]  = useState(false)
   const [error,   setError]   = useState('')
   const [success, setSuccess] = useState(false)
+  const [allLocations, setAllLocations] = useState<LocationNode[]>([])
+
+  useEffect(() => {
+    locationAdminService.getAll().then(setAllLocations).catch(() => {})
+  }, [])
+
+  const locationName = (id: number | null) =>
+    id ? (allLocations.find(l => l.id === id)?.name ?? '') : ''
 
   // Load existing tour
   const loadTour = useCallback(async () => {
@@ -143,7 +151,7 @@ export default function EditTourPage() {
     setForm(p => p ? { ...p, itinerary: p.itinerary.map((d, idx) => idx === i ? { ...d, [field]: val } : d) } : p)
 
   const addDay = () =>
-    setForm(p => p ? { ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activities: [''], locationId: null }] } : p)
+    setForm(p => p ? { ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activityLocationIds: [], locationId: null }] } : p)
 
   const removeDay = (i: number) =>
     setForm(p => p ? { ...p, itinerary: p.itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, day: idx + 1 })) } : p)
@@ -190,7 +198,16 @@ export default function EditTourPage() {
         destinations:    clean(form.destinations),
         locationIds:     form.locationIds,
         itinerary:       form.itinerary
-          .map(d => ({ ...d, activities: d.activities.filter(a => a.trim()) }))
+          .map(d => ({
+            day:                 d.day,
+            title:               d.title,
+            description:         d.description,
+            locationId:          d.locationId,
+            activityLocationIds: d.activityLocationIds,
+            activities:          d.activityLocationIds
+              .map(id => allLocations.find(l => l.id === id)?.name ?? '')
+              .filter(Boolean),
+          }))
           .filter(d => d.title.trim()),
         isFeatured: form.isFeatured,
         isActive:   form.isActive,
@@ -330,11 +347,37 @@ export default function EditTourPage() {
 
                 {/* Location for this day */}
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Location for this day</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Main Location (auto-fills title)</p>
                   <LocationPicker
                     selectedIds={day.locationId ? [day.locationId] : []}
-                    onChange={ids => updateDay(i, 'locationId', ids[0] ?? null)}
+                    onChange={ids => {
+                      const id = ids[0] ?? null
+                      const name = locationName(id)
+                      updateDay(i, 'locationId', id)
+                      if (name) updateDay(i, 'title', name)
+                    }}
                     singleSelect
+                  />
+                </div>
+
+                {/* Title editable */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">Title</p>
+                  <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)} className={cls} placeholder="e.g. Amber Fort & City Palace" />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">Description</p>
+                  <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)} className={cls} placeholder="What happens this day…" />
+                </div>
+
+                {/* Activities = locations */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">🗺 Places to visit (activities)</p>
+                  <LocationPicker
+                    selectedIds={day.activityLocationIds}
+                    onChange={ids => updateDay(i, 'activityLocationIds', ids)}
                   />
                 </div>
 
