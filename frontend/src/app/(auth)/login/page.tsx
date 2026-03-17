@@ -31,7 +31,7 @@ function LoginForm() {
         refreshToken,
       )
 
-      const defaultRedirect = user.role === 'admin' ? '/dashboard' : '/my-account'
+      const defaultRedirect = (user.role === 'admin' || user.role === 'superadmin') ? '/dashboard' : '/my-account'
       const destination = (redirect === '/my-account' || redirect === '/dashboard') ? defaultRedirect : redirect
       router.push(destination)
     } catch (err: any) {
