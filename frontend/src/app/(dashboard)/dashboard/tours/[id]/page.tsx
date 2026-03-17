@@ -54,7 +54,7 @@ type FormState = {
   images: string[]; highlights: string[]; included: string[]; excluded: string[]
   destinations: string[]
   locationIds: number[]
-  itinerary: Array<{ day: number; title: string; description: string; activities: string[] }>
+  itinerary: Array<{ day: number; title: string; description: string; activities: string[]; locationId: number | null }>
   isFeatured: boolean; isActive: boolean
 }
 
@@ -76,8 +76,8 @@ function tourToForm(t: Tour): FormState {
     destinations:    (t.destinations ?? []).length > 0 ? t.destinations : [''],
     locationIds:     t.locationIds ?? [],
     itinerary:       (t.itinerary ?? []).length > 0
-      ? t.itinerary.map(d => ({ ...d, activities: d.activities?.length > 0 ? d.activities : [''] }))
-      : [{ day: 1, title: '', description: '', activities: [''] }],
+      ? t.itinerary.map(d => ({ ...d, activities: d.activities?.length > 0 ? d.activities : [''], locationId: d.locationId ?? null }))
+      : [{ day: 1, title: '', description: '', activities: [''], locationId: null }],
     isFeatured: t.isFeatured,
     isActive:   t.isActive,
   }
@@ -143,7 +143,7 @@ export default function EditTourPage() {
     setForm(p => p ? { ...p, itinerary: p.itinerary.map((d, idx) => idx === i ? { ...d, [field]: val } : d) } : p)
 
   const addDay = () =>
-    setForm(p => p ? { ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activities: [''] }] } : p)
+    setForm(p => p ? { ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activities: [''], locationId: null }] } : p)
 
   const removeDay = (i: number) =>
     setForm(p => p ? { ...p, itinerary: p.itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, day: idx + 1 })) } : p)
@@ -327,6 +327,17 @@ export default function EditTourPage() {
                 </div>
                 <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)} className={cls} placeholder="Day title" />
                 <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)} className={cls} placeholder="Day description…" />
+
+                {/* Location for this day */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Location for this day</p>
+                  <LocationPicker
+                    selectedIds={day.locationId ? [day.locationId] : []}
+                    onChange={ids => updateDay(i, 'locationId', ids[0] ?? null)}
+                    singleSelect
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-gray-500">Activities</p>
                   {day.activities.map((act, j) => (

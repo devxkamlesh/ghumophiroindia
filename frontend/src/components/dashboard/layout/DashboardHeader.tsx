@@ -6,7 +6,7 @@ import {
   Search, Bell, LogOut, User, Settings,
   ExternalLink, ChevronDown, MenuIcon,
   LayoutDashboard, MapPin, Calendar, MessageSquare,
-  Wand2, Star, FileText, BarChart3, UserCircle,
+  Wand2, Star, BarChart3, UserCircle, Globe,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { getUser, clearAuth } from '@/lib/auth'
@@ -16,16 +16,15 @@ import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
 
 const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Tours', href: '/dashboard/tours', icon: MapPin },
-  { name: 'Bookings', href: '/dashboard/bookings', icon: Calendar },
-  { name: 'Inquiries', href: '/dashboard/inquiries', icon: MessageSquare },
-  { name: 'Custom Requests', href: '/dashboard/custom-requests', icon: Wand2 },
-  { name: 'Reviews', href: '/dashboard/reviews', icon: Star },
-  { name: 'Destinations', href: '/dashboard/destinations', icon: MapPin },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  { name: 'Blog', href: '/dashboard/blog', icon: FileText },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: 'Dashboard',       href: '/dashboard',                    icon: LayoutDashboard },
+  { name: 'Tours',           href: '/dashboard/tours',              icon: MapPin },
+  { name: 'Locations',       href: '/dashboard/locations',          icon: Globe },
+  { name: 'Bookings',        href: '/dashboard/bookings',           icon: Calendar },
+  { name: 'Inquiries',       href: '/dashboard/inquiries',          icon: MessageSquare },
+  { name: 'Custom Requests', href: '/dashboard/custom-requests',    icon: Wand2 },
+  { name: 'Reviews',         href: '/dashboard/reviews',            icon: Star },
+  { name: 'Analytics',       href: '/dashboard/analytics',          icon: BarChart3 },
+  { name: 'Settings',        href: '/dashboard/settings',           icon: Settings },
 ]
 
 export default function DashboardHeader() {
