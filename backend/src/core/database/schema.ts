@@ -26,23 +26,6 @@ export const users = pgTable('users', {
   activeIdx: index('idx_users_is_active').on(t.isActive),
 }))
 
-// ─── Destinations ─────────────────────────────────────────────────────────────
-
-export const destinations = pgTable('destinations', {
-  id:          serial('id').primaryKey(),
-  name:        text('name').notNull(),
-  slug:        text('slug').notNull().unique(),
-  subtitle:    text('subtitle').notNull(),
-  description: text('description').notNull(),
-  image:       text('image').notNull(),
-  tourCount:   integer('tour_count').default(0),
-  isPopular:   boolean('is_popular').default(false),
-  createdAt:   timestamp('created_at').defaultNow(),
-}, (t) => ({
-  slugIdx:    index('idx_destinations_slug').on(t.slug),
-  popularIdx: index('idx_destinations_popular').on(t.isPopular),
-}))
-
 // ─── Tours ────────────────────────────────────────────────────────────────────
 
 export const tours = pgTable('tours', {
