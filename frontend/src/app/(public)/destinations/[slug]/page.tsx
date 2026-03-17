@@ -11,6 +11,9 @@ import {
 import { locationAdminService } from '@/services/api'
 import { cn } from '@/lib/utils'
 import type { LocationNode, Tour } from '@/types'
+import dynamic from 'next/dynamic'
+
+const LocationMap = dynamic(() => import('@/components/public/map/LocationMap'), { ssr: false })
 
 const FALLBACK = 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&q=80'
 const FALLBACK_TOUR = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80'
@@ -50,9 +53,8 @@ export default function DestinationDetailPage() {
     try {
       const loc = await locationAdminService.getBySlug(slug)
       setLocation(loc)
-      // Get tours for this location
-      const { data } = await (await import('@/services/api')).default.get(`/locations/${loc.id}/tours`)
-      setTours(data.data?.tours ?? [])
+      const tourList = await locationAdminService.getTours(loc.id)
+      setTours(tourList)
     } catch (err: any) {
       setError(err.message || 'Destination not found')
     } finally { setLoading(false) }
@@ -129,13 +131,34 @@ export default function DestinationDetailPage() {
 
       <div className="container-custom py-8 space-y-8">
 
-        {/* About */}
-        {location.description && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="text-base font-bold text-gray-900 mb-3">About {location.name}</h2>
-            <p className="text-gray-600 text-sm leading-relaxed">{location.description}</p>
-          </div>
-        )}
+        {/* About + Mini Map side by side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {location.description && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <h2 className="text-base font-bold text-gray-900 mb-3">About {location.name}</h2>
+              <p className="text-gray-600 text-sm leading-relaxed">{location.description}</p>
+              {location.lat && location.lng && (
+                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-400">
+                  <MapPin className="w-3.5 h-3.5 text-primary-500" />
+                  {Number(location.lat).toFixed(6)}°N, {Number(location.lng).toFixed(6)}°E
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mini map — only if GPS exists */}
+          {location.lat && location.lng && (
+            <div>
+              <LocationMap
+                locations={[location]}
+                center={[Number(location.lng), Number(location.lat)]}
+                zoom={location.type === 'country' ? 4 : location.type === 'state' ? 7 : location.type === 'city' ? 11 : 14}
+                height="260px"
+                selectedId={location.id}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Tours */}
         <div>
