@@ -21,31 +21,26 @@ async function getFeaturedTours(): Promise<Tour[]> {
   } catch { return [] }
 }
 
-async function getPopularLocations(): Promise<LocationNode[]> {
+async function getAllLocations(): Promise<LocationNode[]> {
   try {
     const res = await fetch(`${API}/locations`, { next: { revalidate: 300 } })
     if (!res.ok) return []
     const json = await res.json()
-    const all: LocationNode[] = json.data?.locations ?? []
-    // Filter popular — if is_popular column doesn't exist yet, show cities as fallback
-    const popular = all.filter(l => l.isPopular === true)
-    if (popular.length > 0) return popular.slice(0, 6)
-    // Fallback: show first 6 cities/states if none marked popular
-    return all.filter(l => l.type === 'city' || l.type === 'state').slice(0, 6)
+    return (json.data?.locations ?? []) as LocationNode[]
   } catch { return [] }
 }
 
 export default async function Home() {
-  const [featuredTours, popularLocations] = await Promise.all([
+  const [featuredTours, allLocations] = await Promise.all([
     getFeaturedTours(),
-    getPopularLocations(),
+    getAllLocations(),
   ])
 
   return (
     <>
       <Hero />
       <FeaturedTours tours={featuredTours} />
-      <PopularDestinations locations={popularLocations} />
+      <PopularDestinations locations={allLocations} />
       <HowItWorks />
       <WhyChooseUs />
       <Testimonials />

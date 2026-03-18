@@ -1,109 +1,208 @@
 'use client'
 
 import Link from 'next/link'
-import { MapPin, ArrowRight, Compass } from 'lucide-react'
+import { ArrowRight, Compass, MapPin, Map, Globe } from 'lucide-react'
 import type { LocationNode } from '@/types'
 import { toWebP } from '@/lib/image'
 
-const FALLBACK_LOCATIONS: LocationNode[] = [
-  { id: 0, slug: 'jaipur',    name: 'Jaipur',    type: 'city', path: 'india/rajasthan/jaipur',    image: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?q=80&w=2070', description: 'Royal palaces and vibrant bazaars',    parentId: null, lat: '26.9124', lng: '75.7873', isActive: true, isPopular: true, createdAt: '' },
-  { id: 0, slug: 'udaipur',   name: 'Udaipur',   type: 'city', path: 'india/rajasthan/udaipur',   image: 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?q=80&w=2070', description: 'Romantic lakes and majestic palaces', parentId: null, lat: '24.5854', lng: '73.7125', isActive: true, isPopular: true, createdAt: '' },
-  { id: 0, slug: 'jaisalmer', name: 'Jaisalmer', type: 'city', path: 'india/rajasthan/jaisalmer', image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=2070', description: 'Desert adventures and golden forts',    parentId: null, lat: '26.9157', lng: '70.9083', isActive: true, isPopular: true, createdAt: '' },
-  { id: 0, slug: 'jodhpur',   name: 'Jodhpur',   type: 'city', path: 'india/rajasthan/jodhpur',   image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?q=80&w=2070', description: 'Majestic forts and blue houses',       parentId: null, lat: '26.2389', lng: '73.0243', isActive: true, isPopular: true, createdAt: '' },
-  { id: 0, slug: 'bikaner',   name: 'Bikaner',   type: 'city', path: 'india/rajasthan/bikaner',   image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071', description: 'Ancient forts and camel safaris',      parentId: null, lat: '28.0229', lng: '73.3119', isActive: true, isPopular: true, createdAt: '' },
-  { id: 0, slug: 'pushkar',   name: 'Pushkar',   type: 'city', path: 'india/rajasthan/pushkar',   image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=2071', description: 'Sacred lakes and spiritual vibes',     parentId: null, lat: '26.4899', lng: '74.5511', isActive: true, isPopular: true, createdAt: '' },
-]
-
-const GRADIENTS = [
-  'from-pink-600/75 to-rose-700/75',
-  'from-blue-500/75 to-cyan-600/75',
-  'from-yellow-500/75 to-orange-600/75',
-  'from-blue-600/75 to-indigo-700/75',
-  'from-amber-500/75 to-orange-700/75',
-  'from-purple-500/75 to-pink-600/75',
-]
-
-interface Props {
-  locations?: LocationNode[]
+/* ─── Helpers ───────────────────────────────────────────────────────────── */
+/** Extract country & state from path like "india/rajasthan/jaipur" */
+function parsePath(path: string) {
+  const parts = path.split('/')
+  return {
+    country: parts[0] ? capitalize(parts[0]) : null,
+    state:   parts[1] ? capitalize(parts[1]) : null,
+  }
+}
+function capitalize(s: string) {
+  return s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
-export default function PopularDestinations({ locations }: Props) {
-  const items = locations && locations.length > 0 ? locations : FALLBACK_LOCATIONS
+/* ─── Component ─────────────────────────────────────────────────────────── */
+interface Props { locations?: LocationNode[] }
+
+export default function PopularDestinations({ locations = [] }: Props) {
+  // Filter by type and isPopular - only show items marked as popular in database
+  const popularCities = locations.filter(l => (l.type === 'city' || l.type === 'place') && l.isPopular)
+  const popularStates = locations.filter(l => l.type === 'state' && l.isPopular)
+  const popularCountries = locations.filter(l => l.type === 'country' && l.isPopular)
+
+  const hasCities = popularCities.length > 0
+  const hasStates = popularStates.length > 0
+  const hasCountries = popularCountries.length > 0
+
+  // Debug logging (remove in production)
+  if (typeof window !== 'undefined') {
+    console.log('PopularDestinations - Total locations:', locations.length)
+    console.log('PopularDestinations - Popular cities:', popularCities.length, popularCities.map(l => l.name))
+    console.log('PopularDestinations - Popular states:', popularStates.length, popularStates.map(l => l.name))
+    console.log('PopularDestinations - Popular countries:', popularCountries.length, popularCountries.map(l => l.name))
+  }
+
+  // Don't render section at all if no popular locations exist
+  if (!hasCities && !hasStates && !hasCountries) return null
 
   return (
-    <section className="py-16 md:py-24 bg-white">
-      <div className="container-custom">
+    <section className="py-20 md:py-28 bg-gray-50">
+      <div className="container-custom space-y-16">
 
-        <div className="text-center mb-12 md:mb-16">
-          <div className="inline-flex items-center space-x-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full mb-4">
-            <Compass className="w-4 h-4" />
-            <span className="text-sm font-semibold">Explore Destinations</span>
+        {/* ── Main header ────────────────────────────────────────────────── */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 text-primary-600 text-sm font-semibold mb-3">
+              <Compass className="w-4 h-4" />
+              <span>Explore Destinations</span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+              Popular Destinations
+            </h2>
+            <p className="text-gray-500 mt-2 text-lg">Discover the most sought-after places to visit</p>
           </div>
-          <h2 className="font-sans text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-900">
-            Popular Destinations
-          </h2>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover the most sought-after cities in Rajasthan
-          </p>
+          <Link href="/destinations"
+            className="inline-flex items-center gap-2 text-primary-600 font-semibold hover:gap-3 transition-all text-sm shrink-0">
+            All destinations <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.slice(0, 6).map((loc, i) => {
-            const gradient = GRADIENTS[i % GRADIENTS.length]
-            const image    = toWebP(loc.image || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071', 800)
-            const href     = `/destinations/${loc.slug}`
+        {/* ══════════════════════════════════════════════════════════════════
+            SECTION 1 — Cities & Places
+        ══════════════════════════════════════════════════════════════════ */}
+        {hasCities && (
+          <LocationSection
+            title="Cities & Places"
+            subtitle="Explore vibrant cities and iconic landmarks"
+            icon={<MapPin className="w-4 h-4 text-primary-600" />}
+            iconBg="bg-primary-100"
+            items={popularCities}
+          />
+        )}
 
-            return (
-              <Link key={loc.id || loc.slug} href={href}
-                className="group relative h-80 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
-                <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
-                  style={{ backgroundImage: `url('${image}')` }} />
-                <div className={`absolute inset-0 bg-gradient-to-t ${gradient} opacity-90 group-hover:opacity-95 transition-opacity`} />
+        {/* ══════════════════════════════════════════════════════════════════
+            SECTION 2 — States
+        ══════════════════════════════════════════════════════════════════ */}
+        {hasStates && (
+          <LocationSection
+            title="States"
+            subtitle="Discover entire regions and their wonders"
+            icon={<Map className="w-4 h-4 text-violet-600" />}
+            iconBg="bg-violet-100"
+            items={popularStates}
+          />
+        )}
 
-                <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full">
-                      <div className="flex items-center gap-1 text-white">
-                        <MapPin className="w-3.5 h-3.5" />
-                        <span className="text-xs font-semibold capitalize">{loc.type}</span>
-                      </div>
-                    </div>
-                    <div className="bg-white/20 backdrop-blur-md p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-                      <ArrowRight className="w-4 h-4 text-white" />
-                    </div>
-                  </div>
+        {/* ══════════════════════════════════════════════════════════════════
+            SECTION 3 — Countries
+        ══════════════════════════════════════════════════════════════════ */}
+        {hasCountries && (
+          <LocationSection
+            title="Countries"
+            subtitle="Explore nations and their diverse cultures"
+            icon={<Globe className="w-4 h-4 text-blue-600" />}
+            iconBg="bg-blue-100"
+            items={popularCountries}
+          />
+        )}
 
-                  <div className="text-white">
-                    <h3 className="text-3xl md:text-4xl font-bold mb-1 transform group-hover:translate-x-1 transition-transform">
-                      {loc.name}
-                    </h3>
-                    {loc.description && <p className="text-white/75 text-sm mt-1">{loc.description}</p>}
-                    <div className="flex items-center gap-2 text-sm font-semibold mt-4 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all">
-                      <span>Explore {loc.name}</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-
-        <div className="mt-12 md:mt-16 text-center">
-          <div className="bg-gradient-to-r from-primary-50 to-orange-50 rounded-2xl p-8 md:p-12">
-            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-              Can&apos;t Find Your Dream Destination?
-            </h3>
-            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Create a custom tour tailored to your preferences.
-            </p>
-            <Link href="/custom-tour"
-              className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl">
-              Build Custom Tour <ArrowRight className="w-5 h-5" />
-            </Link>
+        {/* Custom tour nudge */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-gray-200 rounded-2xl px-7 py-5">
+          <div>
+            <p className="font-bold text-gray-900">Can&apos;t find your dream destination?</p>
+            <p className="text-gray-400 text-sm mt-0.5">We build fully custom itineraries tailored to you.</p>
           </div>
+          <Link href="/custom-tour"
+            className="shrink-0 inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors shadow-md">
+            Build Custom Tour <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     </section>
+  )
+}
+
+/* ─── Location Section ──────────────────────────────────────────────────── */
+interface LocationSectionProps {
+  title: string
+  subtitle: string
+  icon: React.ReactNode
+  iconBg: string
+  items: LocationNode[]
+}
+
+function LocationSection({ title, subtitle, icon, iconBg, items }: LocationSectionProps) {
+  // Bento layout: 1 large + up to 4 small
+  const [featured, ...rest] = items.slice(0, 5)
+
+  return (
+    <div>
+      {/* Section header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className={`w-8 h-8 ${iconBg} rounded-lg flex items-center justify-center`}>
+          {icon}
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-900 text-lg leading-tight">{title}</h3>
+          <p className="text-gray-400 text-xs">{subtitle}</p>
+        </div>
+      </div>
+
+      {/* Bento grid */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        {/* Featured large card */}
+        {featured && (
+          <DestCard loc={featured} className="md:col-span-5 h-80 md:h-[440px]" large />
+        )}
+        {/* Smaller cards */}
+        {rest.length > 0 && (
+          <div className="md:col-span-7 grid grid-cols-2 gap-4">
+            {rest.map(loc => (
+              <DestCard key={loc.id || loc.slug} loc={loc} className="h-52" />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Destination card ──────────────────────────────────────────────────── */
+function DestCard({ loc, className = '', large = false }: {
+  loc: LocationNode
+  className?: string
+  large?: boolean
+}) {
+  const image = toWebP(loc.image || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071', 800)
+  const { country, state } = parsePath(loc.path)
+
+  return (
+    <Link href={`/destinations/${loc.slug}`}
+      className={`group relative rounded-2xl overflow-hidden block ${className}`}>
+      {/* Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+        style={{ backgroundImage: `url('${image}')` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+
+      {/* Location breadcrumb badge */}
+      {(country || state) && (
+        <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/30 backdrop-blur-sm border border-white/10 text-white/80 text-[10px] font-medium px-2.5 py-1 rounded-full">
+          <MapPin className="w-3 h-3" />
+          {[state, country].filter(Boolean).join(', ')}
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="absolute inset-0 p-5 flex flex-col justify-end">
+        <h3 className={`font-bold text-white leading-tight ${large ? 'text-4xl md:text-5xl' : 'text-2xl'}`}>
+          {loc.name}
+        </h3>
+        {loc.description && (
+          <p className="text-white/65 text-sm mt-1 line-clamp-1">{loc.description}</p>
+        )}
+        <div className="flex items-center gap-1 text-white/0 group-hover:text-white/90 text-xs font-semibold mt-3 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+          Explore <ArrowRight className="w-3.5 h-3.5" />
+        </div>
+      </div>
+    </Link>
   )
 }
