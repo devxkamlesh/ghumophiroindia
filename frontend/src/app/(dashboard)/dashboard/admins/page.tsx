@@ -127,8 +127,7 @@ export default function AdminsPage() {
             <tbody className="divide-y divide-gray-100">
               {users.map(u => {
                 const RoleIcon = ROLE_ICON[u.role] ?? User
-                const isSelf = u.id === Number(me?.id)
-                const isSuper = u.role === 'superadmin'
+                const isSelf = u.id === Number(me?.id)                const isSuper = u.role === 'superadmin'
                 const busy = working === u.id
 
                 return (
