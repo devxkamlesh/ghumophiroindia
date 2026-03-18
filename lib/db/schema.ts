@@ -33,6 +33,7 @@ export const tours = pgTable('tours', {
 export const bookings = pgTable('bookings', {
   id: serial('id').primaryKey(),
   tourId: integer('tour_id').references(() => tours.id),
+  userId: integer('user_id').references(() => users.id),
   customerName: text('customer_name').notNull(),
   customerEmail: text('customer_email').notNull(),
   customerPhone: text('customer_phone').notNull(),
@@ -118,4 +119,23 @@ export const customTourRequests = pgTable('custom_tour_requests', {
   additionalInfo: text('additional_info'),
   status: text('status').notNull().default('new'),
   createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 })
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  password: text('password').notNull(),
+  phone: text('phone'),
+  role: text('role').notNull().default('user'), // admin, user
+  avatar: text('avatar'),
+  address: text('address'),
+  city: text('city'),
+  country: text('country'),
+  isActive: boolean('is_active').default(true),
+  emailVerified: boolean('email_verified').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
