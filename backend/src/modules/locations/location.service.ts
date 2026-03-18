@@ -77,6 +77,7 @@ export class LocationService {
       description: data.description ?? null,
       image:       data.image ?? null,
       isActive:    true,
+      isPopular:   data.isPopular ?? false,
     }).returning()
     logger.info(`Location created: ${loc.name} (${loc.type})`)
     return loc
@@ -107,6 +108,8 @@ export class LocationService {
     if (data.description !== undefined) updateData.description = data.description
     if (data.image       !== undefined) updateData.image       = data.image
     if (data.lat         !== undefined) updateData.lat         = data.lat != null ? String(data.lat) : null
+    if (data.lng         !== undefined) updateData.lng         = data.lng != null ? String(data.lng) : null
+    if (data.isPopular   !== undefined) updateData.isPopular   = data.isPopular
     if (data.lng         !== undefined) updateData.lng         = data.lng != null ? String(data.lng) : null
     updateData.path = path
 
