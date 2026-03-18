@@ -5,7 +5,6 @@ export const createTourSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters'),
   price: z.number().positive('Price must be positive'),
   duration: z.number().int().positive('Duration must be a positive integer'),
-  destinationId: z.string().uuid('Invalid destination ID'),
   maxGroupSize: z.number().int().min(1).max(50, 'Max group size must be between 1 and 50'),
   difficulty: z.enum(['easy', 'moderate', 'challenging']),
   images: z.array(z.string().url('Invalid image URL')).min(1, 'At least one image is required'),

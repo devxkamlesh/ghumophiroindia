@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { customTourRequests } from '@/lib/db/schema'
 import { eq, desc } from 'drizzle-orm'
+import { toCustomTourEntity, toCustomTourUpdateEntity, toCustomTourResponse } from '@/lib/mappers/custom-tour.mapper'
 
 export interface CreateCustomTourInput {
   name: string
@@ -34,7 +35,7 @@ export const customTourService = {
     ])
 
     return {
-      requests,
+      requests: requests.map(toCustomTourResponse),
       total: totalCount.length,
       page,
       limit,
@@ -52,34 +53,20 @@ export const customTourService = {
       .where(eq(customTourRequests.id, parseInt(id)))
       .limit(1)
 
-    return request || null
+    return request ? toCustomTourResponse(request) : null
   },
 
   /**
    * Create a new custom tour request
    */
   async create(data: CreateCustomTourInput) {
+    const entity = toCustomTourEntity(data)
     const [newRequest] = await db
       .insert(customTourRequests)
-      .values({
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        country: data.country,
-        numberOfTravelers: data.numberOfTravelers,
-        duration: data.duration,
-        budget: data.budget,
-        destinations: data.destinations,
-        interests: data.interests || [],
-        startDate: data.startDate ? new Date(data.startDate) : null,
-        additionalInfo: data.additionalInfo,
-        status: 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
+      .values(entity)
       .returning()
 
-    return newRequest
+    return toCustomTourResponse(newRequest)
   },
 
   /**
@@ -95,18 +82,20 @@ export const customTourService = {
       .where(eq(customTourRequests.id, parseInt(id)))
       .returning()
 
-    return updatedRequest || null
+    return updatedRequest ? toCustomTourResponse(updatedRequest) : null
   },
 
   /**
    * Get recent custom tour requests (for dashboard)
    */
   async getRecent(limit: number = 5) {
-    return db
+    const requests = await db
       .select()
       .from(customTourRequests)
       .orderBy(desc(customTourRequests.createdAt))
       .limit(limit)
+    
+    return requests.map(toCustomTourResponse)
   },
 
   /**

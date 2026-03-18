@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { tours } from '@/lib/db/schema'
 import { eq, and, gte, lte, ilike, desc } from 'drizzle-orm'
 import { CreateTourInput, UpdateTourInput, TourQuery } from '@/lib/validations/tour.schema'
+import { toTourEntity, toTourUpdateEntity, toTourResponse } from '@/lib/mappers/tour.mapper'
 
 export const toursService = {
   /**
@@ -10,7 +11,6 @@ export const toursService = {
   async getAll(query?: TourQuery) {
     const {
       destination,
-      duration,
       minPrice,
       maxPrice,
       difficulty,
@@ -53,7 +53,7 @@ export const toursService = {
     ])
 
     return {
-      tours: toursList,
+      tours: toursList.map(toTourResponse),
       total: totalCount.length,
       page,
       limit,
@@ -66,39 +66,37 @@ export const toursService = {
    */
   async getById(id: string) {
     const [tour] = await db.select().from(tours).where(eq(tours.id, parseInt(id))).limit(1)
-    return tour || null
+    return tour ? toTourResponse(tour) : null
   },
 
   /**
    * Create a new tour
    */
   async create(data: CreateTourInput) {
+    const entity = toTourEntity(data)
     const [newTour] = await db
       .insert(tours)
-      .values({
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
+      .values(entity)
       .returning()
 
-    return newTour
+    return toTourResponse(newTour)
   },
 
   /**
    * Update an existing tour
    */
   async update(id: string, data: UpdateTourInput) {
+    const updates = toTourUpdateEntity(data)
     const [updatedTour] = await db
       .update(tours)
       .set({
-        ...data,
+        ...updates,
         updatedAt: new Date(),
       })
       .where(eq(tours.id, parseInt(id)))
       .returning()
 
-    return updatedTour || null
+    return updatedTour ? toTourResponse(updatedTour) : null
   },
 
   /**
@@ -110,30 +108,34 @@ export const toursService = {
       .where(eq(tours.id, parseInt(id)))
       .returning()
 
-    return deletedTour || null
+    return deletedTour ? toTourResponse(deletedTour) : null
   },
 
   /**
    * Get featured/popular tours
    */
   async getFeatured(limit: number = 6) {
-    return db
+    const toursList = await db
       .select()
       .from(tours)
       .orderBy(desc(tours.rating))
       .limit(limit)
+    
+    return toursList.map(toTourResponse)
   },
 
   /**
    * Search tours by keyword
    */
   async search(keyword: string, limit: number = 10) {
-    return db
+    const toursList = await db
       .select()
       .from(tours)
       .where(
         ilike(tours.title, `%${keyword}%`)
       )
       .limit(limit)
+    
+    return toursList.map(toTourResponse)
   },
 }
