@@ -86,6 +86,12 @@ export class LocationService {
   async update(id: number, data: UpdateLocationInput) {
     const existing = await this.getById(id)
 
+    // Debug logging
+    logger.info(`Update request for location ${id}:`, { 
+      receivedData: data, 
+      existingIsPopular: existing.isPopular 
+    })
+
     if (data.slug && data.slug !== existing.slug) {
       const [dup] = await db.select({ id: locations.id }).from(locations).where(eq(locations.slug, data.slug)).limit(1)
       if (dup) throw new ConflictError('Slug already in use')
@@ -110,11 +116,13 @@ export class LocationService {
     if (data.lat         !== undefined) updateData.lat         = data.lat != null ? String(data.lat) : null
     if (data.lng         !== undefined) updateData.lng         = data.lng != null ? String(data.lng) : null
     if (data.isPopular   !== undefined) updateData.isPopular   = data.isPopular
-    if (data.lng         !== undefined) updateData.lng         = data.lng != null ? String(data.lng) : null
     updateData.path = path
 
+    // Debug logging
+    logger.info(`Update data being sent to DB:`, { updateData })
+
     const [updated] = await db.update(locations).set(updateData).where(eq(locations.id, id)).returning()
-    logger.info(`Location updated: ${updated.name}`)
+    logger.info(`Location updated: ${updated.name}, isPopular: ${updated.isPopular}`)
     return updated
   }
 
