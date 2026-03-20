@@ -1,7 +1,8 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Compass, MapPin, Map, Globe } from 'lucide-react'
+import { ArrowRight, Compass, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { LocationNode } from '@/types'
 import { toWebP } from '@/lib/image'
 
@@ -22,187 +23,187 @@ function capitalize(s: string) {
 interface Props { locations?: LocationNode[] }
 
 export default function PopularDestinations({ locations = [] }: Props) {
-  // Filter by type and isPopular - only show items marked as popular in database
-  const popularCities = locations.filter(l => (l.type === 'city' || l.type === 'place') && l.isPopular)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+
+  // Filter only states that are marked as popular
   const popularStates = locations.filter(l => l.type === 'state' && l.isPopular)
-  const popularCountries = locations.filter(l => l.type === 'country' && l.isPopular)
 
-  const hasCities = popularCities.length > 0
-  const hasStates = popularStates.length > 0
-  const hasCountries = popularCountries.length > 0
+  // Check scroll position to show/hide buttons
+  const checkScrollPosition = () => {
+    const container = scrollRef.current
+    if (!container) return
 
-  // Debug logging (remove in production)
-  if (typeof window !== 'undefined') {
-    console.log('PopularDestinations - Total locations:', locations.length)
-    console.log('PopularDestinations - Popular cities:', popularCities.length, popularCities.map(l => l.name))
-    console.log('PopularDestinations - Popular states:', popularStates.length, popularStates.map(l => l.name))
-    console.log('PopularDestinations - Popular countries:', popularCountries.length, popularCountries.map(l => l.name))
+    setCanScrollLeft(container.scrollLeft > 0)
+    setCanScrollRight(
+      container.scrollLeft < container.scrollWidth - container.clientWidth - 10
+    )
   }
 
-  // Don't render section at all if no popular locations exist
-  if (!hasCities && !hasStates && !hasCountries) return null
+  // Scroll functions
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -284, behavior: 'smooth' })
+    }
+  }
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 284, behavior: 'smooth' })
+    }
+  }
+
+  // Auto-scroll effect
+  useEffect(() => {
+    const scrollContainer = scrollRef.current
+    if (!scrollContainer || popularStates.length === 0) return
+
+    let scrollInterval: NodeJS.Timeout
+    let isPaused = false
+
+    const startAutoScroll = () => {
+      scrollInterval = setInterval(() => {
+        if (!isPaused && scrollContainer) {
+          const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth
+          const currentScroll = scrollContainer.scrollLeft
+
+          if (currentScroll >= maxScroll) {
+            scrollContainer.scrollTo({ left: 0, behavior: 'smooth' })
+          } else {
+            scrollContainer.scrollBy({ left: 284, behavior: 'smooth' })
+          }
+        }
+      }, 3000)
+    }
+
+    // Pause on hover
+    const handleMouseEnter = () => { isPaused = true }
+    const handleMouseLeave = () => { isPaused = false }
+
+    scrollContainer.addEventListener('mouseenter', handleMouseEnter)
+    scrollContainer.addEventListener('mouseleave', handleMouseLeave)
+    scrollContainer.addEventListener('scroll', checkScrollPosition)
+
+    startAutoScroll()
+    checkScrollPosition()
+
+    return () => {
+      clearInterval(scrollInterval)
+      scrollContainer.removeEventListener('mouseenter', handleMouseEnter)
+      scrollContainer.removeEventListener('mouseleave', handleMouseLeave)
+      scrollContainer.removeEventListener('scroll', checkScrollPosition)
+    }
+  }, [popularStates.length])
+
+  // Don't render section if no popular states exist
+  if (popularStates.length === 0) return null
 
   return (
-    <section className="py-20 md:py-28 bg-gray-50">
-      <div className="container-custom space-y-16">
+    <section className="py-16 md:py-20 bg-white">
+      <div className="container-custom">
 
-        {/* ── Main header ────────────────────────────────────────────────── */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        {/* ── Header ────────────────────────────────────────────────── */}
+        <div className="flex items-end justify-between mb-8">
           <div>
             <div className="inline-flex items-center gap-2 text-primary-600 text-sm font-semibold mb-3">
               <Compass className="w-4 h-4" />
-              <span>Explore Destinations</span>
+              <span>Popular Destinations</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
-              Popular Destinations
+              Explore India
             </h2>
-            <p className="text-gray-500 mt-2 text-lg">Discover the most sought-after places to visit</p>
           </div>
           <Link href="/destinations"
             className="inline-flex items-center gap-2 text-primary-600 font-semibold hover:gap-3 transition-all text-sm shrink-0">
-            All destinations <ArrowRight className="w-4 h-4" />
+            View all destinations <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {/* ══════════════════════════════════════════════════════════════════
-            SECTION 1 — Cities & Places
+            Horizontal Scrollable Row with Navigation Buttons
         ══════════════════════════════════════════════════════════════════ */}
-        {hasCities && (
-          <LocationSection
-            title="Cities & Places"
-            subtitle="Explore vibrant cities and iconic landmarks"
-            icon={<MapPin className="w-4 h-4 text-primary-600" />}
-            iconBg="bg-primary-100"
-            items={popularCities}
-          />
-        )}
+        <div className="relative">
+          {/* Left scroll button */}
+          {canScrollLeft && (
+            <button
+              onClick={scrollLeft}
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all hover:scale-110 hidden md:flex"
+              aria-label="Scroll left"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-700" />
+            </button>
+          )}
 
-        {/* ══════════════════════════════════════════════════════════════════
-            SECTION 2 — States
-        ══════════════════════════════════════════════════════════════════ */}
-        {hasStates && (
-          <LocationSection
-            title="States"
-            subtitle="Discover entire regions and their wonders"
-            icon={<Map className="w-4 h-4 text-violet-600" />}
-            iconBg="bg-violet-100"
-            items={popularStates}
-          />
-        )}
+          {/* Right scroll button */}
+          {canScrollRight && (
+            <button
+              onClick={scrollRight}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all hover:scale-110 hidden md:flex"
+              aria-label="Scroll right"
+            >
+              <ChevronRight className="w-6 h-6 text-gray-700" />
+            </button>
+          )}
 
-        {/* ══════════════════════════════════════════════════════════════════
-            SECTION 3 — Countries
-        ══════════════════════════════════════════════════════════════════ */}
-        {hasCountries && (
-          <LocationSection
-            title="Countries"
-            subtitle="Explore nations and their diverse cultures"
-            icon={<Globe className="w-4 h-4 text-blue-600" />}
-            iconBg="bg-blue-100"
-            items={popularCountries}
-          />
-        )}
-
-        {/* Custom tour nudge */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white border border-gray-200 rounded-2xl px-7 py-5">
-          <div>
-            <p className="font-bold text-gray-900">Can&apos;t find your dream destination?</p>
-            <p className="text-gray-400 text-sm mt-0.5">We build fully custom itineraries tailored to you.</p>
+          {/* Scroll container - NO CURSOR SCROLL */}
+          <div 
+            ref={scrollRef}
+            className="flex gap-5 overflow-x-hidden pb-4 scroll-smooth snap-x snap-mandatory scrollbar-hide"
+            style={{ overscrollBehavior: 'contain' }}
+          >
+            {popularStates.map(state => (
+              <StateCard key={state.id || state.slug} state={state} />
+            ))}
           </div>
-          <Link href="/custom-tour"
-            className="shrink-0 inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-colors shadow-md">
-            Build Custom Tour <ArrowRight className="w-4 h-4" />
-          </Link>
+          
+          {/* Gradient fades on edges - reduced width */}
+          <div className="absolute top-0 left-0 bottom-4 w-12 bg-gradient-to-r from-white to-transparent pointer-events-none hidden md:block" />
+          <div className="absolute top-0 right-0 bottom-4 w-12 bg-gradient-to-l from-white to-transparent pointer-events-none hidden md:block" />
         </div>
+
       </div>
+
+      {/* Hide scrollbar */}
+      <style jsx global>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </section>
   )
 }
 
-/* ─── Location Section ──────────────────────────────────────────────────── */
-interface LocationSectionProps {
-  title: string
-  subtitle: string
-  icon: React.ReactNode
-  iconBg: string
-  items: LocationNode[]
-}
-
-function LocationSection({ title, subtitle, icon, iconBg, items }: LocationSectionProps) {
-  // Bento layout: 1 large + up to 4 small
-  const [featured, ...rest] = items.slice(0, 5)
+/* ─── State Card ────────────────────────────────────────────────────────── */
+function StateCard({ state }: { state: LocationNode }) {
+  const image = toWebP(state.image || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071', 600)
 
   return (
-    <div>
-      {/* Section header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className={`w-8 h-8 ${iconBg} rounded-lg flex items-center justify-center`}>
-          {icon}
-        </div>
-        <div>
-          <h3 className="font-bold text-gray-900 text-lg leading-tight">{title}</h3>
-          <p className="text-gray-400 text-xs">{subtitle}</p>
-        </div>
-      </div>
-
-      {/* Bento grid */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-        {/* Featured large card */}
-        {featured && (
-          <DestCard loc={featured} className="md:col-span-5 h-80 md:h-[440px]" large />
-        )}
-        {/* Smaller cards */}
-        {rest.length > 0 && (
-          <div className="md:col-span-7 grid grid-cols-2 gap-4">
-            {rest.map(loc => (
-              <DestCard key={loc.id || loc.slug} loc={loc} className="h-52" />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/* ─── Destination card ──────────────────────────────────────────────────── */
-function DestCard({ loc, className = '', large = false }: {
-  loc: LocationNode
-  className?: string
-  large?: boolean
-}) {
-  const image = toWebP(loc.image || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071', 800)
-  const { country, state } = parsePath(loc.path)
-
-  return (
-    <Link href={`/destinations/${loc.slug}`}
-      className={`group relative rounded-2xl overflow-hidden block ${className}`}>
+    <Link href={`/destinations/${state.slug}`}
+      className="group relative rounded-3xl overflow-hidden block w-[264px] h-[240px] flex-shrink-0 snap-start snap-always">
       {/* Image */}
       <div
-        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
         style={{ backgroundImage: `url('${image}')` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-
-      {/* Location breadcrumb badge */}
-      {(country || state) && (
-        <div className="absolute top-3 left-3 flex items-center gap-1 bg-black/30 backdrop-blur-sm border border-white/10 text-white/80 text-[10px] font-medium px-2.5 py-1 rounded-full">
-          <MapPin className="w-3 h-3" />
-          {[state, country].filter(Boolean).join(', ')}
-        </div>
-      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
       {/* Content */}
       <div className="absolute inset-0 p-5 flex flex-col justify-end">
-        <h3 className={`font-bold text-white leading-tight ${large ? 'text-4xl md:text-5xl' : 'text-2xl'}`}>
-          {loc.name}
+        <h3 className="font-bold text-white text-lg leading-tight transition-all duration-300 group-hover:translate-y-[-2px] group-hover:text-xl">
+          {state.name}
         </h3>
-        {loc.description && (
-          <p className="text-white/65 text-sm mt-1 line-clamp-1">{loc.description}</p>
-        )}
-        <div className="flex items-center gap-1 text-white/0 group-hover:text-white/90 text-xs font-semibold mt-3 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-          Explore <ArrowRight className="w-3.5 h-3.5" />
-        </div>
       </div>
+
+      {/* Enhanced hover overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-black/0 to-black/0 group-hover:from-black/30 group-hover:via-black/10 group-hover:to-transparent transition-all duration-300" />
+      
+      {/* Subtle glow border on hover */}
+      <div className="absolute inset-0 border-2 border-transparent group-hover:border-white/30 rounded-3xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]" />
     </Link>
   )
 }

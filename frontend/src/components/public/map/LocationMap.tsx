@@ -125,17 +125,6 @@ export default function LocationMap({
       const lat = Number(location.lat)
       const lng = Number(location.lng)
 
-      // Create custom marker element with animation
-      const el = document.createElement('div')
-      el.className = 'custom-marker'
-      el.style.cssText = `
-        width: 40px;
-        height: 40px;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        animation: markerDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both;
-      `
-
       // Marker colors and sizes by type
       const config = {
         country: { color: '#3b82f6', size: 40, glow: 'rgba(59, 130, 246, 0.3)' },
@@ -146,11 +135,19 @@ export default function LocationMap({
 
       const cfg = config[location.type as keyof typeof config] || config.place
 
-      el.style.width = `${cfg.size}px`
-      el.style.height = `${cfg.size}px`
+      // Create custom marker element with animation
+      const el = document.createElement('div')
+      el.className = 'custom-marker'
+      el.style.cssText = `
+        width: ${cfg.size}px;
+        height: ${cfg.size * 1.2}px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: markerDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both;
+      `
 
       el.innerHTML = `
-        <svg width="${cfg.size}" height="${cfg.size}" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="${cfg.size}" height="${cfg.size * 1.2}" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
           <defs>
             <filter id="glow-${location.id}" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
@@ -160,14 +157,16 @@ export default function LocationMap({
               </feMerge>
             </filter>
           </defs>
-          <circle cx="12" cy="12" r="10" fill="${cfg.glow}" opacity="0.5"/>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" 
+          <!-- Glow circle -->
+          <circle cx="12" cy="9" r="8" fill="${cfg.glow}" opacity="0.6"/>
+          <!-- Pin shape pointing down -->
+          <path d="M12 0C7.58 0 4 3.58 4 8c0 5.5 8 14 8 14s8-8.5 8-14c0-4.42-3.58-8-8-8z" 
                 fill="${cfg.color}" 
                 stroke="white" 
-                stroke-width="2"
-                filter="url(#glow-${location.id})"
-                transform="translate(0, 2)"/>
-          <circle cx="12" cy="11" r="2.5" fill="white"/>
+                stroke-width="1.5"
+                filter="url(#glow-${location.id})"/>
+          <!-- Inner dot -->
+          <circle cx="12" cy="8" r="3" fill="white"/>
         </svg>
       `
 
@@ -219,11 +218,11 @@ export default function LocationMap({
         </div>
       `)
 
-      // Create marker with correct anchor point
+      // Create marker with correct anchor point at the bottom tip of the pin
       const marker = new maplibregl.Marker({ 
         element: el, 
-        anchor: 'bottom',  // Anchor at the bottom point of the pin
-        offset: [0, 0]     // No offset needed
+        anchor: 'bottom',  // Anchor at bottom center
+        offset: [0, 0]     // No offset - the SVG is designed to point down
       })
         .setLngLat([lng, lat])
         .setPopup(popup)
@@ -362,12 +361,7 @@ export default function LocationMap({
         </div>
       </div>
 
-      {/* Enhanced legend with glassmorphism */}
-      <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl p-4 border border-white/50">
-        <div className="flex items-center gap-2 mb-3">
-          <Layers className="w-4 h-4 text-primary-600" />
-          <p className="font-bold text-sm text-gray-900">Map Legend</p>
-        </div>
+      {/* Custom styles */}
       <style jsx global>{`
         @keyframes markerDrop {
           0% {
