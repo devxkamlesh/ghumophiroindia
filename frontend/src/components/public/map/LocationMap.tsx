@@ -63,7 +63,6 @@ export default function LocationMap({
       },
       center: defaultCenter,
       zoom: defaultZoom,
-      attributionControl: true,
       pitchWithRotate: false,
       dragRotate: false,
     })
