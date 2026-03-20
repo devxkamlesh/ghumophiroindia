@@ -142,7 +142,7 @@ export class TourService {
       duration: tours.duration,
       rating: tours.rating,
       createdAt: tours.createdAt,
-    }[sortBy]
+    }[sortBy] ?? tours.createdAt
 
     const orderByFn = sortOrder === 'asc' ? asc : desc
 

@@ -413,14 +413,19 @@ export const locationAdminService = {
     return data.data.location
   },
   update: async (id: number, input: Partial<LocationNode>): Promise<LocationNode> => {
-    console.log('🌐 API Service - Updating location:', id, 'with data:', input)
-    console.log('🌐 isPopular in API call:', input.isPopular)
     const { data } = await api.patch(`/locations/${id}`, input)
-    console.log('🌐 API Response:', data)
     return data.data.location
   },
   delete: async (id: number): Promise<void> => {
     await api.delete(`/locations/${id}`)
+  },
+  bulkImport: async (locations: Partial<LocationNode>[]): Promise<{
+    success: LocationNode[]
+    failed: { row: number; data: any; error: string }[]
+    skipped: { row: number; data: any; reason: string }[]
+  }> => {
+    const { data } = await api.post('/locations/bulk-import', { locations })
+    return data.data
   },
 }
 
@@ -450,6 +455,91 @@ export const adminService = {
   },
   deactivate: async (userId: number) => {
     await api.delete(`/admin/users/${userId}`)
+  },
+}
+
+// ─── Gallery (Cloudinary) ─────────────────────────────────────────────────────
+
+export interface GalleryImage {
+  publicId:  string
+  url:       string
+  format:    string
+  width:     number
+  height:    number
+  bytes:     number
+  folder:    string
+  tags:      string[]
+  context:   Record<string, string>
+  createdAt: string
+}
+
+export interface GalleryFolder {
+  name: string
+  path: string
+}
+
+export const galleryService = {
+  getFolders: async (): Promise<GalleryFolder[]> => {
+    const { data } = await api.get('/gallery/folders')
+    return data.data.folders ?? []
+  },
+
+  getStats: async () => {
+    const { data } = await api.get('/gallery/stats')
+    return data.data.stats
+  },
+
+  getImages: async (folder = 'general', nextCursor?: string): Promise<{
+    images: GalleryImage[]
+    nextCursor: string | null
+  }> => {
+    const { data } = await api.get('/gallery', {
+      params: { folder, ...(nextCursor ? { next_cursor: nextCursor } : {}) },
+    })
+    return { images: data.data.images ?? [], nextCursor: data.data.nextCursor ?? null }
+  },
+
+  upload: async (
+    files: File[],
+    folder: string,
+    tags: string[],
+    onProgress?: (pct: number) => void
+  ): Promise<GalleryImage[]> => {
+    const formData = new FormData()
+    files.forEach(f => formData.append('images', f))
+    formData.append('folder', folder)
+    if (tags.length) formData.append('tags', JSON.stringify(tags))
+
+    const { data } = await api.post('/gallery/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: e => {
+        if (onProgress && e.total) onProgress(Math.round((e.loaded * 100) / e.total))
+      },
+    })
+    return data.data.images ?? []
+  },
+
+  update: async (publicId: string, input: { tags?: string[]; title?: string; altText?: string }) => {
+    const encoded = btoa(publicId)
+    const { data } = await api.patch(`/gallery/${encoded}`, input)
+    return data.data
+  },
+
+  delete: async (publicId: string): Promise<void> => {
+    const encoded = btoa(publicId)
+    await api.delete(`/gallery/${encoded}`)
+  },
+
+  bulkDelete: async (publicIds: string[]): Promise<void> => {
+    await api.post('/gallery/bulk-delete', { publicIds })
+  },
+
+  createFolder: async (folder: string): Promise<void> => {
+    await api.post('/gallery/create-folder', { folder })
+  },
+
+  moveImages: async (publicIds: string[], targetFolder: string): Promise<void> => {
+    await api.post('/gallery/move', { publicIds, targetFolder })
   },
 }
 

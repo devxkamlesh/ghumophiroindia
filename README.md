@@ -4,11 +4,32 @@ A modern, full-stack tour booking platform for exploring Rajasthan's royal herit
 
 ---
 
+## 🎉 Recent Updates (May 31, 2026)
+
+### ✨ Locations Page Enhanced
+- **Search & Filter:** Real-time search, type filter, popular filter
+- **Export:** One-click CSV export
+- **Quick Actions:** Copy details, view images, expand/collapse all
+- **Enhanced Stats:** 6 stat cards with popular and total counts
+- **Better UX:** Active filter chips, results counter, improved empty states
+
+[📖 See full details](./LOCATIONS_PAGE_ENHANCED.md) | [📊 Before/After comparison](./BEFORE_AFTER.md)
+
+### 📁 Documentation Organized
+- **Clean Root:** 40+ files → 9 essential files
+- **Organized Docs:** Categorized into guides, database, deployment, data, archive
+- **Quick Reference:** New quick reference guide for common tasks
+- **Easy Navigation:** Clear folder structure with comprehensive index
+
+[📖 See organization guide](./docs/FOLDER_ORGANIZATION.md) | [⚡ Quick reference](./docs/QUICK_REFERENCE.md)
+
+---
+
 ## 🚀 Quick Links
 
 - **[📚 Complete Documentation](./docs/README.md)** - All guides and references
-- **[🔧 VPS Setup Guide](./docs/deployment/VPS-SETUP.md)** - Deploy to production
-- **[👤 User Setup](./docs/deployment/USER-SETUP.md)** - Create secure user
+- **[⚡ Quick Reference](./docs/QUICK_REFERENCE.md)** - Common tasks and URLs
+- **[🐳 Docker Deployment Guide](./docs/deployment/VPS_DOCKER_DEPLOYMENT.md)** - Deploy to VPS with Docker
 - **[💻 Development Guide](./docs/development/DEVELOPMENT.md)** - Local setup
 
 ---

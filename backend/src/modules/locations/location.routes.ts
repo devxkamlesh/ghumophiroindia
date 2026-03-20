@@ -137,6 +137,17 @@ router.post('/', validateBody(createLocationSchema), async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
+router.post('/bulk-import', async (req, res, next) => {
+  try {
+    const { locations: locationsData } = req.body
+    if (!Array.isArray(locationsData)) {
+      return sendSuccess(res, null, 'Invalid data format. Expected array of locations', 400)
+    }
+    const results = await locationService.bulkImport(locationsData)
+    sendSuccess(res, results, `Imported ${results.success.length} locations`, 200)
+  } catch (e) { next(e) }
+})
+
 router.patch('/:id', validateParams(idParam), validateBody(updateLocationSchema), async (req, res, next) => {
   try {
     const location = await locationService.update(Number(req.params.id), req.body)

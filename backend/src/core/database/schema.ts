@@ -211,7 +211,30 @@ export const tourLocations = pgTable('tour_locations', {
   locationIdx: index('idx_tl_location_id').on(t.locationId),
 }))
 
-export const tourLocationsRelations = relations(tourLocations, ({ one }) => ({
-  tour:     one(tours,     { fields: [tourLocations.tourId],     references: [tours.id] }),
-  location: one(locations, { fields: [tourLocations.locationId], references: [locations.id] }),
+// ─── Gallery ──────────────────────────────────────────────────────────────────
+
+export const galleryImages = pgTable('gallery_images', {
+  id:          serial('id').primaryKey(),
+  url:         text('url').notNull(),
+  title:       text('title'),
+  altText:     text('alt_text'),
+  folder:      text('folder').notNull().default('general'), // e.g. "rajasthan", "tours", "general"
+  tags:        jsonb('tags').$type<string[]>().default([]),
+  width:       integer('width'),
+  height:      integer('height'),
+  fileSize:    integer('file_size'),
+  mimeType:    text('mime_type'),
+  isActive:    boolean('is_active').default(true),
+  sortOrder:   integer('sort_order').default(0),
+  uploadedBy:  integer('uploaded_by').references(() => users.id),
+  createdAt:   timestamp('created_at').defaultNow(),
+  updatedAt:   timestamp('updated_at').defaultNow(),
+}, (t) => ({
+  folderIdx:   index('idx_gallery_folder').on(t.folder),
+  activeIdx:   index('idx_gallery_is_active').on(t.isActive),
+  uploadedIdx: index('idx_gallery_uploaded_by').on(t.uploadedBy),
+}))
+
+export const galleryImagesRelations = relations(galleryImages, ({ one }) => ({
+  uploader: one(users, { fields: [galleryImages.uploadedBy], references: [users.id] }),
 }))

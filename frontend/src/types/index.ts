@@ -235,5 +235,6 @@ export interface PaginationMeta {
 }
 
 export interface PaginatedData<T> {
+  data: T[]
   pagination: PaginationMeta
 }

@@ -93,7 +93,7 @@ export default function ProfilePage() {
       const updated = await authService.updateProfile(form)
       setUser(updated)
       const token = getToken(); const localUser = getUser()
-      if (token && localUser) saveAuth(token, { ...localUser, name: updated.name, id: String(updated.id) })
+      if (token && localUser) saveAuth(token, { ...localUser, name: updated.name, id: updated.id })
       setSuccess('Profile updated successfully')
     } catch (err: any) { setError(err.message) }
     finally { setSaving(false) }

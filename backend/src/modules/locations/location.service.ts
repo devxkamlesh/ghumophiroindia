@@ -86,12 +86,6 @@ export class LocationService {
   async update(id: number, data: UpdateLocationInput) {
     const existing = await this.getById(id)
 
-    // Debug logging
-    logger.info(`Update request for location ${id}:`, { 
-      receivedData: data, 
-      existingIsPopular: existing.isPopular 
-    })
-
     if (data.slug && data.slug !== existing.slug) {
       const [dup] = await db.select({ id: locations.id }).from(locations).where(eq(locations.slug, data.slug)).limit(1)
       if (dup) throw new ConflictError('Slug already in use')
@@ -118,9 +112,6 @@ export class LocationService {
     if (data.isPopular   !== undefined) updateData.isPopular   = data.isPopular
     updateData.path = path
 
-    // Debug logging
-    logger.info(`Update data being sent to DB:`, { updateData })
-
     const [updated] = await db.update(locations).set(updateData).where(eq(locations.id, id)).returning()
     logger.info(`Location updated: ${updated.name}, isPopular: ${updated.isPopular}`)
     return updated
@@ -131,6 +122,35 @@ export class LocationService {
     await db.delete(locations).where(eq(locations.id, id))
     logger.info(`Location deleted: ${id}`)
     return { message: 'Location deleted' }
+  }
+
+  async bulkImport(data: CreateLocationInput[]) {
+    const results = {
+      success: [] as any[],
+      failed: [] as { row: number; data: any; error: string }[],
+      skipped: [] as { row: number; data: any; reason: string }[],
+    }
+
+    for (let i = 0; i < data.length; i++) {
+      const row = data[i]
+      try {
+        // Check if slug already exists
+        const [existing] = await db.select({ id: locations.id }).from(locations).where(eq(locations.slug, row.slug)).limit(1)
+        if (existing) {
+          results.skipped.push({ row: i + 1, data: row, reason: 'Slug already exists' })
+          continue
+        }
+
+        // Create location
+        const created = await this.create(row)
+        results.success.push(created)
+      } catch (error: any) {
+        results.failed.push({ row: i + 1, data: row, error: error.message || 'Unknown error' })
+      }
+    }
+
+    logger.info(`Bulk import completed: ${results.success.length} success, ${results.failed.length} failed, ${results.skipped.length} skipped`)
+    return results
   }
 
   // Stub — distances table not created yet

@@ -176,22 +176,20 @@ export default function DestinationsPage() {
   )
 }
 
-// Bento-style grid layout (1 large featured + up to 4 smaller cards)
+// Scrollable card grid - shows all items with horizontal scroll on mobile, wraps on desktop
 function BentoGrid({ locations }: { locations: LocationNode[] }) {
   if (locations.length === 0) return null
 
-  const [featured, ...rest] = locations
-  const smallCards = rest.slice(0, 4)
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {/* Featured large card */}
-      <DestinationCard location={featured} featured />
-      
-      {/* Smaller cards */}
-      {smallCards.map(loc => (
-        <DestinationCard key={loc.id} location={loc} />
-      ))}
+    <div className="relative">
+      {/* Horizontal scroll on mobile, wrap grid on desktop */}
+      <div className="flex gap-4 overflow-x-auto pb-3 md:pb-0 md:grid md:grid-cols-3 lg:grid-cols-4 md:overflow-visible scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+        {locations.map((loc, i) => (
+          <div key={loc.id} className="flex-shrink-0 w-[260px] md:w-auto">
+            <DestinationCard location={loc} featured={i === 0} />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -210,19 +208,16 @@ function DestinationCard({ location, featured }: { location: LocationNode; featu
   return (
     <Link
       href={`/destinations/${location.slug}`}
-      className={cn(
-        'group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1',
-        featured ? 'md:row-span-2 md:col-span-1' : ''
-      )}
+      className="group relative overflow-hidden rounded-2xl bg-white border border-gray-200 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 block"
     >
       {/* Image */}
-      <div className={cn('relative overflow-hidden', featured ? 'h-80 md:h-full' : 'h-64')}>
+      <div className="relative overflow-hidden h-52">
         <Image
           src={location.image || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80'}
           alt={location.name}
           fill
           className="object-cover group-hover:scale-110 transition-transform duration-700"
-          sizes={featured ? '(max-width: 768px) 100vw, 50vw' : '(max-width: 768px) 100vw, 33vw'}
+          sizes="(max-width: 768px) 260px, (max-width: 1024px) 33vw, 25vw"
         />
         
         {/* Gradient overlay */}
@@ -245,21 +240,18 @@ function DestinationCard({ location, featured }: { location: LocationNode; featu
         </div>
 
         {/* Content overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-5">
-          <h3 className={cn('text-white font-bold mb-1', featured ? 'text-2xl' : 'text-xl')}>
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <h3 className="text-white font-bold text-lg mb-1">
             {location.name}
           </h3>
-          {location.path && (
-            <p className="text-white/70 text-xs font-mono mb-2">{location.path}</p>
-          )}
-          {location.description && featured && (
-            <p className="text-white/90 text-sm leading-relaxed line-clamp-2 mb-3">
+          {location.description && (
+            <p className="text-white/80 text-xs leading-relaxed line-clamp-2 mb-2">
               {location.description}
             </p>
           )}
           
           {/* CTA */}
-          <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center justify-between mt-2">
             {location.lat && location.lng ? (
               <div className="flex items-center gap-1 text-xs text-white/70">
                 <MapPin className="w-3.5 h-3.5" />

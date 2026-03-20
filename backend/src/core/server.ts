@@ -6,8 +6,6 @@ import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 import config from './config'
 import logger from './logger'
-import { checkDatabaseConnection } from './database'
-import { checkRedisConnection } from './redis'
 
 export const createServer = (): Application => {
   const app = express()
@@ -46,26 +44,6 @@ export const createServer = (): Application => {
       },
     }))
   }
-
-  // Health check endpoint
-  app.get('/health', async (req, res) => {
-    const dbConnected = await checkDatabaseConnection()
-    const redisConnected = await checkRedisConnection()
-
-    const health = {
-      status: dbConnected ? 'ok' : 'error',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: config.env,
-      services: {
-        database: dbConnected ? 'connected' : 'disconnected',
-        redis: redisConnected ? 'connected' : 'disconnected',
-      },
-    }
-
-    const statusCode = dbConnected ? 200 : 503
-    res.status(statusCode).json(health)
-  })
 
   return app
 }

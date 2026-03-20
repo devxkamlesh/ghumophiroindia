@@ -1,3 +1,4 @@
+import { Router } from 'express'
 import { createServer } from './core/server'
 import { errorHandler } from './middleware/errorHandler'
 import { notFoundHandler } from './middleware/notFoundHandler'
@@ -10,6 +11,7 @@ import inquiryRoutes from './modules/inquiries/inquiry.routes'
 import customTourRoutes from './modules/custom-tour/customTour.routes'
 import locationRoutes from './modules/locations/location.routes'
 import uploadRoutes from './modules/upload/upload.routes'
+import galleryRoutes from './modules/gallery/gallery.routes'
 import { setupCacheInvalidation } from './core/cache-invalidator'
 import config from './core/config'
 import logger from './core/logger'
@@ -24,7 +26,7 @@ import('./jobs/workers').then(({ startScheduledJobs }) => {
   )
 }).catch(err => logger.warn(`Workers module load failed: ${err.message}`))
 
-const apiRouter = require('express').Router()
+const apiRouter = Router()
 
 apiRouter.get('/health', async (req: any, res: any) => {
   const { checkDatabaseConnection } = await import('./core/database')
@@ -56,6 +58,7 @@ apiRouter.use('/inquiries',    inquiryRoutes)
 apiRouter.use('/custom-tours', customTourRoutes)
 apiRouter.use('/locations',    locationRoutes)
 apiRouter.use('/upload',       uploadRoutes)
+apiRouter.use('/gallery',      galleryRoutes)
 
 app.use(`/api/${config.apiVersion}`, apiRouter)
 
