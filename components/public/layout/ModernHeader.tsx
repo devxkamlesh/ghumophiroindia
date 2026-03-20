@@ -97,10 +97,8 @@ export default function ModernHeader() {
           <NavigationMenu className="hidden lg:flex">
             <NavigationMenuList>
               <NavigationMenuItem>
-                <Link href="/" legacyBehavior passHref>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Home
-                  </NavigationMenuLink>
+                <Link href="/" className={navigationMenuTriggerStyle()}>
+                  Home
                 </Link>
               </NavigationMenuItem>
 
@@ -141,26 +139,20 @@ export default function ModernHeader() {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <Link href="/about" legacyBehavior passHref>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    About Us
-                  </NavigationMenuLink>
+                <Link href="/about" className={navigationMenuTriggerStyle()}>
+                  About Us
                 </Link>
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <Link href="/blog" legacyBehavior passHref>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Blog
-                  </NavigationMenuLink>
+                <Link href="/blog" className={navigationMenuTriggerStyle()}>
+                  Blog
                 </Link>
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <Link href="/contact" legacyBehavior passHref>
-                  <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                    Contact
-                  </NavigationMenuLink>
+                <Link href="/contact" className={navigationMenuTriggerStyle()}>
+                  Contact
                 </Link>
               </NavigationMenuItem>
             </NavigationMenuList>
@@ -285,7 +277,7 @@ export default function ModernHeader() {
         )}
       </div>
     </header>
-  )
+  );
 }
 
 const ListItem = React.forwardRef<
