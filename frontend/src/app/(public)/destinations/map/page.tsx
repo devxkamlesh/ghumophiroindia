@@ -57,16 +57,30 @@ export default function DestinationsMapPage() {
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="container-custom flex items-center justify-between gap-4">
+      {/* Header with gradient */}
+      <div className="relative bg-gradient-to-r from-primary-600 via-primary-700 to-green-600 border-b border-primary-800 px-4 py-6 overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 left-1/4 w-64 h-64 bg-white rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-white rounded-full blur-3xl" />
+        </div>
+        
+        <div className="container-custom relative flex items-center justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Explore India</h1>
-            <p className="text-sm text-gray-500">{locations.length} locations on the map</p>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-white">Explore India</h1>
+            </div>
+            <p className="text-sm text-primary-100 flex items-center gap-2">
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              {locations.length} locations • Interactive map view
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/destinations"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 text-white rounded-xl text-sm font-medium transition-all hover:scale-105">
               <List className="w-4 h-4" /> List View
             </Link>
           </div>
@@ -74,21 +88,25 @@ export default function DestinationsMapPage() {
       </div>
 
       <div className="container-custom py-4">
-        {/* Filter tabs */}
-        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
+        {/* Filter tabs with enhanced design */}
+        <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 scrollbar-hide">
           {(['all', 'country', 'state', 'city', 'place'] as const).map(t => {
             const Icon = t === 'all' ? MapPin : TYPE_ICON[t as LocationType]
+            const isActive = filter === t
             return (
               <button key={t} onClick={() => setFilter(t)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border whitespace-nowrap transition-all',
-                  filter === t
-                    ? 'bg-primary-600 text-white border-primary-600'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'
+                  'inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border-2 whitespace-nowrap transition-all duration-200',
+                  isActive
+                    ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white border-primary-600 shadow-lg shadow-primary-500/30 scale-105'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:shadow-md hover:scale-102'
                 )}>
-                <Icon className="w-3.5 h-3.5" />
-                {t === 'all' ? 'All' : t.charAt(0).toUpperCase() + t.slice(1) + 's'}
-                <span className={cn('ml-0.5', filter === t ? 'text-primary-200' : 'text-gray-400')}>
+                <Icon className={cn('w-4 h-4', isActive && 'animate-pulse')} />
+                {t === 'all' ? 'All Locations' : t.charAt(0).toUpperCase() + t.slice(1) + 's'}
+                <span className={cn(
+                  'px-2 py-0.5 rounded-full text-xs font-bold',
+                  isActive ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
+                )}>
                   {counts[t]}
                 </span>
               </button>
