@@ -93,3 +93,10 @@ export function isAdmin(): boolean {
   const role = getUser()?.role
   return role === 'admin' || role === 'superadmin'
 }
+
+/**
+ * Update the stored user object (used when user data changes on the server).
+ */
+export function updateUser(user: AuthUser) {
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
+}
