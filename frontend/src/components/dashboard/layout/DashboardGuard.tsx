@@ -56,8 +56,7 @@ export default function DashboardGuard({ children }: { children: React.ReactNode
         if (!currentUser) return
 
         // Fetch latest user data from server
-        const response = await authService.getProfile()
-        const serverUser = response.data
+        const serverUser = await authService.getProfile()
 
         // Check if role has changed
         if (serverUser.role !== currentUser.role) {
