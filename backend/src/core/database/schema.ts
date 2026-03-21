@@ -153,6 +153,20 @@ export const reviews = pgTable('reviews', {
 
 // ─── Locations (Hierarchy: Country → State → City → Place) ───────────────────
 
+export const banners = pgTable('banners', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  subtitle: varchar('subtitle', { length: 255 }),
+  description: text('description'),
+  image: varchar('image', { length: 500 }).notNull(),
+  linkUrl: varchar('link_url', { length: 500 }),
+  linkText: varchar('link_text', { length: 100 }).default('Book Now'),
+  displayOrder: integer('display_order').default(0),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
 export const locations = pgTable('locations', {
   id:          serial('id').primaryKey(),
   name:        text('name').notNull(),

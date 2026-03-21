@@ -14,6 +14,7 @@ import type {
   MapPlace,
   MapTour,
   LocationNode,
+  Banner,
 } from '@/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
@@ -426,6 +427,37 @@ export const locationAdminService = {
   }> => {
     const { data } = await api.post('/locations/bulk-import', { locations })
     return data.data
+  },
+}
+
+// ─── Banners ──────────────────────────────────────────────────────────────────
+
+export const bannerService = {
+  getActive: async (): Promise<Banner[]> => {
+    const { data } = await api.get('/banners/active')
+    return data.data?.banners ?? []
+  },
+  getAll: async (): Promise<Banner[]> => {
+    const { data } = await api.get('/banners')
+    return data.data?.banners ?? []
+  },
+  getById: async (id: number): Promise<Banner> => {
+    const { data } = await api.get(`/banners/${id}`)
+    return data.data.banner
+  },
+  create: async (input: Partial<Banner>): Promise<Banner> => {
+    const { data } = await api.post('/banners', input)
+    return data.data.banner
+  },
+  update: async (id: number, input: Partial<Banner>): Promise<Banner> => {
+    const { data } = await api.patch(`/banners/${id}`, input)
+    return data.data.banner
+  },
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/banners/${id}`)
+  },
+  reorder: async (orders: { id: number; displayOrder: number }[]): Promise<void> => {
+    await api.post('/banners/reorder', { orders })
   },
 }
 

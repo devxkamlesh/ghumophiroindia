@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, MapPin, Calendar, MessageSquare,
   Wand2, Star, FileText, BarChart3, Settings,
-  LogOut, ExternalLink, UserCircle, Globe, Crown, Images,
+  LogOut, ExternalLink, UserCircle, Globe, Crown, Images, Image,
 } from 'lucide-react'
 import { clearAuth, getUser } from '@/lib/auth'
 import { cn } from '@/lib/utils'
@@ -24,6 +24,7 @@ const groups = [
       { name: 'Tours',     href: '/dashboard/tours',     icon: MapPin },
       { name: 'Locations', href: '/dashboard/locations', icon: Globe },
       { name: 'Gallery',   href: '/dashboard/gallery',   icon: Images },
+      { name: 'Banners',   href: '/dashboard/banners',   icon: Image },
       { name: 'Blog',      href: '/dashboard/blog',      icon: FileText },
     ],
   },
