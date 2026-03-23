@@ -21,10 +21,11 @@ module.exports = {
       max_memory_restart: '500M',
       watch: false
     },
-    // Frontend Next.js (Standalone Mode)
+    // Frontend Next.js
     {
       name: 'ghumo-phiro-frontend',
-      script: '.next/standalone/server.js',
+      script: 'node_modules/.bin/next',
+      args: 'start --port 3000',
       cwd: '/var/www/ghumo-phiro/frontend',
       instances: 1,
       exec_mode: 'fork',
