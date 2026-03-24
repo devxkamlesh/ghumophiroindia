@@ -1,52 +1,71 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { bannerService } from '@/services/api'
 import type { Banner } from '@/types'
 
-/* ─── Hero ──────────────────────────────────────────────────────────────── */
+const slideVariants = {
+  enter: (dir: number) => ({
+    x: dir > 0 ? '100%' : '-100%',
+    opacity: 1,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+  exit: (dir: number) => ({
+    x: dir > 0 ? '-100%' : '100%',
+    opacity: 1,
+    transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] },
+  }),
+}
+
+const textVariants = {
+  hidden: (dir: number) => ({
+    opacity: 0,
+    x: dir > 0 ? 60 : -60,
+  }),
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.45, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] },
+  },
+}
+
 export default function Hero() {
+  const [[currentSlide, direction], setSlide] = useState([0, 1])
   const [banners, setBanners] = useState<Banner[]>([])
   const [loading, setLoading] = useState(true)
-  const [currentSlide, setCurrentSlide] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
 
-  // Fetch banners
   useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const data = await bannerService.getActive()
-        setBanners(data)
-      } catch (error) {
-        console.error('Failed to fetch banners:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    fetchBanners()
+    bannerService.getActive()
+      .then(data => setBanners(data))
+      .catch(err => console.error('Failed to fetch banners:', err))
+      .finally(() => setLoading(false))
   }, [])
 
-  // Auto-scroll slider
+  const paginate = (dir: number) => {
+    setSlide(([cur]) => {
+      const next = (cur + dir + banners.length) % banners.length
+      return [next, dir]
+    })
+  }
+
   useEffect(() => {
-    if (isPaused || banners.length === 0) return
-    
-    const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % banners.length)
-    }, 4000)
-
-    return () => clearInterval(interval)
-  }, [isPaused, banners.length])
-
-  const nextSlide = () => setCurrentSlide(prev => (prev + 1) % banners.length)
-  const prevSlide = () => setCurrentSlide(prev => (prev - 1 + banners.length) % banners.length)
+    if (isPaused || banners.length <= 1) return
+    const t = setInterval(() => paginate(1), 4500)
+    return () => clearInterval(t)
+  }, [isPaused, banners.length, currentSlide])
 
   if (loading) {
     return (
       <section className="relative bg-white">
-        <div className="relative w-full h-[320px] overflow-hidden flex-shrink-0 flex items-center justify-center bg-gray-100">
+        <div className="w-full h-[320px] flex items-center justify-center bg-gray-100">
           <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
         </div>
       </section>
@@ -56,9 +75,9 @@ export default function Hero() {
   if (banners.length === 0) {
     return (
       <section className="relative bg-white">
-        <div className="relative w-full h-[320px] overflow-hidden flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
+        <div className="w-full h-[320px] flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Ghumo Firo India</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Ghumo Phiro India</h2>
             <p className="text-gray-600">Explore the beauty of Rajasthan</p>
           </div>
         </div>
@@ -66,79 +85,94 @@ export default function Hero() {
     )
   }
 
-  const currentBanner = banners[currentSlide]
+  const banner = banners[currentSlide]
 
   return (
-    <section className="relative bg-white">
-
-      {/* Banner Slider */}
+    <section className="relative bg-black">
       <div
-        className="relative w-full h-[320px] overflow-hidden flex-shrink-0"
+        className="relative w-full h-[320px] overflow-hidden"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
-        {/* Slides */}
-        <div className="absolute inset-0 overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentSlide}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="absolute inset-0"
-            >
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url('${currentBanner.image}')` }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+        {/* Sliding track */}
+        <AnimatePresence initial={false} custom={direction} mode="popLayout">
+          <motion.div
+            key={currentSlide}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            className="absolute inset-0"
+          >
+            {/* Background */}
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url('${banner.image}')` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
 
-              {/* Banner info — vertically centered */}
-              <div className="absolute inset-0 flex items-center">
-                <div className="container-custom w-full px-4 md:px-6 lg:px-8">
-                  <div className="max-w-lg flex flex-col justify-center gap-2">
-                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight">
-                      {currentBanner.title}
-                    </h2>
-                    {currentBanner.subtitle && (
-                      <p className="text-white/90 text-sm md:text-base font-medium">{currentBanner.subtitle}</p>
-                    )}
-                    {currentBanner.description && (
-                      <p className="text-white/75 text-xs md:text-sm">{currentBanner.description}</p>
-                    )}
-                    {currentBanner.linkUrl && (
-                      <div className="pt-1">
-                        <Link
-                          href={currentBanner.linkUrl}
-                          className="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg"
-                        >
-                          {currentBanner.linkText || 'Learn More'}
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                </div>
+            {/* Text */}
+            <div className="absolute inset-0 flex items-center">
+              <div className="container-custom w-full px-4 md:px-8 lg:px-12">
+                <motion.div
+                  custom={direction}
+                  variants={textVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="max-w-xl flex flex-col gap-2.5"
+                >
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg">
+                    {banner.title}
+                  </h2>
+                  {banner.subtitle && (
+                    <p className="text-white/95 text-base md:text-lg font-semibold drop-shadow">
+                      {banner.subtitle}
+                    </p>
+                  )}
+                  {banner.description && (
+                    <p className="text-white/80 text-sm md:text-base">
+                      {banner.description}
+                    </p>
+                  )}
+                  {banner.linkUrl && (
+                    <div className="pt-1">
+                      <Link
+                        href={banner.linkUrl}
+                        className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg font-bold text-sm md:text-base transition-colors shadow-lg"
+                      >
+                        {banner.linkText || 'Book Now'}
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
               </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
-        {/* Slider Controls - Bottom Right */}
+        {/* Controls */}
         {banners.length > 1 && (
-          <div className="absolute bottom-4 right-4 md:right-6 flex items-center gap-2 z-20">
-            <button onClick={prevSlide} className="w-8 h-8 bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors" aria-label="Previous slide">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30">
+            <button
+              onClick={() => paginate(-1)}
+              className="w-8 h-8 bg-black/40 hover:bg-black/70 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors"
+            >
               <ChevronLeft className="w-4 h-4 text-white" />
             </button>
             <div className="flex gap-1.5">
               {banners.map((_, idx) => (
-                <button key={idx} onClick={() => setCurrentSlide(idx)}
-                  className={`h-1.5 rounded-full transition-all ${idx === currentSlide ? 'w-6 bg-white' : 'w-1.5 bg-white/50'}`}
-                  aria-label={`Go to slide ${idx + 1}`}
+                <button
+                  key={idx}
+                  onClick={() => setSlide([idx, idx > currentSlide ? 1 : -1])}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentSlide ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
                 />
               ))}
             </div>
-            <button onClick={nextSlide} className="w-8 h-8 bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors" aria-label="Next slide">
+            <button
+              onClick={() => paginate(1)}
+              className="w-8 h-8 bg-black/40 hover:bg-black/70 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors"
+            >
               <ChevronRight className="w-4 h-4 text-white" />
             </button>
           </div>
