@@ -2,17 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, CheckCircle, Bot, Copy, ClipboardPaste, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
 import { tourService, locationAdminService } from '@/services/api'
 import { ImageField } from '@/components/dashboard/shared/ImageField'
 import { LocationPicker } from '@/components/dashboard/shared/LocationPicker'
 import type { LocationNode } from '@/types'
 
-// ── Shared input style ────────────────────────────────────────────────────────
 const cls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all'
 
-// ── Section card ──────────────────────────────────────────────────────────────
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5">
@@ -24,34 +22,25 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-// ── Dynamic list field (highlights, included, excluded) ───────────────────────
-function ListField({
-  label, items, onChange, placeholder,
-}: {
+function ListField({ label, items, onChange, placeholder }: {
   label: string; items: string[]; onChange: (v: string[]) => void; placeholder: string
 }) {
-  const update = (i: number, val: string) => {
-    const next = [...items]; next[i] = val; onChange(next)
-  }
+  const update = (i: number, val: string) => { const next = [...items]; next[i] = val; onChange(next) }
   const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i))
-  const add    = () => onChange([...items, ''])
-
+  const add = () => onChange([...items, ''])
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
       <div className="space-y-2">
         {items.map((item, i) => (
           <div key={i} className="flex gap-2">
-            <input type="text" value={item} onChange={e => update(i, e.target.value)}
-              className={cls} placeholder={placeholder} />
-            <button type="button" onClick={() => remove(i)}
-              className="p-2.5 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0">
+            <input type="text" value={item} onChange={e => update(i, e.target.value)} className={cls} placeholder={placeholder} />
+            <button type="button" onClick={() => remove(i)} className="p-2.5 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0">
               <Trash2 className="w-4 h-4 text-red-400" />
             </button>
           </div>
         ))}
-        <button type="button" onClick={add}
-          className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors">
+        <button type="button" onClick={add} className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors">
           <Plus className="w-4 h-4" /> Add item
         </button>
       </div>
@@ -59,35 +48,142 @@ function ListField({
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
+// ── AI Import ─────────────────────────────────────────────────────────────────
+const AI_PROMPT = `Fill in the following JSON for a tour package. Return ONLY valid JSON, no explanation.
 
+{
+  "title": "Tour name",
+  "description": "Short description (1-2 sentences for listing cards)",
+  "longDescription": "Detailed description (3-5 paragraphs for tour detail page)",
+  "duration": 6,
+  "price": 24999,
+  "maxGroupSize": 15,
+  "difficulty": "easy",
+  "category": "heritage",
+  "isFeatured": false,
+  "images": ["https://images.unsplash.com/photo-XXXXX?w=1200&q=80"],
+  "highlights": ["Visit Amber Fort", "Taj Mahal at sunrise"],
+  "included": ["Hotel accommodation (5 nights)", "Daily breakfast", "AC vehicle", "Tour guide"],
+  "excluded": ["International flights", "Personal expenses", "Camera fees"],
+  "destinations": ["Delhi", "Agra", "Jaipur"],
+  "itinerary": [
+    { "day": 1, "title": "Arrival in Delhi", "description": "Arrive at Delhi airport, check in to hotel, evening visit to India Gate." },
+    { "day": 2, "title": "Delhi Sightseeing", "description": "Visit Red Fort, Jama Masjid, Qutub Minar and Humayun Tomb." }
+  ]
+}`
+
+function AIImportPanel({ onImport }: { onImport: (data: any) => void }) {
+  const [json, setJson] = useState('')
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+  const [open, setOpen] = useState(true)
+
+  const copyPrompt = () => {
+    navigator.clipboard.writeText(AI_PROMPT)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleImport = () => {
+    setError('')
+    try {
+      const data = JSON.parse(json.trim())
+      onImport(data)
+      setJson('')
+    } catch {
+      setError('Invalid JSON. Make sure the AI returned valid JSON only.')
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden sticky top-4">
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <Bot className="w-4 h-4 text-white" />
+          </div>
+          <div className="text-left">
+            <p className="text-sm font-bold text-gray-900">AI Import</p>
+            <p className="text-xs text-gray-400">Fill form with AI</p>
+          </div>
+        </div>
+        {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+      </button>
+
+      {open && (
+        <div className="px-4 pb-4 space-y-3 border-t border-gray-100 pt-3">
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Step 1 — Copy prompt for AI</p>
+            <button type="button" onClick={copyPrompt}
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all border ${copied ? 'bg-green-50 border-green-200 text-green-700' : 'bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100'}`}>
+              <Copy className="w-4 h-4" />
+              {copied ? 'Copied!' : 'Copy AI Prompt'}
+            </button>
+            <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+              Paste in ChatGPT, Gemini, Claude etc. Tell it the tour name and it fills the JSON.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Step 2 — Paste AI response</p>
+            <textarea
+              value={json}
+              onChange={e => { setJson(e.target.value); setError('') }}
+              rows={8}
+              placeholder={'{\n  "title": "Golden Triangle Tour",\n  "price": 24999,\n  ...\n}'}
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all resize-none bg-gray-50"
+            />
+            {error && (
+              <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {error}
+              </p>
+            )}
+          </div>
+
+          <button type="button" onClick={handleImport} disabled={!json.trim()}
+            className="w-full flex items-center justify-center gap-2 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold transition-colors">
+            <ClipboardPaste className="w-4 h-4" />
+            Fill Form from JSON
+          </button>
+
+          <details>
+            <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors select-none">
+              View JSON template ↓
+            </summary>
+            <pre className="mt-2 text-xs bg-gray-50 border border-gray-100 rounded-xl p-3 overflow-auto max-h-48 text-gray-600 leading-relaxed whitespace-pre-wrap">
+              {AI_PROMPT}
+            </pre>
+          </details>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function NewTourPage() {
   const router = useRouter()
 
   const [form, setForm] = useState({
-    title:           '',
-    slug:            '',
-    description:     '',
-    longDescription: '',
-    duration:        1,
-    price:           0,
-    maxGroupSize:    10,
-    difficulty:      'easy' as 'easy' | 'moderate' | 'challenging',
-    category:        'heritage' as 'city' | 'heritage' | 'desert' | 'custom',
-    images:          [''] as string[],
-    highlights:      [''] as string[],
-    included:        [''] as string[],
-    excluded:        [''] as string[],
-    destinations:    [''] as string[],
-    locationIds:     [] as number[],
-    itinerary:       [{ day: 1, title: '', description: '', activityLocationIds: [] as number[], locationId: null as number | null }] as Array<{
+    title: '', slug: '', description: '', longDescription: '',
+    duration: 1, price: 0, maxGroupSize: 10,
+    difficulty: 'easy' as 'easy' | 'moderate' | 'challenging',
+    category: 'heritage' as 'city' | 'heritage' | 'desert' | 'custom',
+    images: [''] as string[],
+    highlights: [''] as string[],
+    included: [''] as string[],
+    excluded: [''] as string[],
+    destinations: [''] as string[],
+    locationIds: [] as number[],
+    itinerary: [{ day: 1, title: '', description: '', activityLocationIds: [] as number[], locationId: null as number | null }] as Array<{
       day: number; title: string; description: string; activityLocationIds: number[]; locationId: number | null
     }>,
     isFeatured: false,
   })
 
-  const [saving,  setSaving]  = useState(false)
-  const [error,   setError]   = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [allLocations, setAllLocations] = useState<LocationNode[]>([])
 
@@ -98,7 +194,6 @@ export default function NewTourPage() {
   const locationName = (id: number | null) =>
     id ? (allLocations.find(l => l.id === id)?.name ?? '') : ''
 
-  // Auto-generate slug from title
   const handleTitleChange = (title: string) => {
     const slug = title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim()
     setForm(p => ({ ...p, title, slug }))
@@ -106,7 +201,6 @@ export default function NewTourPage() {
 
   const set = (k: keyof typeof form) => (val: any) => setForm(p => ({ ...p, [k]: val }))
 
-  // Itinerary helpers
   const updateDay = (i: number, field: string, val: any) =>
     setForm(p => ({ ...p, itinerary: p.itinerary.map((d, idx) => idx === i ? { ...d, [field]: val } : d) }))
 
@@ -116,16 +210,39 @@ export default function NewTourPage() {
   const removeDay = (i: number) =>
     setForm(p => ({ ...p, itinerary: p.itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, day: idx + 1 })) }))
 
+  const handleAIImport = (data: any) => {
+    setForm(prev => ({
+      ...prev,
+      title:           data.title           ?? prev.title,
+      slug:            data.title ? data.title.toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim() : prev.slug,
+      description:     data.description     ?? prev.description,
+      longDescription: data.longDescription ?? prev.longDescription,
+      duration:        data.duration        ?? prev.duration,
+      price:           data.price           ?? prev.price,
+      maxGroupSize:    data.maxGroupSize     ?? prev.maxGroupSize,
+      difficulty:      data.difficulty      ?? prev.difficulty,
+      category:        data.category        ?? prev.category,
+      isFeatured:      data.isFeatured      ?? prev.isFeatured,
+      images:          data.images?.length  ? data.images       : prev.images,
+      highlights:      data.highlights?.length ? data.highlights : prev.highlights,
+      included:        data.included?.length   ? data.included   : prev.included,
+      excluded:        data.excluded?.length   ? data.excluded   : prev.excluded,
+      destinations:    data.destinations?.length ? data.destinations : prev.destinations,
+      itinerary:       data.itinerary?.length ? data.itinerary.map((d: any, i: number) => ({
+        day: d.day ?? i + 1, title: d.title ?? '', description: d.description ?? '',
+        activityLocationIds: [], locationId: null,
+      })) : prev.itinerary,
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    // Basic validation
     const clean = (arr: string[]) => arr.filter(s => s.trim())
-    if (!form.title.trim())              { setError('Title is required'); return }
-    if (!form.slug.trim())               { setError('Slug is required'); return }
-    if (!form.description.trim())        { setError('Description is required'); return }
-    if (clean(form.images).length === 0) { setError('At least one image URL is required'); return }
+    if (!form.title.trim())                    { setError('Title is required'); return }
+    if (!form.slug.trim())                     { setError('Slug is required'); return }
+    if (!form.description.trim())              { setError('Description is required'); return }
+    if (clean(form.images).length === 0)       { setError('At least one image URL is required'); return }
     if (clean(form.destinations).length === 0) { setError('At least one destination is required'); return }
 
     setSaving(true)
@@ -147,13 +264,8 @@ export default function NewTourPage() {
         destinations:    clean(form.destinations),
         locationIds:     form.locationIds,
         itinerary:       form.itinerary.map(d => ({
-          day:         d.day,
-          title:       d.title,
-          description: d.description,
-          locationId:  d.locationId,
-          activities:  d.activityLocationIds
-            .map(id => allLocations.find(l => l.id === id)?.name ?? '')
-            .filter(Boolean),
+          day: d.day, title: d.title, description: d.description, locationId: d.locationId,
+          activities: d.activityLocationIds.map(id => allLocations.find(l => l.id === id)?.name ?? '').filter(Boolean),
         })).filter(d => d.title.trim()),
         isFeatured: form.isFeatured,
       })
@@ -181,10 +293,10 @@ export default function NewTourPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="max-w-6xl">
 
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mb-6">
         <Link href="/dashboard/tours" className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-500">
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -196,185 +308,176 @@ export default function NewTourPage() {
 
       {/* Error */}
       {error && (
-        <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+        <div className="flex items-start gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 mb-5">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />{error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Two column layout */}
+      <div className="flex gap-6 items-start">
 
-        {/* Basic info */}
-        <Section title="Basic Information">
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Title <span className="text-red-500">*</span></label>
-                <input type="text" value={form.title} onChange={e => handleTitleChange(e.target.value)}
-                  className={cls} placeholder="Golden Triangle Tour" required />
+        {/* Left — Form */}
+        <form onSubmit={handleSubmit} className="flex-1 space-y-5 min-w-0">
+
+          {/* Basic info */}
+          <Section title="Basic Information">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Title <span className="text-red-500">*</span></label>
+                  <input type="text" value={form.title} onChange={e => handleTitleChange(e.target.value)}
+                    className={cls} placeholder="Golden Triangle Tour" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug <span className="text-red-500">*</span></label>
+                  <input type="text" value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))}
+                    className={cls} placeholder="golden-triangle-tour" required />
+                  <p className="text-xs text-gray-400 mt-1">Auto-generated from title</p>
+                </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug <span className="text-red-500">*</span></label>
-                <input type="text" value={form.slug} onChange={e => setForm(p => ({ ...p, slug: e.target.value }))}
-                  className={cls} placeholder="golden-triangle-tour" required />
-                <p className="text-xs text-gray-400 mt-1">Auto-generated from title</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Description <span className="text-red-500">*</span></label>
+                <textarea rows={3} value={form.description} onChange={e => set('description')(e.target.value)}
+                  className={cls} placeholder="Short description shown on listing cards…" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Long Description</label>
+                <textarea rows={4} value={form.longDescription} onChange={e => set('longDescription')(e.target.value)}
+                  className={cls} placeholder="Detailed description shown on the tour detail page…" />
               </div>
             </div>
+          </Section>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Description <span className="text-red-500">*</span></label>
-              <textarea rows={3} value={form.description} onChange={e => set('description')(e.target.value)}
-                className={cls} placeholder="Short description shown on listing cards…" required />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Long Description</label>
-              <textarea rows={4} value={form.longDescription} onChange={e => set('longDescription')(e.target.value)}
-                className={cls} placeholder="Detailed description shown on the tour detail page…" />
-            </div>
-          </div>
-        </Section>
-
-        {/* Details */}
-        <Section title="Tour Details">
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration (days) <span className="text-red-500">*</span></label>
-              <input type="number" min="1" value={form.duration} onChange={e => set('duration')(parseInt(e.target.value) || 1)}
-                className={cls} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Price (₹) <span className="text-red-500">*</span></label>
-              <input type="number" min="0" step="100" value={form.price} onChange={e => set('price')(parseFloat(e.target.value) || 0)}
-                className={cls} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Group Size <span className="text-red-500">*</span></label>
-              <input type="number" min="1" value={form.maxGroupSize} onChange={e => set('maxGroupSize')(parseInt(e.target.value) || 1)}
-                className={cls} required />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty</label>
-              <select value={form.difficulty} onChange={e => set('difficulty')(e.target.value)} className={cls}>
-                <option value="easy">Easy</option>
-                <option value="moderate">Moderate</option>
-                <option value="challenging">Challenging</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
-              <select value={form.category} onChange={e => set('category')(e.target.value)} className={cls}>
-                <option value="city">City</option>
-                <option value="heritage">Heritage</option>
-                <option value="desert">Desert</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-3 pt-6">
-              <input type="checkbox" id="featured" checked={form.isFeatured}
-                onChange={e => set('isFeatured')(e.target.checked)}
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
-              <label htmlFor="featured" className="text-sm font-medium text-gray-700">Featured tour</label>
-            </div>
-          </div>
-        </Section>
-
-        {/* Images & Destinations */}
-        <Section title="Images & Destinations">
-          <div className="space-y-5">
-            <ImageField images={form.images} onChange={set('images')} />
-            <LocationPicker selectedIds={form.locationIds} onChange={set('locationIds')} />
-            <ListField label="Destinations (text fallback)" items={form.destinations} onChange={set('destinations')}
-              placeholder="Jaipur" />
-          </div>
-        </Section>
-
-        {/* Highlights, Included, Excluded */}
-        <Section title="What's Included">
-          <div className="space-y-5">
-            <ListField label="Highlights" items={form.highlights} onChange={set('highlights')}
-              placeholder="Visit Amber Fort" />
-            <ListField label="Included" items={form.included} onChange={set('included')}
-              placeholder="Hotel accommodation" />
-            <ListField label="Excluded" items={form.excluded} onChange={set('excluded')}
-              placeholder="International flights" />
-          </div>
-        </Section>
-
-        {/* Itinerary */}
-        <Section title="Itinerary">
-          <div className="space-y-5">
-            {form.itinerary.map((day, i) => (
-              <div key={i} className="border border-gray-100 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-semibold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-full">
-                    Day {day.day}{day.title ? ` — ${day.title}` : ''}
-                  </span>
-                  {form.itinerary.length > 1 && (
-                    <button type="button" onClick={() => removeDay(i)}
-                      className="p-1.5 hover:bg-red-50 rounded-lg transition-colors">
-                      <Trash2 className="w-4 h-4 text-red-400" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Main location for this day → auto-fills title */}
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Main Location (auto-fills title)</p>
-                  <LocationPicker
-                    selectedIds={day.locationId ? [day.locationId] : []}
-                    onChange={ids => {
-                      const id = ids[0] ?? null
-                      const name = locationName(id)
-                      updateDay(i, 'locationId', id)
-                      if (name) updateDay(i, 'title', name)
-                    }}
-                    singleSelect
-                  />
-                </div>
-
-                {/* Title — editable, pre-filled from location */}
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">Title</p>
-                  <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)}
-                    className={cls} placeholder="e.g. Amber Fort & City Palace" />
-                </div>
-
-                {/* Description */}
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">Description</p>
-                  <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)}
-                    className={cls} placeholder="What happens this day…" />
-                </div>
-
-                {/* Activities = locations visited this day */}
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">🗺 Places to visit (activities)</p>
-                  <LocationPicker
-                    selectedIds={day.activityLocationIds}
-                    onChange={ids => updateDay(i, 'activityLocationIds', ids)}
-                  />
-                </div>
+          {/* Details */}
+          <Section title="Tour Details">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Duration (days) <span className="text-red-500">*</span></label>
+                <input type="number" min="1" value={form.duration} onChange={e => set('duration')(parseInt(e.target.value) || 1)} className={cls} required />
               </div>
-            ))}
-            <button type="button" onClick={addDay}
-              className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-gray-300 hover:border-primary-400 text-gray-500 hover:text-primary-600 rounded-xl text-sm font-medium transition-colors w-full justify-center">
-              <Plus className="w-4 h-4" /> Add Day
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Price (₹) <span className="text-red-500">*</span></label>
+                <input type="number" min="0" step="100" value={form.price} onChange={e => set('price')(parseFloat(e.target.value) || 0)} className={cls} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Group Size <span className="text-red-500">*</span></label>
+                <input type="number" min="1" value={form.maxGroupSize} onChange={e => set('maxGroupSize')(parseInt(e.target.value) || 1)} className={cls} required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty</label>
+                <select value={form.difficulty} onChange={e => set('difficulty')(e.target.value)} className={cls}>
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="challenging">Challenging</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>
+                <select value={form.category} onChange={e => set('category')(e.target.value)} className={cls}>
+                  <option value="city">City</option>
+                  <option value="heritage">Heritage</option>
+                  <option value="desert">Desert</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-3 pt-6">
+                <input type="checkbox" id="featured" checked={form.isFeatured}
+                  onChange={e => set('isFeatured')(e.target.checked)}
+                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500" />
+                <label htmlFor="featured" className="text-sm font-medium text-gray-700">Featured tour</label>
+              </div>
+            </div>
+          </Section>
+
+          {/* Images & Destinations */}
+          <Section title="Images & Destinations">
+            <div className="space-y-5">
+              <ImageField images={form.images} onChange={set('images')} />
+              <LocationPicker selectedIds={form.locationIds} onChange={set('locationIds')} />
+              <ListField label="Destinations (text fallback)" items={form.destinations} onChange={set('destinations')} placeholder="Jaipur" />
+            </div>
+          </Section>
+
+          {/* Highlights, Included, Excluded */}
+          <Section title="What's Included">
+            <div className="space-y-5">
+              <ListField label="Highlights" items={form.highlights} onChange={set('highlights')} placeholder="Visit Amber Fort" />
+              <ListField label="Included" items={form.included} onChange={set('included')} placeholder="Hotel accommodation" />
+              <ListField label="Excluded" items={form.excluded} onChange={set('excluded')} placeholder="International flights" />
+            </div>
+          </Section>
+
+          {/* Itinerary */}
+          <Section title="Itinerary">
+            <div className="space-y-5">
+              {form.itinerary.map((day, i) => (
+                <div key={i} className="border border-gray-100 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-primary-700 bg-primary-50 px-2.5 py-1 rounded-full">
+                      Day {day.day}{day.title ? ` — ${day.title}` : ''}
+                    </span>
+                    {form.itinerary.length > 1 && (
+                      <button type="button" onClick={() => removeDay(i)} className="p-1.5 hover:bg-red-50 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                      </button>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Main Location (auto-fills title)</p>
+                    <LocationPicker
+                      selectedIds={day.locationId ? [day.locationId] : []}
+                      onChange={ids => {
+                        const id = ids[0] ?? null
+                        const name = locationName(id)
+                        updateDay(i, 'locationId', id)
+                        if (name) updateDay(i, 'title', name)
+                      }}
+                      singleSelect
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1.5">Title</p>
+                    <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)}
+                      className={cls} placeholder="e.g. Amber Fort & City Palace" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1.5">Description</p>
+                    <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)}
+                      className={cls} placeholder="What happens this day…" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1.5">🗺 Places to visit (activities)</p>
+                    <LocationPicker selectedIds={day.activityLocationIds} onChange={ids => updateDay(i, 'activityLocationIds', ids)} />
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={addDay}
+                className="flex items-center gap-2 px-4 py-2.5 border border-dashed border-gray-300 hover:border-primary-400 text-gray-500 hover:text-primary-600 rounded-xl text-sm font-medium transition-colors w-full justify-center">
+                <Plus className="w-4 h-4" /> Add Day
+              </button>
+            </div>
+          </Section>
+
+          {/* Submit */}
+          <div className="flex gap-3 pb-6">
+            <Link href="/dashboard/tours"
+              className="flex-1 flex items-center justify-center py-3 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors">
+              Cancel
+            </Link>
+            <button type="submit" disabled={saving}
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
+              {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Creating…</> : 'Create Tour'}
             </button>
           </div>
-        </Section>
 
-        {/* Submit */}
-        <div className="flex gap-3 pb-6">
-          <Link href="/dashboard/tours"
-            className="flex-1 flex items-center justify-center py-3 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors">
-            Cancel
-          </Link>
-          <button type="submit" disabled={saving}
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
-            {saving ? <><Loader2 className="w-4 h-4 animate-spin" />Creating…</> : 'Create Tour'}
-          </button>
+        </form>
+
+        {/* Right — AI Import Panel */}
+        <div className="w-72 flex-shrink-0">
+          <AIImportPanel onImport={handleAIImport} />
         </div>
-      </form>
+
+      </div>
     </div>
   )
 }
