@@ -49,37 +49,80 @@ function ListField({ label, items, onChange, placeholder }: {
 }
 
 // ── AI Import ─────────────────────────────────────────────────────────────────
-const AI_PROMPT = `Fill in the following JSON for a tour package. Return ONLY valid JSON, no explanation.
+function buildAIPrompt(locations: LocationNode[]) {
+  const countries  = locations.filter(l => l.type === 'country').map(l => `  { "id": ${l.id}, "name": "${l.name}", "slug": "${l.slug}", "type": "country" }`)
+  const states     = locations.filter(l => l.type === 'state').map(l => `  { "id": ${l.id}, "name": "${l.name}", "slug": "${l.slug}", "type": "state" }`)
+  const cities     = locations.filter(l => l.type === 'city').map(l => `  { "id": ${l.id}, "name": "${l.name}", "slug": "${l.slug}", "type": "city" }`)
+  const places     = locations.filter(l => l.type === 'place').map(l => `  { "id": ${l.id}, "name": "${l.name}", "slug": "${l.slug}", "type": "place" }`)
+
+  const locationList = [
+    countries.length ? `// COUNTRIES\n${countries.join(',\n')}` : '',
+    states.length    ? `// STATES\n${states.join(',\n')}`       : '',
+    cities.length    ? `// CITIES\n${cities.join(',\n')}`       : '',
+    places.length    ? `// PLACES\n${places.join(',\n')}`       : '',
+  ].filter(Boolean).join(',\n\n')
+
+  return `You are creating a tour package for an Indian travel website.
+Use ONLY the locations listed below. Pick relevant ones based on the tour.
+
+AVAILABLE LOCATIONS (use exact id, name, slug):
+[
+${locationList}
+]
+
+Fill in the following JSON. Return ONLY valid JSON, no explanation, no markdown.
 
 {
   "title": "Tour name",
-  "description": "Short description (1-2 sentences for listing cards)",
-  "longDescription": "Detailed description (3-5 paragraphs for tour detail page)",
+  "description": "Short 1-2 sentence description for listing cards",
+  "longDescription": "Detailed 3-5 paragraph description for tour detail page",
   "duration": 6,
   "price": 24999,
   "maxGroupSize": 15,
   "difficulty": "easy",
   "category": "heritage",
   "isFeatured": false,
-  "images": ["https://images.unsplash.com/photo-XXXXX?w=1200&q=80"],
-  "highlights": ["Visit Amber Fort", "Taj Mahal at sunrise"],
-  "included": ["Hotel accommodation (5 nights)", "Daily breakfast", "AC vehicle", "Tour guide"],
-  "excluded": ["International flights", "Personal expenses", "Camera fees"],
-  "destinations": ["Delhi", "Agra", "Jaipur"],
+  "images": [
+    "https://images.unsplash.com/photo-XXXXX?w=1200&q=80"
+  ],
+  "highlights": [
+    "Visit Amber Fort",
+    "Taj Mahal at sunrise"
+  ],
+  "included": [
+    "Hotel accommodation (5 nights)",
+    "Daily breakfast",
+    "AC vehicle",
+    "Tour guide"
+  ],
+  "excluded": [
+    "International flights",
+    "Personal expenses",
+    "Camera fees"
+  ],
+  "locationIds": [1, 2, 3],
   "itinerary": [
-    { "day": 1, "title": "Arrival in Delhi", "description": "Arrive at Delhi airport, check in to hotel, evening visit to India Gate." },
-    { "day": 2, "title": "Delhi Sightseeing", "description": "Visit Red Fort, Jama Masjid, Qutub Minar and Humayun Tomb." }
+    {
+      "day": 1,
+      "title": "Arrival in Delhi",
+      "description": "Arrive at Delhi airport, check in to hotel, evening visit to India Gate.",
+      "locationId": 1,
+      "activityLocationIds": [4, 5]
+    }
   ]
 }`
+}
 
-function AIImportPanel({ onImport }: { onImport: (data: any) => void }) {
+function AIImportPanel({ onImport, locations }: { onImport: (data: any) => void; locations: LocationNode[] }) {
   const [json, setJson] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [open, setOpen] = useState(true)
 
+  const prompt = buildAIPrompt(locations)
+
   const copyPrompt = () => {
-    navigator.clipboard.writeText(AI_PROMPT)
+    navigator.clipboard.writeText(prompt)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -152,7 +195,7 @@ function AIImportPanel({ onImport }: { onImport: (data: any) => void }) {
               View JSON template ↓
             </summary>
             <pre className="mt-2 text-xs bg-gray-50 border border-gray-100 rounded-xl p-3 overflow-auto max-h-48 text-gray-600 leading-relaxed whitespace-pre-wrap">
-              {AI_PROMPT}
+              {prompt}
             </pre>
           </details>
         </div>
@@ -227,10 +270,18 @@ export default function NewTourPage() {
       highlights:      data.highlights?.length ? data.highlights : prev.highlights,
       included:        data.included?.length   ? data.included   : prev.included,
       excluded:        data.excluded?.length   ? data.excluded   : prev.excluded,
-      destinations:    data.destinations?.length ? data.destinations : prev.destinations,
-      itinerary:       data.itinerary?.length ? data.itinerary.map((d: any, i: number) => ({
-        day: d.day ?? i + 1, title: d.title ?? '', description: d.description ?? '',
-        activityLocationIds: [], locationId: null,
+      // Use real locationIds from AI response
+      locationIds:     data.locationIds?.length ? data.locationIds : prev.locationIds,
+      // Auto-generate destinations from location names
+      destinations:    data.locationIds?.length
+        ? data.locationIds.map((id: number) => allLocations.find(l => l.id === id)?.name ?? '').filter(Boolean)
+        : (data.destinations?.length ? data.destinations : prev.destinations),
+      itinerary: data.itinerary?.length ? data.itinerary.map((d: any, i: number) => ({
+        day:                 d.day ?? i + 1,
+        title:               d.title ?? '',
+        description:         d.description ?? '',
+        locationId:          d.locationId ?? null,
+        activityLocationIds: d.activityLocationIds ?? [],
       })) : prev.itinerary,
     }))
   }
@@ -394,7 +445,6 @@ export default function NewTourPage() {
             <div className="space-y-5">
               <ImageField images={form.images} onChange={set('images')} />
               <LocationPicker selectedIds={form.locationIds} onChange={set('locationIds')} />
-              <ListField label="Destinations (text fallback)" items={form.destinations} onChange={set('destinations')} placeholder="Jaipur" />
             </div>
           </Section>
 
@@ -474,7 +524,7 @@ export default function NewTourPage() {
 
         {/* Right — AI Import Panel */}
         <div className="w-72 flex-shrink-0">
-          <AIImportPanel onImport={handleAIImport} />
+          <AIImportPanel onImport={handleAIImport} locations={allLocations} />
         </div>
 
       </div>
