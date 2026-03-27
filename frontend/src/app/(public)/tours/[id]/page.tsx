@@ -163,7 +163,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
   const [adults, setAdults] = useState(2)
   const [children, setChildren] = useState(0)
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [showHotelPicker, setShowHotelPicker] = useState(false)
+  const [showRoomPicker, setShowRoomPicker] = useState(false)
   
   // Hotel category selection (locked for all rooms once first room is selected)
   const [selectedHotel, setSelectedHotel] = useState<string | null>(null)
@@ -178,16 +178,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
 
   // Update room selection
   const updateRoomCount = (key: string, delta: number) => {
-    setRoomSelections(prev => {
-      const newCount = Math.max(0, prev[key] + delta)
-      // If first room being added and no hotel selected, prompt hotel selection
-      const totalRoomsBeforeUpdate = Object.values(prev).reduce((sum, count) => sum + count, 0)
-      if (totalRoomsBeforeUpdate === 0 && newCount > 0 && !selectedHotel) {
-        setShowHotelPicker(true)
-        return prev
-      }
-      return { ...prev, [key]: newCount }
-    })
+    setRoomSelections(prev => ({ ...prev, [key]: Math.max(0, prev[key] + delta) }))
   }
 
   // Calculate total travelers and price
@@ -218,20 +209,19 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
   }
 
   const seats = selectedDate ? seatsFor(selectedDate) : tour.maxGroupSize
+  const selectedHotelData = HOTEL_CATEGORIES.find(h => h.key === selectedHotel)
 
   return (
     <div className="space-y-3">
 
-      {/* Select Departure Date - Opens on Left Side */}
-      <div className="relative">
-        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Date</p>
-
-        {/* Selected date display */}
-        <button type="button" onClick={() => setShowDatePicker(s => !s)}
-          className="w-full flex items-center justify-between px-3 py-2 border-2 border-primary-500 rounded-lg bg-primary-50 hover:bg-primary-100 transition-colors">
+      {/* Select Departure Date */}
+      <div>
+        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Departure Date</p>
+        <button type="button" onClick={() => setShowDatePicker(true)}
+          className="w-full flex items-center justify-between px-3 py-2.5 border-2 border-primary-500 rounded-xl bg-primary-50 hover:bg-primary-100 transition-colors">
           <div className="flex items-center gap-2">
-            <Calendar className="w-3.5 h-3.5 text-primary-600" />
-            <span className="text-xs font-bold text-primary-700">
+            <Calendar className="w-4 h-4 text-primary-600" />
+            <span className="text-sm font-bold text-primary-700">
               {selectedDate ? fmtDate(selectedDate) : 'Choose date'}
             </span>
           </div>
@@ -241,248 +231,215 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
                 {seats} left
               </span>
             )}
-            <ChevronDown className={`w-3.5 h-3.5 text-primary-600 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
+            <ChevronDown className="w-4 h-4 text-primary-600" />
           </div>
         </button>
-
-        {/* Date picker panel - Opens to the left */}
-        {showDatePicker && (
-          <>
-            {/* Backdrop */}
-            <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setShowDatePicker(false)} />
-            
-            {/* Left side panel */}
-            <div className="fixed left-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 overflow-y-auto animate-slide-in-left">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-                <h3 className="font-bold text-gray-900">Select Date</h3>
-                <button onClick={() => setShowDatePicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-              
-              {/* Price alert */}
-              <div className="bg-red-50 border-b border-red-100 px-4 py-2.5">
-                <p className="text-xs text-red-600 font-medium">
-                  ⚠️ If seats drop below 5, price may increase by up to 25%.
-                </p>
-              </div>
-
-              <div className="p-4">
-                {Object.entries(byMonth).map(([month, dates]) => (
-                  <div key={month} className="mb-5 last:mb-0">
-                    <p className="text-xs font-bold text-gray-500 mb-3 flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />{month}
-                    </p>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {dates.map((d, i) => {
-                        const s = seatsFor(d)
-                        const isSelected = selectedDate?.getTime() === d.getTime()
-                        const isLow = s <= 5
-                        return (
-                          <button key={i} type="button"
-                            onClick={() => { setSelectedDate(d); setShowDatePicker(false) }}
-                            className={`p-3 rounded-lg border text-center transition-all ${
-                              isSelected
-                                ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
-                                : isLow
-                                ? 'border-red-200 bg-red-50 hover:border-red-400'
-                                : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50'
-                            }`}>
-                            <p className={`text-sm font-bold ${isSelected ? 'text-primary-700' : isLow ? 'text-red-600' : 'text-gray-800'}`}>
-                              {fmtDate(d)}
-                            </p>
-                            <p className={`text-[10px] mt-1 ${isLow ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
-                              {s} seats
-                            </p>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
       </div>
 
-      <style jsx>{`
-        @keyframes slide-in-left {
-          from {
-            transform: translateX(-100%);
-          }
-          to {
-            transform: translateX(0);
-          }
-        }
-        .animate-slide-in-left {
-          animation: slide-in-left 0.3s ease-out;
-        }
-      `}</style>
-
-      {/* Hotel Category Selection - Opens in Side Panel */}
+      {/* Rooms & Hotel Selection */}
       <div>
-        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Hotel Category</p>
-        
-        <button 
-          type="button" 
-          onClick={() => setShowHotelPicker(true)}
-          className="w-full flex items-center justify-between px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-primary-500 transition-colors">
+        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Rooms & Hotel</p>
+        <button type="button" onClick={() => setShowRoomPicker(true)}
+          className="w-full flex items-center justify-between px-3 py-2.5 border-2 border-gray-300 rounded-xl hover:border-primary-500 transition-colors">
           <div className="flex items-center gap-2">
             <Hotel className="w-4 h-4 text-gray-600" />
-            <span className="text-xs font-bold text-gray-700">
-              {selectedHotel ? HOTEL_CATEGORIES.find(h => h.key === selectedHotel)?.label : 'Select Hotel'}
+            <span className="text-sm font-bold text-gray-700">
+              {selectedHotel && totalRooms > 0
+                ? `${selectedHotelData?.label} · ${totalRooms} room${totalRooms > 1 ? 's' : ''}`
+                : selectedHotel
+                ? `${selectedHotelData?.label} · Add rooms`
+                : 'Select rooms'}
             </span>
           </div>
-          {selectedHotel && (
-            <div className="flex gap-0.5">
-              {Array.from({ length: HOTEL_CATEGORIES.find(h => h.key === selectedHotel)?.stars ?? 0 }).map((_, i) => (
-                <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+          <div className="flex items-center gap-1.5">
+            {selectedHotelData && (
+              <div className="flex gap-0.5">
+                {Array.from({ length: selectedHotelData.stars }).map((_, i) => (
+                  <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+            )}
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          </div>
+        </button>
+      </div>
+
+      {/* ═══════════ Date Picker Modal ═══════════ */}
+      {showDatePicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col animate-modal-pop">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary-600" />
+                Select Departure Date
+              </h3>
+              <button onClick={() => setShowDatePicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            {/* Price alert */}
+            <div className="bg-amber-50 border-b border-amber-100 px-5 py-2.5">
+              <p className="text-xs text-amber-700 font-medium flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                If seats drop below 5, price may increase by up to 25%.
+              </p>
+            </div>
+            {/* Scrollable dates */}
+            <div className="flex-1 overflow-y-auto p-5">
+              {Object.entries(byMonth).map(([month, dates]) => (
+                <div key={month} className="mb-5 last:mb-0">
+                  <p className="text-xs font-bold text-gray-500 mb-3">{month}</p>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {dates.map((d, i) => {
+                      const s = seatsFor(d)
+                      const isSelected = selectedDate?.getTime() === d.getTime()
+                      const isLow = s <= 5
+                      return (
+                        <button key={i} type="button"
+                          onClick={() => { setSelectedDate(d); setShowDatePicker(false) }}
+                          className={`p-3 rounded-xl border text-center transition-all ${
+                            isSelected
+                              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                              : isLow
+                              ? 'border-red-200 bg-red-50 hover:border-red-400'
+                              : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50'
+                          }`}>
+                          <p className={`text-sm font-bold ${isSelected ? 'text-primary-700' : isLow ? 'text-red-600' : 'text-gray-800'}`}>
+                            {fmtDate(d)}
+                          </p>
+                          <p className={`text-[10px] mt-1 ${isLow ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                            {s} seats
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               ))}
             </div>
-          )}
-          {!selectedHotel && <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
-        </button>
+          </div>
+        </div>
+      )}
 
-        {/* Hotel picker panel */}
-        {showHotelPicker && (
-          <>
-            <div className="fixed inset-0 bg-black/20 z-40" onClick={() => !selectedHotel && setShowHotelPicker(false)} />
-            
-            <div className="fixed left-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 overflow-y-auto animate-slide-in-left">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-                <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                  <Hotel className="w-5 h-5 text-primary-600" />
-                  Select Hotel Category
-                </h3>
-                {selectedHotel && (
-                  <button onClick={() => setShowHotelPicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
-                )}
-              </div>
+      {/* ═══════════ Rooms + Hotel Modal ═══════════ */}
+      {showRoomPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowRoomPicker(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col animate-modal-pop">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                <Hotel className="w-5 h-5 text-primary-600" />
+                Choose Rooms
+              </h3>
+              <button onClick={() => setShowRoomPicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
 
-              <div className="p-4">
-                <p className="text-xs text-gray-500 mb-4">All rooms will be in the same hotel category</p>
-                
-                <div className="space-y-3">
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {/* Step 1: Hotel category */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-5 h-5 rounded-full bg-primary-600 text-white text-[10px] font-bold flex items-center justify-center">1</span>
+                  <p className="text-sm font-bold text-gray-900">Hotel Category</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
                   {HOTEL_CATEGORIES.map(hotel => {
-                    const pricePerRoom = Math.round(p * hotel.multiplier)
                     const isSelected = selectedHotel === hotel.key
                     return (
-                      <button 
-                        key={hotel.key}
-                        onClick={() => { 
-                          setSelectedHotel(hotel.key)
-                          setShowHotelPicker(false)
+                      <button key={hotel.key}
+                        onClick={() => {
+                          if (selectedHotel !== hotel.key) {
+                            setSelectedHotel(hotel.key)
+                            setRoomSelections({ sharing: 0, triple: 0, double: 0, single: 0 })
+                          }
                         }}
-                        className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                          isSelected 
-                            ? 'border-primary-500 bg-primary-50' 
-                            : 'border-gray-200 hover:border-primary-300'
+                        className={`p-3 rounded-xl border-2 text-center transition-all ${
+                          isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300'
                         }`}>
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                              isSelected ? 'bg-primary-100' : 'bg-gray-100'
-                            }`}>
-                              <Hotel className={`w-5 h-5 ${isSelected ? 'text-primary-600' : 'text-gray-600'}`} />
-                            </div>
-                            <div>
-                              <p className={`text-sm font-bold ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}>
-                                {hotel.label} Hotel
-                              </p>
-                              <div className="flex gap-0.5 mt-1">
-                                {Array.from({ length: hotel.stars }).map((_, i) => (
-                                  <Star key={i} className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                          {isSelected && <Check className="w-5 h-5 text-primary-600" />}
+                        <Hotel className={`w-5 h-5 mx-auto mb-1.5 ${isSelected ? 'text-primary-600' : 'text-gray-400'}`} />
+                        <p className={`text-xs font-bold ${isSelected ? 'text-primary-700' : 'text-gray-700'}`}>{hotel.label}</p>
+                        <div className="flex justify-center gap-0.5 mt-1">
+                          {Array.from({ length: hotel.stars }).map((_, i) => (
+                            <Star key={i} className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                          ))}
                         </div>
-                        <p className={`text-xs ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}>
-                          From ₹{(pricePerRoom/1000).toFixed(0)}k per room
-                        </p>
                       </button>
                     )
                   })}
                 </div>
               </div>
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* Room Type - Compact Multiple Selection */}
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Rooms (Optional)</p>
-          {selectedHotel && (
-            <button 
-              onClick={() => {
-                setSelectedHotel(null)
-                setRoomSelections({ sharing: 0, triple: 0, double: 0, single: 0 })
-              }}
-              className="text-[10px] text-primary-600 hover:text-primary-700 font-medium">
-              Change Hotel
-            </button>
-          )}
-        </div>
-        
-        {!selectedHotel ? (
-          <div className="text-center py-6 px-4 border-2 border-dashed border-gray-200 rounded-lg">
-            <Hotel className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-            <p className="text-xs text-gray-500 mb-2">Select hotel category first</p>
-            <button 
-              onClick={() => setShowHotelPicker(true)}
-              className="text-xs text-primary-600 font-semibold hover:text-primary-700">
-              Choose Hotel →
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            {ROOM_TYPES.map(rt => {
-              const rtPrice = Math.round(p * rt.multiplier * hotelMultiplier)
-              const count = roomSelections[rt.key]
-              return (
-                <div key={rt.key} 
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${
-                    count > 0 ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
-                  }`}>
-                  <div className="flex-1">
-                    <p className={`text-xs font-bold ${count > 0 ? 'text-primary-700' : 'text-gray-700'}`}>
-                      {rt.label} 
-                      <span className={`ml-1.5 text-[10px] font-normal ${count > 0 ? 'text-primary-600' : 'text-gray-400'}`}>
-                        {rt.capacity}
-                      </span>
-                    </p>
-                    <p className={`text-[10px] ${count > 0 ? 'text-primary-600' : 'text-gray-500'}`}>
-                      ₹{(rtPrice/1000).toFixed(0)}k/room
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button 
-                      type="button" 
-                      onClick={() => updateRoomCount(rt.key, -1)}
-                      disabled={count === 0}
-                      className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 text-sm font-bold transition-colors">
-                      −
-                    </button>
-                    <span className="w-4 text-center text-xs font-bold text-gray-900">{count}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => updateRoomCount(rt.key, 1)}
-                      className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold transition-colors">
-                      +
-                    </button>
-                  </div>
+              {/* Step 2: Room types */}
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${selectedHotel ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-400'}`}>2</span>
+                  <p className={`text-sm font-bold ${selectedHotel ? 'text-gray-900' : 'text-gray-400'}`}>Select Room Types</p>
                 </div>
-              )
-            })}
+
+                {!selectedHotel ? (
+                  <div className="text-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-xl">
+                    <Hotel className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                    <p className="text-xs text-gray-400">Choose a hotel category above first</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {ROOM_TYPES.map(rt => {
+                      const rtPrice = Math.round(p * rt.multiplier * hotelMultiplier)
+                      const count = roomSelections[rt.key]
+                      return (
+                        <div key={rt.key}
+                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${
+                            count > 0 ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
+                          }`}>
+                          <div className="flex-1">
+                            <p className={`text-sm font-bold ${count > 0 ? 'text-primary-700' : 'text-gray-700'}`}>
+                              {rt.label}
+                              <span className="ml-1.5 text-[10px] font-normal text-gray-400">{rt.capacity}</span>
+                            </p>
+                            <p className={`text-xs ${count > 0 ? 'text-primary-600' : 'text-gray-500'}`}>
+                              ₹{rtPrice.toLocaleString('en-IN')}/room
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button type="button" onClick={() => updateRoomCount(rt.key, -1)} disabled={count === 0}
+                              className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-colors">−</button>
+                            <span className="w-5 text-center text-sm font-bold text-gray-900">{count}</span>
+                            <button type="button" onClick={() => updateRoomCount(rt.key, 1)}
+                              className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">+</button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer with Done button */}
+            <div className="border-t border-gray-100 p-4">
+              <button onClick={() => setShowRoomPicker(false)}
+                className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-xl text-sm font-bold transition-colors">
+                {totalRooms > 0 ? `Done · ${totalRooms} room${totalRooms > 1 ? 's' : ''}` : 'Done'}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes modal-pop {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .animate-modal-pop {
+          animation: modal-pop 0.2s ease-out;
+        }
+      `}</style>
 
       {/* Travelers - Compact Adults & Children */}
       <div>
