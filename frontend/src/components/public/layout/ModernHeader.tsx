@@ -110,9 +110,25 @@ export default function ModernHeader() {
   const [budget, setBudget]       = React.useState('')
   const [groupType, setGroupType] = React.useState('')
   const [scrolled, setScrolled]   = React.useState(false)
+  const [navHidden, setNavHidden] = React.useState(false)
+  const lastScrollY = React.useRef(0)
 
   React.useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 8)
+    const h = () => {
+      const y = window.scrollY
+      setScrolled(y > 8)
+
+      // Auto-hide nav links row based on scroll direction (only the nav row,
+      // not the main bar). Keep visible near the top of the page.
+      if (y < 120) {
+        setNavHidden(false)
+      } else if (y > lastScrollY.current + 6) {
+        setNavHidden(true)   // scrolling down → hide nav links
+      } else if (y < lastScrollY.current - 6) {
+        setNavHidden(false)  // scrolling up → show nav links
+      }
+      lastScrollY.current = y
+    }
     window.addEventListener('scroll', h, { passive: true })
     return () => window.removeEventListener('scroll', h)
   }, [])
@@ -369,8 +385,11 @@ export default function ModernHeader() {
         </div>
       </div>
 
-      {/* ══ ROW 2: Nav links — desktop only ══ */}
-      <div className="hidden lg:block bg-gradient-to-r from-orange-50/30 to-transparent">
+      {/* ══ ROW 2: Nav links — desktop only (auto-hide on scroll down) ══ */}
+      <div className={cn(
+        'hidden lg:block bg-gradient-to-r from-orange-50/30 to-transparent border-t border-gray-50 overflow-hidden transition-all duration-300 ease-in-out',
+        navHidden ? 'max-h-0 opacity-0 border-transparent' : 'max-h-16 opacity-100'
+      )}>
         <div className="container-custom px-4 lg:px-6">
           <div className="flex items-center h-12">
             {/* Left spacer - same width as logo */}
@@ -451,15 +470,12 @@ export default function ModernHeader() {
 function NavItem({ href, label, active }: { href: string; label: string; active: boolean }) {
   return (
     <Link href={href} className={cn(
-      'relative px-4 h-full flex items-center text-sm font-semibold transition-all',
+      'relative px-4 py-2 rounded-full flex items-center text-sm font-semibold transition-all duration-200',
       active
-        ? 'text-orange-600'
-        : 'text-gray-700 hover:text-orange-500'
+        ? 'text-orange-600 bg-orange-100/60'
+        : 'text-gray-700 hover:text-orange-500 hover:bg-orange-50'
     )}>
       {label}
-      {active && (
-        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-orange-500 rounded-full" />
-      )}
     </Link>
   )
 }
@@ -488,17 +504,14 @@ function NavDropdown({ label, active, children }: { label: string; active: boole
     <div ref={ref} className="relative h-full flex items-center" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
       <div
         className={cn(
-          'relative px-4 h-full flex items-center gap-1.5 text-sm font-semibold transition-all cursor-pointer',
-          active ? 'text-orange-600' : 'text-gray-700 hover:text-orange-500'
+          'relative px-4 py-2 rounded-full flex items-center gap-1.5 text-sm font-semibold transition-all duration-200 cursor-pointer',
+          active || open ? 'text-orange-600 bg-orange-100/60' : 'text-gray-700 hover:text-orange-500 hover:bg-orange-50'
         )}>
         {label}
         <ChevronDown className={cn('w-3.5 h-3.5 transition-transform duration-200', open && 'rotate-180')} />
-        {active && (
-          <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-orange-500 rounded-full" />
-        )}
       </div>
       {open && (
-        <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-[300] animate-in fade-in slide-in-from-top-2 duration-200">
           {children}
         </div>
       )}
