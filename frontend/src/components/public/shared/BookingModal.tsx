@@ -92,20 +92,43 @@ function SuccessScreen({ bookingId, tourTitle, onClose }: {
 interface Props {
   tour: Tour
   onClose: () => void
+  selectedDate?: Date | null
+  adults?: number
+  children?: number
+  selectedHotel?: string | null
+  roomSelections?: Record<string, number>
 }
 
-export default function BookingModal({ tour, onClose }: Props) {
+export default function BookingModal({ tour, onClose, selectedDate: preSelectedDate, adults: preAdults, children: preChildren, selectedHotel, roomSelections }: Props) {
   const router = useRouter()
   const user   = getUser()
   const price  = priceNum(tour.price)
+
+  const totalTravelers = (preAdults ?? 1) + (preChildren ?? 0)
+  
+  // Calculate price from room selections if available
+  const ROOM_MULTIPLIERS: Record<string, number> = { sharing: 1.0, triple: 1.05, double: 1.18, single: 1.55 }
+  const HOTEL_MULTIPLIERS: Record<string, number> = { '3star': 1.0, '4star': 1.25, '5star': 1.6 }
+  const hotelMul = selectedHotel ? (HOTEL_MULTIPLIERS[selectedHotel] ?? 1.0) : 1.0
+  const totalRooms = roomSelections ? Object.values(roomSelections).reduce((s, c) => s + c, 0) : 0
+  
+  let calculatedPrice = price * totalTravelers
+  if (totalRooms > 0 && roomSelections) {
+    calculatedPrice = 0
+    Object.entries(roomSelections).forEach(([key, count]) => {
+      if (count > 0) {
+        calculatedPrice += Math.round(price * (ROOM_MULTIPLIERS[key] ?? 1) * hotelMul) * count
+      }
+    })
+  }
 
   const [form, setForm] = useState({
     customerName:      user?.name    ?? '',
     customerEmail:     user?.email   ?? '',
     customerPhone:     user?.phone   ?? '',
     customerCountry:   user?.country ?? '',
-    numberOfTravelers: 1,
-    startDate:         '',
+    numberOfTravelers: totalTravelers,
+    startDate:         preSelectedDate ? preSelectedDate.toISOString().split('T')[0] : '',
     specialRequests:   '',
   })
 
@@ -113,7 +136,7 @@ export default function BookingModal({ tour, onClose }: Props) {
   const [error,      setError]      = useState('')
   const [booking,    setBooking]    = useState<{ id: number } | null>(null)
 
-  const totalPrice = price * form.numberOfTravelers
+  const totalPrice = calculatedPrice
 
   const set = (k: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -212,13 +235,22 @@ export default function BookingModal({ tour, onClose }: Props) {
                   <p className="text-xl font-bold text-gray-900">₹{price.toLocaleString('en-IN')}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-500">Total ({form.numberOfTravelers} pax)</p>
+                  <p className="text-xs text-gray-500">Total</p>
                   <p className="text-xl font-bold text-primary-600">₹{totalPrice.toLocaleString('en-IN')}</p>
                 </div>
               </div>
-              <div className="border-t border-primary-100 pt-2 flex items-center justify-between text-xs text-primary-700">
-                <span>Includes 5% GST · No hidden charges</span>
-                <span className="font-semibold text-green-700">✓ Pay on confirmation</span>
+              {/* Show selected options */}
+              <div className="border-t border-primary-100 pt-2 space-y-1">
+                {selectedHotel && (
+                  <div className="flex items-center justify-between text-xs text-primary-700">
+                    <span>Hotel: {selectedHotel.replace('star', ' Star')}</span>
+                    {totalRooms > 0 && <span>{totalRooms} room{totalRooms > 1 ? 's' : ''}</span>}
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-xs text-primary-700">
+                  <span>{(preAdults ?? 1)} adult{(preAdults ?? 1) > 1 ? 's' : ''}{(preChildren ?? 0) > 0 ? ` + ${preChildren} child${(preChildren ?? 0) > 1 ? 'ren' : ''}` : ''}</span>
+                  <span className="font-semibold text-green-700">✓ Pay on confirmation</span>
+                </div>
               </div>
             </div>
 
