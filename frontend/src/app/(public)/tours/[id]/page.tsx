@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -17,6 +18,15 @@ import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import type { Tour, LocationNode } from '@/types'
 import { toWebP } from '@/lib/image'
 import dynamic from 'next/dynamic'
+
+// Portal renders children directly into document.body, escaping any parent
+// stacking context so modals always appear above the fixed header.
+function Portal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+  if (!mounted) return null
+  return createPortal(children, document.body)
+}
 
 const TourRouteMap = dynamic(() => import('@/components/public/map/TourRouteMap'), {
   ssr: false,
@@ -266,6 +276,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
 
       {/* ═══════════ Date Picker Modal ═══════════ */}
       {showDatePicker && (
+        <Portal>
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col animate-modal-pop">
@@ -321,10 +332,12 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
       {/* ═══════════ Rooms + Hotel Modal ═══════════ */}
       {showRoomPicker && (
+        <Portal>
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowRoomPicker(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col animate-modal-pop">
@@ -429,9 +442,10 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
             </div>
           </div>
         </div>
+        </Portal>
       )}
 
-      <style jsx>{`
+      <style jsx global>{`
         @keyframes modal-pop {
           from { transform: scale(0.95); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
