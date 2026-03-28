@@ -6,6 +6,7 @@
   :root {
     --font-inter: 'Inter', system-ui, sans-serif;
     --font-playfair: 'Playfair Display', serif;
+    --font-jost: 'Jost', system-ui, sans-serif;
     --radius: 0.5rem;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -23,6 +24,12 @@
 
   body {
     @apply text-gray-900 antialiased;
+  }
+
+  /* Use Jost for all headings (titles & subtitles) */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-jost), system-ui, sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 
