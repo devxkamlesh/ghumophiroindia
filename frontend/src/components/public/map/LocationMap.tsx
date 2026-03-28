@@ -169,14 +169,31 @@ export default function LocationMap({
         </svg>
       `
 
-      // Hover effect with pulse
+      // Hover effect with pulse + popup near the pin
+      const popup = new maplibregl.Popup({
+        offset: cfg.size * 0.9,
+        closeButton: false,
+        closeOnClick: false,
+        className: 'location-pin-popup',
+      }).setHTML(`
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${cfg.color};flex-shrink:0;"></span>
+          <div>
+            <div style="font-weight:700;font-size:12px;color:#111827;line-height:1.1;">${location.name}</div>
+            <div style="font-size:10px;color:#9ca3af;text-transform:capitalize;">${location.type}</div>
+          </div>
+        </div>
+      `)
+
       el.addEventListener('mouseenter', () => {
         el.style.transform = 'scale(1.3) translateY(-6px)'
         el.style.filter = 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3))'
+        popup.setLngLat([lng, lat]).addTo(map.current!)
       })
       el.addEventListener('mouseleave', () => {
         el.style.transform = 'scale(1) translateY(0)'
         el.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))'
+        popup.remove()
       })
 
       // Create marker with correct anchor point at the bottom tip of the pin
@@ -271,13 +288,13 @@ export default function LocationMap({
       
       <div ref={mapContainer} className="w-full h-full" />
       
-      {/* Simplified legend - top left corner - doesn't block map interaction */}
-      <div className="absolute top-6 left-6 bg-white/95 backdrop-blur-md rounded-xl shadow-lg p-3 border border-gray-200/50 max-w-[200px] pointer-events-none">
-        <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-200">
+      {/* Compact floating legend — bottom left, out of the way of controls */}
+      <div className="absolute bottom-6 left-4 bg-white/90 backdrop-blur-md rounded-2xl shadow-lg p-3 border border-gray-200/60">
+        <div className="flex items-center gap-1.5 mb-2.5">
           <Layers className="w-3.5 h-3.5 text-orange-600" />
-          <p className="font-bold text-xs text-gray-900">Map Legend</p>
+          <p className="font-bold text-[11px] text-gray-900 uppercase tracking-wide">Legend</p>
         </div>
-        <div className="space-y-1.5">
+        <div className="flex flex-col gap-2">
           {[
             { type: 'country', color: '#3b82f6', label: 'Countries' },
             { type: 'state', color: '#a855f7', label: 'States' },
@@ -285,29 +302,20 @@ export default function LocationMap({
             { type: 'place', color: '#f97316', label: 'Places' },
           ].map(({ type, color, label }) => {
             const count = locations.filter(l => l.type === type && l.lat && l.lng).length
+            if (count === 0) return null
             return (
               <div key={type} className="flex items-center gap-2">
-                <div
-                  className="w-3 h-3 rounded-full border border-white shadow-sm flex-shrink-0"
+                <span
+                  className="w-2.5 h-2.5 rounded-full border border-white shadow-sm flex-shrink-0"
                   style={{ backgroundColor: color }}
                 />
-                <span className="text-[11px] font-medium text-gray-700 flex-1">
-                  {label}
-                </span>
-                <span className="text-[10px] font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                <span className="text-[11px] font-medium text-gray-700 flex-1 whitespace-nowrap">{label}</span>
+                <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-md min-w-[20px] text-center">
                   {count}
                 </span>
               </div>
             )
           })}
-        </div>
-        <div className="mt-2 pt-2 border-t border-gray-200">
-          <p className="text-[10px] text-gray-500 flex items-center gap-1">
-            <svg className="w-3 h-3 text-green-500" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
-            <span className="font-semibold text-gray-700">{locations.filter(l => l.lat && l.lng).length}</span> locations
-          </p>
         </div>
       </div>
 
@@ -348,6 +356,17 @@ export default function LocationMap({
 
         .maplibregl-ctrl-group button:hover {
           background-color: #f3f4f6 !important;
+        }
+
+        /* Location pin hover popup */
+        .location-pin-popup .maplibregl-popup-content {
+          padding: 7px 11px !important;
+          border-radius: 10px !important;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18) !important;
+          border: 1px solid rgba(0, 0, 0, 0.06) !important;
+        }
+        .location-pin-popup .maplibregl-popup-tip {
+          border-top-color: white !important;
         }
       `}</style>
     </div>
