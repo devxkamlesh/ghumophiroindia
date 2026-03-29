@@ -1,6 +1,6 @@
 'use client'
 
-import { Star, Clock, MapPin, ArrowRight, Flame } from 'lucide-react'
+import { MapPin, Calendar, Clock } from 'lucide-react'
 import Link from 'next/link'
 import type { Tour } from '@/types'
 import { toWebP } from '@/lib/image'
@@ -10,13 +10,6 @@ const FALLBACK_IMAGES = [
   'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80',
   'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80',
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-]
-
-const BADGES = [
-  { text: 'Most Popular', cls: 'bg-rose-500' },
-  { text: 'Best Value', cls: 'bg-emerald-500' },
-  { text: 'Top Rated', cls: 'bg-amber-500' },
-  { text: 'Adventure', cls: 'bg-violet-500' },
 ]
 
 function priceNum(p: string | number | null | undefined) {
@@ -30,103 +23,94 @@ export default function FeaturedTours({ tours }: Props) {
   if (!tours || tours.length === 0) return null
 
   return (
-    <section className="py-20 md:py-28 bg-white">
+    <section className="bg-emerald-50/30 py-16 md:py-20">
       <div className="container-custom">
-
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
-          <div>
-            <div className="inline-flex items-center gap-2 text-primary-600 text-sm font-semibold mb-3">
-              <Flame className="w-4 h-4" />
-              <span>Trending Now</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
-              Featured Tours
-            </h2>
-            <p className="text-gray-500 mt-2 text-lg">Handpicked experiences across Rajasthan</p>
-          </div>
-          <Link href="/tours"
-            className="inline-flex items-center gap-2 text-primary-600 font-semibold hover:gap-3 transition-all text-sm shrink-0">
-            View all tours <ArrowRight className="w-4 h-4" />
-          </Link>
+        <div className="mb-12 text-center">
+          <p className="font-montez text-3xl text-[#f97316] md:text-4xl">
+            Best Place For You
+          </p>
+          <h2 className="mt-1 text-3xl font-extrabold text-slate-800 md:text-5xl">
+            Most <span className="text-blue-600">Popular</span> Tour
+          </h2>
+          <p className="mx-auto mt-4 max-w-3xl text-sm text-gray-600 md:text-base">
+            "Discover the world's most popular tours with Enlivetrips – where every journey is crafted
+            for unforgettable experiences." Your best place for adventure, culture, and memories that
+            last a lifetime starts here
+          </p>
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {/* Tour Cards Grid */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {tours.slice(0, 4).map((tour, i) => {
-            const badge = BADGES[i % BADGES.length]
-            const imageUrl = toWebP((tour.images ?? [])[0] || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length], 800)
+            const imageUrl = toWebP(
+              (tour.images ?? [])[0] || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length],
+              800
+            )
             const price = priceNum(tour.price)
-            const rating = tour.rating != null ? Number(tour.rating) : null
-            const dests = Array.isArray(tour.destinations) ? tour.destinations : []
 
             return (
-              <Link key={tour.id} href={`/tours/${tour.id}`}
-                className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-primary-200 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-
-                {/* Image */}
-                <div className="relative h-52 overflow-hidden">
+              <div
+                key={tour.id}
+                className="group overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+              >
+                {/* Image with badges */}
+                <div className="relative h-56 overflow-hidden">
                   <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
                     style={{ backgroundImage: `url('${imageUrl}')` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 
-                  <span className={`absolute top-3 left-3 ${badge.cls} text-white text-[11px] font-bold px-2.5 py-1 rounded-full`}>
-                    {badge.text}
-                  </span>
+                  {/* Start-End Badge */}
+                  <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow backdrop-blur-sm">
+                    <MapPin className="h-3.5 w-3.5 text-green-600" />
+                    Delhi To Delhi
+                  </div>
 
-                  {rating != null && (
-                    <span className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-full shadow text-xs font-bold text-gray-900">
-                      <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                      {rating.toFixed(1)}
-                      {(tour.reviewCount ?? 0) > 0 && <span className="text-gray-500 font-normal">({tour.reviewCount})</span>}
-                    </span>
-                  )}
-
-                  <span className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-sm text-primary-700 font-bold text-sm px-3 py-1 rounded-full shadow">
-                    ₹{price.toLocaleString('en-IN')}
-                  </span>
+                  {/* Duration Badge */}
+                  <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow backdrop-blur-sm">
+                    <Clock className="h-3.5 w-3.5 text-orange-600" />
+                    {tour.duration}D
+                  </div>
                 </div>
 
-                {/* Body */}
-                <div className="flex flex-col flex-1 p-5">
-                  <h3 className="font-bold text-gray-900 text-base mb-1 line-clamp-1 group-hover:text-primary-600 transition-colors">
+                {/* Content */}
+                <div className="p-4">
+                  <h3 className="mb-2 text-base font-bold leading-tight text-gray-800 line-clamp-2 group-hover:text-[#f97316]">
                     {tour.title}
                   </h3>
-                  <p className="text-gray-500 text-sm line-clamp-2 mb-4 flex-1">{tour.description}</p>
 
-                  <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-primary-500" />
-                      {tour.duration} days
-                    </span>
-                    {dests.length > 0 && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-primary-500" />
-                        {dests.slice(0, 2).join(', ')}
-                      </span>
-                    )}
+                  {/* Dates */}
+                  <div className="mb-3 flex items-center gap-1.5 text-xs text-gray-600">
+                    <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="line-clamp-1">12 Jun, 19 Jun, 26 Jun, ...</span>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                    <span className="text-xs text-gray-400">Max {tour.maxGroupSize} people</span>
-                    <span className="flex items-center gap-1 text-primary-600 text-xs font-semibold group-hover:gap-2 transition-all">
-                      View details <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
+                  {/* Price */}
+                  <div className="mb-3 text-lg font-bold text-[#f97316]">
+                    ₹{price.toLocaleString('en-IN')} <span className="text-sm font-normal text-gray-500">/Person</span>
                   </div>
+
+                  {/* Request CallBack Button */}
+                  <Link
+                    href={`tel:8287828267`}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-2.5 text-sm font-semibold text-gray-700 transition-all hover:border-[#f97316] hover:bg-[#f97316] hover:text-white"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                      />
+                    </svg>
+                    Request CallBack
+                  </Link>
                 </div>
-              </Link>
+              </div>
             )
           })}
-        </div>
-
-        {/* CTA */}
-        <div className="mt-12 text-center">
-          <Link href="/tours"
-            className="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 rounded-xl font-semibold transition-colors shadow-lg hover:shadow-xl">
-            Browse All Tours <ArrowRight className="w-5 h-5" />
-          </Link>
         </div>
       </div>
     </section>
