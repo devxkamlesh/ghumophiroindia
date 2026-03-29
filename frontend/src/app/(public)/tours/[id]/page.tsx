@@ -139,19 +139,27 @@ const ROOM_TYPES = [
 function generateDepartures(duration: number) {
   const dates: Date[] = []
   const today = new Date()
-  today.setHours(0,0,0,0)
-  // Generate next 12 weekly departures starting from next Saturday
+  today.setHours(0, 0, 0, 0)
+  // Start from next week, generate ~30 departures every 3-4 days across ~5-6 months
   let d = new Date(today)
-  d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7))
-  for (let i = 0; i < 12; i++) {
+  d.setDate(d.getDate() + 7)
+  for (let i = 0; i < 30; i++) {
     dates.push(new Date(d))
-    d.setDate(d.getDate() + 7)
+    d.setDate(d.getDate() + (i % 2 === 0 ? 4 : 3))
   }
   return dates
 }
 
 function fmtDate(d: Date) {
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+}
+
+function fmtFull(d: Date) {
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function shortMonth(d: Date) {
+  return d.toLocaleDateString('en-IN', { month: 'short' })
 }
 
 function fmtMonth(d: Date) {
@@ -219,39 +227,101 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: (data: BookingDa
   // If no rooms selected, show base price per person
   const displayPrice = totalRooms > 0 ? totalPrice : p * totalTravelers
 
-  // Fake seats available (based on date index)
+  // Fake seats available (based on date index) — mock data, replace later
   const seatsFor = (d: Date) => {
     const idx = departures.findIndex(dep => dep.getTime() === d.getTime())
-    const seeds = [24, 12, 17, 8, 22, 40, 15, 30, 6, 19, 24, 11]
+    const seeds = [24, 12, 0, 8, 22, 40, 15, 30, 5, 19, 24, 11, 35, 0, 18, 27, 9, 64, 42, 6]
     return seeds[idx % seeds.length]
+  }
+
+  // Mock seat breakdown — NS (non-sharing) & VUS (with-sharing)
+  const seatInfo = (d: Date) => {
+    const total = seatsFor(d)
+    const vus = Math.round(total * 0.4)
+    return { total, ns: total, vus, soldOut: total === 0 }
   }
 
   const seats = selectedDate ? seatsFor(selectedDate) : tour.maxGroupSize
   const selectedHotelData = HOTEL_CATEGORIES.find(h => h.key === selectedHotel)
 
+  // Route summary (round trip — start & end at first destination)
+  const startCity = tour.destinations?.[0] ?? 'India'
+  const endCity = tour.destinations?.[tour.destinations.length - 1] ?? startCity
+  const nights = tour.duration > 1 ? tour.duration - 1 : 0
+  const endDate = selectedDate
+    ? new Date(selectedDate.getTime() + (tour.duration - 1) * 86400000)
+    : null
+
+  // Group departures by short-month label for the sidebar chips
+  const byShortMonth: Record<string, Date[]> = {}
+  departures.forEach(d => {
+    const key = shortMonth(d)
+    if (!byShortMonth[key]) byShortMonth[key] = []
+    byShortMonth[key].push(d)
+  })
+  const departureYear = departures[0]?.getFullYear() ?? new Date().getFullYear()
+
   return (
     <div className="space-y-3">
 
-      {/* Select Departure Date */}
-      <div>
-        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Departure Date</p>
+      {/* Select Departure Date — rich panel */}
+      <div className="border-2 border-dashed border-orange-300 rounded-xl p-3 bg-orange-50/30">
         <button type="button" onClick={() => setShowDatePicker(true)}
-          className="w-full flex items-center justify-between px-3 py-2.5 border-2 border-primary-500 rounded-xl bg-primary-50 hover:bg-primary-100 transition-colors">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-primary-600" />
-            <span className="text-sm font-bold text-primary-700">
-              {selectedDate ? fmtDate(selectedDate) : 'Choose date'}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {selectedDate && (
-              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${seats <= 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
-                {seats} left
-              </span>
-            )}
-            <ChevronDown className="w-4 h-4 text-primary-600" />
-          </div>
+          className="w-full flex items-center justify-center gap-2 text-orange-600 font-bold text-sm mb-3 hover:text-orange-700 transition-colors">
+          Select Departure Date <Calendar className="w-4 h-4" />
         </button>
+
+        {/* Route summary */}
+        <div className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 mb-3 border border-gray-100">
+          <div className="text-center min-w-0">
+            <p className="text-[10px] text-gray-400 truncate max-w-[70px]">{startCity}</p>
+            <p className="text-xs font-bold text-gray-900">{selectedDate ? fmtFull(selectedDate) : '—'}</p>
+          </div>
+          <div className="flex-1 flex flex-col items-center px-2">
+            <span className="text-[10px] text-gray-500 mb-1 whitespace-nowrap">{tour.duration} Days, {nights} Nights</span>
+            <div className="w-full flex items-center">
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 flex-shrink-0" />
+              <span className="flex-1 border-t border-dashed border-orange-300" />
+              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 flex-shrink-0" />
+            </div>
+          </div>
+          <div className="text-center min-w-0">
+            <p className="text-[10px] text-gray-400 truncate max-w-[70px]">{endCity}</p>
+            <p className="text-xs font-bold text-gray-900">{endDate ? fmtFull(endDate) : '—'}</p>
+          </div>
+        </div>
+
+        {/* Departures chips by month */}
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-gray-700">Departures</p>
+          <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Y {departureYear}</span>
+        </div>
+        <div className="space-y-2 max-h-44 overflow-y-auto pr-1 scrollbar-hide">
+          {Object.entries(byShortMonth).map(([mon, dates]) => (
+            <div key={mon} className="flex items-start gap-2">
+              <span className="bg-orange-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-md min-w-[42px] text-center flex-shrink-0">{mon}</span>
+              <div className="flex flex-wrap gap-1.5">
+                {dates.map((d, i) => {
+                  const { soldOut } = seatInfo(d)
+                  const isSel = selectedDate?.getTime() === d.getTime()
+                  return (
+                    <button key={i} type="button" disabled={soldOut}
+                      onClick={() => setSelectedDate(d)}
+                      className={`w-8 h-8 rounded-md text-xs font-semibold border transition-all ${
+                        isSel
+                          ? 'bg-orange-500 text-white border-orange-500'
+                          : soldOut
+                          ? 'border-gray-100 text-gray-300 line-through cursor-not-allowed'
+                          : 'border-gray-200 text-gray-700 hover:border-orange-400 hover:text-orange-600'
+                      }`}>
+                      {d.getDate()}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Rooms & Hotel Selection */}
@@ -287,49 +357,60 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: (data: BookingDa
         <Portal>
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col animate-modal-pop">
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col animate-modal-pop">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary-600" />
-                Select Departure Date
-              </h3>
+              <h3 className="font-bold text-gray-900">Choose Your Travel Date</h3>
               <button onClick={() => setShowDatePicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
             {/* Price alert */}
-            <div className="bg-amber-50 border-b border-amber-100 px-5 py-2.5">
-              <p className="text-xs text-amber-700 font-medium flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                If seats drop below 5, price may increase by up to 25%.
+            <div className="bg-red-50 border-b border-red-100 px-5 py-2.5">
+              <p className="text-xs text-red-600 flex items-start gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                <span><span className="font-bold">Price Alert:</span> If available seats drop below 5, the price may increase by up to 25%.</span>
               </p>
             </div>
-            {/* Scrollable dates */}
-            <div className="flex-1 overflow-y-auto p-5">
+            {/* Year */}
+            <div className="px-5 pt-4">
+              <div className="inline-flex items-center gap-2 text-sm">
+                <span className="text-gray-500">Select Year:</span>
+                <span className="inline-flex items-center gap-1.5 border border-orange-300 text-orange-600 font-bold px-3 py-1 rounded-lg">
+                  <Calendar className="w-3.5 h-3.5" /> {departureYear}
+                </span>
+              </div>
+            </div>
+            {/* Scrollable month sections */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
               {Object.entries(byMonth).map(([month, dates]) => (
-                <div key={month} className="mb-5 last:mb-0">
-                  <p className="text-xs font-bold text-gray-500 mb-3">{month}</p>
-                  <div className="grid grid-cols-3 gap-2.5">
+                <div key={month}>
+                  <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-orange-500" />{month}
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {dates.map((d, i) => {
-                      const s = seatsFor(d)
+                      const { total, ns, vus, soldOut } = seatInfo(d)
                       const isSelected = selectedDate?.getTime() === d.getTime()
-                      const isLow = s <= 5
                       return (
-                        <button key={i} type="button"
+                        <button key={i} type="button" disabled={soldOut}
                           onClick={() => { setSelectedDate(d); setShowDatePicker(false) }}
-                          className={`p-3 rounded-xl border text-center transition-all ${
+                          className={`p-3 rounded-xl border-2 text-center transition-all ${
                             isSelected
-                              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                              : isLow
-                              ? 'border-red-200 bg-red-50 hover:border-red-400'
-                              : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50'
+                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
+                              : soldOut
+                              ? 'border-red-100 bg-red-50/50 opacity-70 cursor-not-allowed'
+                              : 'border-green-300 hover:border-green-500 hover:bg-green-50'
                           }`}>
-                          <p className={`text-sm font-bold ${isSelected ? 'text-primary-700' : isLow ? 'text-red-600' : 'text-gray-800'}`}>
-                            {fmtDate(d)}
+                          <p className={`text-sm font-bold mb-1.5 ${soldOut ? 'text-red-400' : 'text-gray-800'}`}>
+                            {d.getDate()}-{shortMonth(d)}
                           </p>
-                          <p className={`text-[10px] mt-1 ${isLow ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
-                            {s} seats
+                          <div className="flex items-center justify-center gap-1 mb-1.5">
+                            <span className="bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">NS : {ns}</span>
+                            <span className="bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">VUS : {vus}</span>
+                          </div>
+                          <p className={`text-[10px] font-semibold ${soldOut ? 'text-red-500' : 'text-green-600'}`}>
+                            {soldOut ? 'Sold Out' : `${total} Seats Available`}
                           </p>
                         </button>
                       )
