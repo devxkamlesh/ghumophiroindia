@@ -36,8 +36,8 @@ export default function PopularDestinations({ locations = [] }: Props) {
           </h2>
         </div>
 
-        {/* Overlapping Cards Container (440:630 aspect ratio, infinite loop, progressive scale) */}
-        <div className="relative mx-auto flex h-[580px] items-center justify-center overflow-hidden px-2 md:h-[680px] md:px-4">{popularStates.map((state, index) => {
+        {/* Overlapping Cards Container (landscape aspect ratio, infinite loop, progressive scale) */}
+        <div className="relative mx-auto flex h-[420px] items-center justify-center overflow-hidden px-2 md:h-[480px] md:px-4">{popularStates.map((state, index) => {
             // Calculate offset with wrap-around for infinite loop
             let offset = index - activeIndex
             const halfLength = Math.floor(popularStates.length / 2)
@@ -59,8 +59,8 @@ export default function PopularDestinations({ locations = [] }: Props) {
             else if (absOffset === 2) scale = 0.75
             else if (absOffset > 2) scale = 0.5
 
-            // Horizontal position - tighter spacing
-            const xOffset = offset * (absOffset === 2 ? 180 : 200)
+            // Horizontal position - wider spread for landscape cards
+            const xOffset = offset * (absOffset === 2 ? 240 : 280)
             
             const zIndex = 10 - absOffset
             const opacity = isVisible ? 1 : 0
@@ -126,9 +126,9 @@ function DestinationCard({ state, isFocused }: { state: LocationNode; isFocused:
 
   return (
     <div
-      className="relative w-[340px] overflow-hidden rounded-3xl shadow-2xl transition-shadow duration-500 md:w-[440px]"
+      className="relative w-[420px] overflow-hidden rounded-3xl shadow-2xl transition-shadow duration-500 md:w-[520px]"
       style={{
-        aspectRatio: '440 / 630',
+        aspectRatio: '16 / 10',
         boxShadow: isFocused
           ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
           : '0 10px 30px -5px rgba(0, 0, 0, 0.3)',
