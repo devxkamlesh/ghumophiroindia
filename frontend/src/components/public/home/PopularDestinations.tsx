@@ -28,7 +28,7 @@ export default function PopularDestinations({ locations = [] }: Props) {
     <section className="relative overflow-hidden bg-white py-12 md:py-16">
       <div className="container-custom">{/* Heading */}
         <div className="mb-12 text-center md:mb-14">
-          <p className="font-montez text-3xl text-[#f97316] md:text-4xl">
+          <p className="font-montez text-4xl text-[#f97316] md:text-5xl lg:text-6xl">
             Top Destination
           </p>
           <h2 className="mt-1 font-poppins text-3xl font-bold text-slate-800 md:text-5xl">
