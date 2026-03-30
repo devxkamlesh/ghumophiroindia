@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Playfair_Display, Jost, Dancing_Script, Montez } from 'next/font/google'
+import { Inter, Playfair_Display, Jost, Dancing_Script, Montez, Merriweather_Sans } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({
@@ -33,6 +33,13 @@ const montez = Montez({
   display: 'swap',
 })
 
+const merriweatherSans = Merriweather_Sans({
+  weight: ['300', '400', '500', '600', '700', '800'],
+  subsets: ['latin'],
+  variable: '--font-merriweather-sans',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'Ghumo Phiro India - Custom Tours from Jaipur | Explore Rajasthan',
   description: 'Discover the magic of Rajasthan with custom tours from Jaipur. Golden Triangle, city tours, and personalized itineraries across India.',
@@ -51,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} ${jost.variable} ${dancingScript.variable} ${montez.variable}`}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable} ${jost.variable} ${dancingScript.variable} ${montez.variable} ${merriweatherSans.variable}`}>
       <body className="font-sans">
         {children}
       </body>

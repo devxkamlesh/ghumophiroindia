@@ -25,10 +25,9 @@ export default function PopularDestinations({ locations = [] }: Props) {
   }
 
   return (
-    <section className="relative overflow-hidden bg-white py-16 md:py-20">
-      <div className="container-custom">
-        {/* Heading */}
-        <div className="mb-16 text-center">
+    <section className="relative overflow-hidden bg-white py-12 md:py-16">
+      <div className="container-custom">{/* Heading */}
+        <div className="mb-12 text-center md:mb-14">
           <p className="font-montez text-3xl text-[#f97316] md:text-4xl">
             Top Destination
           </p>
@@ -38,8 +37,7 @@ export default function PopularDestinations({ locations = [] }: Props) {
         </div>
 
         {/* Overlapping Cards Container (440:630 aspect ratio, infinite loop, progressive scale) */}
-        <div className="relative mx-auto flex h-[580px] items-center justify-center overflow-hidden px-4 md:h-[680px]">
-          {popularStates.map((state, index) => {
+        <div className="relative mx-auto flex h-[580px] items-center justify-center overflow-hidden px-2 md:h-[680px] md:px-4">{popularStates.map((state, index) => {
             // Calculate offset with wrap-around for infinite loop
             let offset = index - activeIndex
             const halfLength = Math.floor(popularStates.length / 2)
@@ -55,18 +53,18 @@ export default function PopularDestinations({ locations = [] }: Props) {
             const absOffset = Math.abs(offset)
             const isVisible = absOffset <= 2
 
-            // Progressive scale: center 100%, ±1 is 85%, ±2 is 65%
+            // Progressive scale: center 100%, ±1 is 92%, ±2 is 75%
             let scale = 1
-            if (absOffset === 1) scale = 0.85
-            else if (absOffset === 2) scale = 0.65
+            if (absOffset === 1) scale = 0.92
+            else if (absOffset === 2) scale = 0.75
             else if (absOffset > 2) scale = 0.5
 
-            // Horizontal position - with gap between cards
-            const xOffset = offset * (absOffset === 2 ? 200 : 220)
+            // Horizontal position - tighter spacing
+            const xOffset = offset * (absOffset === 2 ? 180 : 200)
             
             const zIndex = 10 - absOffset
             const opacity = isVisible ? 1 : 0
-            const blur = isFocused ? 0 : absOffset === 1 ? 2 : 4
+            const blur = isFocused ? 0 : absOffset === 1 ? 1.5 : 3
 
             return (
               <motion.div
@@ -128,7 +126,7 @@ function DestinationCard({ state, isFocused }: { state: LocationNode; isFocused:
 
   return (
     <div
-      className="relative w-[320px] overflow-hidden rounded-3xl shadow-2xl transition-shadow duration-500 md:w-[400px]"
+      className="relative w-[340px] overflow-hidden rounded-3xl shadow-2xl transition-shadow duration-500 md:w-[440px]"
       style={{
         aspectRatio: '440 / 630',
         boxShadow: isFocused
@@ -147,11 +145,11 @@ function DestinationCard({ state, isFocused }: { state: LocationNode; isFocused:
 
       {/* Content at bottom - left aligned with button on right */}
       <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-6">
-        <div className="text-left flex-1 min-w-0">
-          <h3 className="text-xl font-bold text-white drop-shadow-lg leading-tight md:text-2xl">
+        <div className="min-w-0 flex-1 text-left">
+          <h3 className="font-merriweather text-xl font-bold leading-tight text-white drop-shadow-lg md:text-2xl">
             {state.name}
           </h3>
-          <p className="mt-1 text-xs font-medium text-white/90 md:text-sm">
+          <p className="mt-1 font-merriweather text-xs font-medium text-white/90 md:text-sm">
             {tourCount} Package{tourCount !== 1 ? 's' : ''}
           </p>
         </div>
