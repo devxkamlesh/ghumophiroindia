@@ -48,6 +48,7 @@ const config: Config = {
         script: ['var(--font-dancing)', 'cursive'],
         montez: ['var(--font-montez)', 'cursive'],
         merriweather: ['var(--font-merriweather-sans)', 'sans-serif'],
+        poppins: ['var(--font-poppins)', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.6s ease-out',

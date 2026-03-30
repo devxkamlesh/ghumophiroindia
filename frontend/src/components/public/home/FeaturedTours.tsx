@@ -30,7 +30,7 @@ export default function FeaturedTours({ tours }: Props) {
           <p className="font-montez text-3xl text-[#f97316] md:text-4xl">
             Best Place For You
           </p>
-          <h2 className="mt-1 text-3xl font-extrabold text-slate-800 md:text-5xl">
+          <h2 className="mt-1 font-poppins text-3xl font-bold text-slate-800 md:text-5xl">
             Most <span className="text-blue-600">Popular</span> Tour
           </h2>
           <p className="mx-auto mt-4 max-w-3xl text-sm text-gray-600 md:text-base">

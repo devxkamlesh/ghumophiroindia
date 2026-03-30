@@ -31,13 +31,13 @@ export default function PopularDestinations({ locations = [] }: Props) {
           <p className="font-montez text-3xl text-[#f97316] md:text-4xl">
             Top Destination
           </p>
-          <h2 className="mt-1 text-3xl font-extrabold text-slate-800 md:text-5xl">
+          <h2 className="mt-1 font-poppins text-3xl font-bold text-slate-800 md:text-5xl">
             Popular Destination
           </h2>
         </div>
 
-        {/* Overlapping Cards Container (landscape aspect ratio, infinite loop, progressive scale) */}
-        <div className="relative mx-auto flex h-[450px] items-center justify-center overflow-hidden px-1 md:h-[520px] md:px-2">{popularStates.map((state, index) => {
+        {/* Overlapping Cards Container (440:630 aspect ratio, infinite loop, progressive scale) */}
+        <div className="relative mx-auto flex h-[580px] items-center justify-center overflow-hidden px-2 md:h-[680px] md:px-4">{popularStates.map((state, index) => {
             // Calculate offset with wrap-around for infinite loop
             let offset = index - activeIndex
             const halfLength = Math.floor(popularStates.length / 2)
@@ -59,8 +59,8 @@ export default function PopularDestinations({ locations = [] }: Props) {
             else if (absOffset === 2) scale = 0.75
             else if (absOffset > 2) scale = 0.5
 
-            // Horizontal position - tighter spacing to fill viewport
-            const xOffset = offset * (absOffset === 2 ? 200 : 230)
+            // Horizontal position - with gap between cards
+            const xOffset = offset * (absOffset === 2 ? 210 : 240)
             
             const zIndex = 10 - absOffset
             const opacity = isVisible ? 1 : 0
@@ -126,9 +126,9 @@ function DestinationCard({ state, isFocused }: { state: LocationNode; isFocused:
 
   return (
     <div
-      className="relative w-[450px] overflow-hidden rounded-3xl shadow-2xl transition-shadow duration-500 md:w-[560px]"
+      className="relative w-[340px] overflow-hidden rounded-3xl shadow-2xl transition-shadow duration-500 md:w-[440px]"
       style={{
-        aspectRatio: '16 / 10',
+        aspectRatio: '440 / 630',
         boxShadow: isFocused
           ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
           : '0 10px 30px -5px rgba(0, 0, 0, 0.3)',

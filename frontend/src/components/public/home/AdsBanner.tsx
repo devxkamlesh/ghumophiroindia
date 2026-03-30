@@ -67,7 +67,7 @@ export default function AdsBanner() {
           <p className="font-montez text-4xl text-[#f97316] md:text-5xl lg:text-6xl">
             Wonderful Place For You
           </p>
-          <h2 className="mt-1 font-merriweather text-3xl font-extrabold text-slate-800 md:text-5xl">
+          <h2 className="mt-1 font-poppins text-3xl font-bold text-slate-800 md:text-5xl">
             Tour Categories
           </h2>
         </motion.div>

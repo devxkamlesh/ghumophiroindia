@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Playfair_Display, Jost, Dancing_Script, Montez, Merriweather_Sans } from 'next/font/google'
+import { Inter, Playfair_Display, Jost, Dancing_Script, Montez, Merriweather_Sans, Poppins } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({
@@ -40,6 +40,13 @@ const merriweatherSans = Merriweather_Sans({
   display: 'swap',
 })
 
+const poppins = Poppins({
+  weight: ['400', '500', '600', '700', '800', '900'],
+  subsets: ['latin'],
+  variable: '--font-poppins',
+  display: 'swap',
+})
+
 export const metadata: Metadata = {
   title: 'Ghumo Phiro India - Custom Tours from Jaipur | Explore Rajasthan',
   description: 'Discover the magic of Rajasthan with custom tours from Jaipur. Golden Triangle, city tours, and personalized itineraries across India.',
@@ -58,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} ${jost.variable} ${dancingScript.variable} ${montez.variable} ${merriweatherSans.variable}`}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable} ${jost.variable} ${dancingScript.variable} ${montez.variable} ${merriweatherSans.variable} ${poppins.variable}`}>
       <body className="font-sans">
         {children}
       </body>
