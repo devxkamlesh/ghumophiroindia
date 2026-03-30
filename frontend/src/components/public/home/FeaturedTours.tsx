@@ -48,9 +48,10 @@ export default function FeaturedTours({ tours }: Props) {
             )
             const price = priceNum(tour.price)
 
-            // Get start/end locations from tour locations
-            const startLocation = tour.tourLocations?.[0]?.name || 'Delhi'
-            const endLocation = tour.tourLocations?.[tour.tourLocations.length - 1]?.name || 'Delhi'
+            // Get start/end locations from destinations array
+            const destinations = tour.destinations || []
+            const startLocation = destinations[0] || 'Delhi'
+            const endLocation = destinations[destinations.length - 1] || 'Delhi'
             const locationText = startLocation === endLocation 
               ? `${startLocation} To ${endLocation}` 
               : `${startLocation} - ${endLocation}`
