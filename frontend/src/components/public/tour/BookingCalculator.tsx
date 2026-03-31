@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { Calendar, Phone, Plus, X, ChevronDown } from 'lucide-react'
+import { Calendar, Phone, Plus, X, ChevronDown, Hotel, Info } from 'lucide-react'
 import type { Tour } from '@/types'
 
 // Portal for modals
@@ -52,6 +52,44 @@ function priceNum(p: string | number | null | undefined) {
 interface Props {
   tour: Tour
   onBook: (data: any) => void
+}
+
+// Traveler Counter Component
+function TravelerCounter({ label, sublabel, value, onChange, min = 0 }: {
+  label: string
+  sublabel: string
+  value: number
+  onChange: (val: number) => void
+  min?: number
+}) {
+  return (
+    <div>
+      <div className="text-[10px] text-gray-600 font-medium mb-1">
+        <span className="font-bold">{label}</span>
+        <span className="text-gray-400 ml-1">{sublabel}</span>
+      </div>
+      <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <button
+          type="button"
+          onClick={() => onChange(value - 1)}
+          disabled={value <= min}
+          className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+        >
+          <span className="text-gray-700 font-bold">−</span>
+        </button>
+        <span className="flex-1 text-center text-sm font-bold text-gray-900">
+          {value}
+        </span>
+        <button
+          type="button"
+          onClick={() => onChange(value + 1)}
+          className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+        >
+          <span className="text-gray-700 font-bold">+</span>
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default function BookingCalculator({ tour, onBook }: Props) {
@@ -150,11 +188,11 @@ export default function BookingCalculator({ tour, onBook }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Tour Type Selection */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-        <label className="block text-sm font-bold text-gray-900 mb-3">Tour Type</label>
-        <div className="grid grid-cols-3 gap-2">
+    <div className="space-y-3">
+      {/* Tour Type Selection - Compact Pills */}
+      <div className="bg-gradient-to-br from-primary-50 to-orange-50 rounded-2xl border border-primary-100 p-4 shadow-sm">
+        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Tour Type</label>
+        <div className="flex gap-2">
           {TOUR_TYPES.map(type => {
             const isSelected = tourType === type.key
             return (
@@ -162,16 +200,16 @@ export default function BookingCalculator({ tour, onBook }: Props) {
                 key={type.key}
                 type="button"
                 onClick={() => setTourType(type.key)}
-                className={`p-3 rounded-xl border-2 transition-all ${
+                className={`flex-1 p-2.5 rounded-xl border-2 transition-all text-center ${
                   isSelected
-                    ? 'border-primary-600 bg-primary-50 shadow-sm'
-                    : 'border-gray-200 hover:border-primary-300'
+                    ? 'border-primary-600 bg-white shadow-md scale-105'
+                    : 'border-transparent bg-white/60 hover:bg-white/80'
                 }`}
               >
-                <p className={`text-xs font-bold mb-0.5 ${isSelected ? 'text-primary-700' : 'text-gray-700'}`}>
+                <p className={`text-xs font-bold ${isSelected ? 'text-primary-700' : 'text-gray-600'}`}>
                   {type.label}
                 </p>
-                <p className={`text-[10px] ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}>
+                <p className={`text-[9px] mt-0.5 ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}>
                   {type.description}
                 </p>
               </button>
@@ -180,243 +218,183 @@ export default function BookingCalculator({ tour, onBook }: Props) {
         </div>
       </div>
 
-      {/* Traveller Details - Multiple Rooms */}
+      {/* Traveller Details - Card Style */}
       <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-bold text-gray-900">Traveller Details</label>
+          <div>
+            <label className="text-sm font-bold text-gray-900">Traveller Details</label>
+            <p className="text-[10px] text-gray-500 mt-0.5">{rooms.length} {rooms.length === 1 ? 'Room' : 'Rooms'} • {totalTravelers} Travelers</p>
+          </div>
           {rooms.length < 3 && (
             <button
               type="button"
               onClick={addRoom}
-              className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1"
+              className="flex items-center gap-1 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-lg text-xs font-semibold transition-colors"
             >
-              <Plus className="w-3.5 h-3.5" /> Add Room
+              <Plus className="w-3 h-3" /> Room
             </button>
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {rooms.map((room, index) => (
-            <div key={index} className="border border-gray-100 rounded-xl p-3">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-bold text-gray-700">Room {index + 1}</span>
+            <div key={index} className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-700 bg-primary-50 px-2 py-1 rounded-lg">
+                  <Hotel className="w-3 h-3" />
+                  Room {index + 1}
+                </span>
                 {rooms.length > 1 && (
                   <button
                     type="button"
                     onClick={() => removeRoom(index)}
-                    className="text-red-500 hover:text-red-600"
+                    className="p-1 hover:bg-red-50 rounded-lg transition-colors group"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500" />
                   </button>
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 {/* Adults */}
-                <div>
-                  <label className="text-[10px] text-gray-500 font-medium mb-1 block">
-                    Adult (12+ yrs)
-                  </label>
-                  <div className="flex items-center border border-gray-200 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => updateRoom(index, 'adults', room.adults - 1)}
-                      disabled={room.adults <= 1}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <span className="text-gray-700 font-bold text-sm">−</span>
-                    </button>
-                    <span className="flex-1 text-center text-xs font-bold text-gray-900">
-                      {room.adults}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateRoom(index, 'adults', room.adults + 1)}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"
-                    >
-                      <span className="text-gray-700 font-bold text-sm">+</span>
-                    </button>
-                  </div>
-                </div>
+                <TravelerCounter
+                  label="Adult"
+                  sublabel="12+ yrs"
+                  value={room.adults}
+                  onChange={(val) => updateRoom(index, 'adults', val)}
+                  min={1}
+                />
 
                 {/* Children with bed */}
-                <div>
-                  <label className="text-[10px] text-gray-500 font-medium mb-1 block">
-                    Child (With bed)
-                  </label>
-                  <div className="flex items-center border border-gray-200 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => updateRoom(index, 'childrenWithBed', room.childrenWithBed - 1)}
-                      disabled={room.childrenWithBed <= 0}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <span className="text-gray-700 font-bold text-sm">−</span>
-                    </button>
-                    <span className="flex-1 text-center text-xs font-bold text-gray-900">
-                      {room.childrenWithBed}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateRoom(index, 'childrenWithBed', room.childrenWithBed + 1)}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"
-                    >
-                      <span className="text-gray-700 font-bold text-sm">+</span>
-                    </button>
-                  </div>
-                </div>
+                <TravelerCounter
+                  label="Child+"
+                  sublabel="With bed"
+                  value={room.childrenWithBed}
+                  onChange={(val) => updateRoom(index, 'childrenWithBed', val)}
+                  min={0}
+                />
 
                 {/* Children without bed */}
-                <div>
-                  <label className="text-[10px] text-gray-500 font-medium mb-1 block">
-                    Child (Without bed)
-                  </label>
-                  <div className="flex items-center border border-gray-200 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => updateRoom(index, 'childrenWithoutBed', room.childrenWithoutBed - 1)}
-                      disabled={room.childrenWithoutBed <= 0}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <span className="text-gray-700 font-bold text-sm">−</span>
-                    </button>
-                    <span className="flex-1 text-center text-xs font-bold text-gray-900">
-                      {room.childrenWithoutBed}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateRoom(index, 'childrenWithoutBed', room.childrenWithoutBed + 1)}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"
-                    >
-                      <span className="text-gray-700 font-bold text-sm">+</span>
-                    </button>
-                  </div>
-                </div>
+                <TravelerCounter
+                  label="Child"
+                  sublabel="No bed"
+                  value={room.childrenWithoutBed}
+                  onChange={(val) => updateRoom(index, 'childrenWithoutBed', val)}
+                  min={0}
+                />
 
                 {/* Infants */}
-                <div>
-                  <label className="text-[10px] text-gray-500 font-medium mb-1 block">
-                    Infant (0-2 yrs)
-                  </label>
-                  <div className="flex items-center border border-gray-200 rounded-lg">
-                    <button
-                      type="button"
-                      onClick={() => updateRoom(index, 'infants', room.infants - 1)}
-                      disabled={room.infants <= 0}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-                    >
-                      <span className="text-gray-700 font-bold text-sm">−</span>
-                    </button>
-                    <span className="flex-1 text-center text-xs font-bold text-gray-900">
-                      {room.infants}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateRoom(index, 'infants', room.infants + 1)}
-                      className="w-7 h-7 flex items-center justify-center hover:bg-gray-50"
-                    >
-                      <span className="text-gray-700 font-bold text-sm">+</span>
-                    </button>
-                  </div>
-                </div>
+                <TravelerCounter
+                  label="Infant"
+                  sublabel="0-2 yrs"
+                  value={room.infants}
+                  onChange={(val) => updateRoom(index, 'infants', val)}
+                  min={0}
+                />
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Date of Travel */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-        <label className="block text-sm font-bold text-gray-900 mb-2">Select Departure Date</label>
+      {/* Date of Travel - Prominent */}
+      <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl border border-orange-200 p-4 shadow-sm">
+        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">
+          <Calendar className="w-3 h-3 inline mr-1" />
+          Departure Date
+        </label>
         <button
           type="button"
           onClick={() => setShowDatePicker(true)}
-          className="w-full flex items-center justify-between px-3 py-2.5 border-2 border-gray-300 rounded-xl hover:border-primary-500 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 bg-white border-2 border-orange-300 rounded-xl hover:border-orange-400 transition-all group"
         >
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">
-              {selectedDate ? fmtDate(selectedDate) : 'Choose date'}
+            <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+              <Calendar className="w-4 h-4 text-orange-600" />
+            </div>
+            <span className="text-sm font-bold text-gray-900">
+              {selectedDate ? fmtDate(selectedDate) : 'Select date'}
             </span>
           </div>
-          <ChevronDown className="w-4 h-4 text-gray-400" />
+          <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-orange-600 transition-colors" />
         </button>
       </div>
 
-      {/* Contact Details */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-3">
-        <label className="block text-sm font-bold text-gray-900">Contact Details</label>
+      {/* Contact Details - Clean Input */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-3">
+          <Phone className="w-3 h-3 inline mr-1" />
+          Contact Details
+        </label>
         
-        <div>
-          <label className="text-[10px] text-gray-500 font-medium mb-1 block">Mobile No.</label>
+        <div className="space-y-2">
           <input
             type="tel"
             value={mobile}
             onChange={(e) => setMobile(e.target.value)}
-            placeholder="Enter mobile number"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            placeholder="Mobile number"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm font-medium placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
           />
-        </div>
 
-        <div>
-          <label className="text-[10px] text-gray-500 font-medium mb-1 block">Email ID</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter email address"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            placeholder="Email address"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm font-medium placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
           />
         </div>
 
-        <p className="text-[10px] text-gray-400 leading-relaxed">
-          Your booking details will be sent on these contact details.
+        <p className="text-[9px] text-gray-400 leading-relaxed mt-2 flex items-start gap-1">
+          <Info className="w-2.5 h-2.5 flex-shrink-0 mt-0.5" />
+          <span>Booking details will be sent to these contacts</span>
         </p>
       </div>
 
-      {/* Terms & Price */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-4">
-        <div className="flex items-start gap-2">
+      {/* Price Summary & CTA - Sticky Bottom */}
+      <div className="bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl p-4 shadow-lg">
+        {/* Price Display */}
+        <div className="mb-3">
+          <div className="flex items-baseline justify-between text-white mb-1">
+            <span className="text-xs font-medium opacity-90">Total Price</span>
+            <span className="text-xs opacity-75">{totalTravelers} travelers</span>
+          </div>
+          <div className="flex items-baseline justify-between">
+            <span className="text-3xl font-bold text-white">
+              ₹{totalPrice.toLocaleString('en-IN')}
+            </span>
+            <span className="text-xs text-white/70 font-medium">per group</span>
+          </div>
+        </div>
+
+        {/* Terms Checkbox */}
+        <label className="flex items-start gap-2 mb-3 cursor-pointer group">
           <input
             type="checkbox"
-            id="terms"
             checked={acceptedTerms}
             onChange={(e) => setAcceptedTerms(e.target.checked)}
-            className="w-4 h-4 mt-0.5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+            className="w-4 h-4 mt-0.5 text-white border-white/30 rounded bg-white/10 focus:ring-white focus:ring-offset-0"
           />
-          <label htmlFor="terms" className="text-[10px] text-gray-600 leading-relaxed">
+          <span className="text-[10px] text-white/90 leading-relaxed">
             I accept the{' '}
-            <Link href="/privacy-policy" className="text-primary-600 hover:underline">
+            <Link href="/privacy-policy" className="underline hover:text-white font-medium">
               Privacy Policy
             </Link>{' '}
             &{' '}
-            <Link href="/terms" className="text-primary-600 hover:underline">
-              Terms & Conditions
+            <Link href="/terms" className="underline hover:text-white font-medium">
+              Terms
             </Link>
-          </label>
-        </div>
+          </span>
+        </label>
 
-        {/* Total Price Display */}
-        <div className="border-t border-gray-100 pt-3">
-          <div className="flex items-baseline justify-between mb-1">
-            <span className="text-xs text-gray-500">Total Travelers:</span>
-            <span className="text-sm font-bold text-gray-900">{totalTravelers}</span>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm font-bold text-gray-900">Package Price:</span>
-            <span className="text-2xl font-bold text-primary-600">
-              ₹{totalPrice.toLocaleString('en-IN')}
-            </span>
-          </div>
-        </div>
-
+        {/* CTA Button */}
         <button
           type="button"
           onClick={handleCalculatePrice}
           disabled={!acceptedTerms || !selectedDate || !mobile || !email}
-          className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 rounded-xl text-sm font-bold transition-colors shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+          className="w-full bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-primary-700 py-3.5 rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 group"
         >
-          <Phone className="w-4 h-4" />
+          <Phone className="w-4 h-4 group-hover:rotate-12 transition-transform" />
           Request CallBack
         </button>
       </div>
