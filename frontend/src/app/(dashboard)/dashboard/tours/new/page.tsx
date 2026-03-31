@@ -107,8 +107,8 @@ ${locationList}
    - Be comprehensive and specific
    - Categories: Accommodation, Meals, Transport, Guides, Activities, Permits
    - Examples:
-     • "4-star hotel accommodation (double occupancy) for ${duration-1} nights"
-     • "Daily breakfast and ${Math.floor(duration/2)} dinners"
+     • "4-star hotel accommodation (double occupancy) for X nights"
+     • "Daily breakfast and dinners"
      • "AC vehicle (sedan/SUV/tempo traveler based on group)"
      • "Professional English-speaking tour guide"
      • "All monument entry fees and parking charges"
