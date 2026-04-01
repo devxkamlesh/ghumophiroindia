@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { Loader2, Navigation } from 'lucide-react'
+import { Loader2, MapPin, Flag, Route } from 'lucide-react'
 import type { LocationNode } from '@/types'
 
 interface Props {
@@ -13,33 +13,42 @@ interface Props {
 
 // Segment colors for routes A→B, B→C, C→D, etc.
 const SEGMENT_COLORS = [
-  '#facc15', // yellow-400
+  '#f97316', // orange-500
   '#22c55e', // green-500
   '#3b82f6', // blue-500
   '#a855f7', // purple-500
   '#ec4899', // pink-500
-  '#f97316', // orange-500
   '#14b8a6', // teal-500
+  '#eab308', // yellow-500
   '#ef4444', // red-500
 ]
 
-// Fetch route segment between two points
-async function fetchRouteSegment(from: [number, number], to: [number, number]): Promise<[number, number][]> {
+const START_COLOR = '#10b981' // emerald-500
+const END_COLOR = '#ef4444'   // red-500
+
+// Fetch route segment between two points; returns geometry + distance (meters)
+async function fetchRouteSegment(
+  from: [number, number],
+  to: [number, number]
+): Promise<{ coords: [number, number][]; distance: number }> {
   try {
     const coordsStr = `${from[0]},${from[1]};${to[0]},${to[1]}`
     const url = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`
-    
+
     const res = await fetch(url)
     if (!res.ok) throw new Error('Route fetch failed')
-    
+
     const data = await res.json()
     if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
-      return data.routes[0].geometry.coordinates as [number, number][]
+      return {
+        coords: data.routes[0].geometry.coordinates as [number, number][],
+        distance: Number(data.routes[0].distance) || 0,
+      }
     }
-    return [from, to] // Fallback to straight line
+    return { coords: [from, to], distance: 0 }
   } catch (err) {
     console.warn('OSRM routing failed, using direct path:', err)
-    return [from, to]
+    return { coords: [from, to], distance: 0 }
   }
 }
 
@@ -48,6 +57,7 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
   const mapRef = useRef<maplibregl.Map | null>(null)
   const [loading, setLoading] = useState(true)
   const [routeLoading, setRouteLoading] = useState(false)
+  const [totalKm, setTotalKm] = useState(0)
 
   const valid = locations.filter(l => l.lat && l.lng && !isNaN(Number(l.lat)) && !isNaN(Number(l.lng)))
 
@@ -61,14 +71,19 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
       style: {
         version: 8,
         sources: {
-          osm: {
+          carto: {
             type: 'raster',
-            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+            tiles: [
+              'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+              'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+              'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+            ],
             tileSize: 256,
-            attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+            attribution:
+              '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> · © <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
           },
         },
-        layers: [{ id: 'osm', type: 'raster', source: 'osm', minzoom: 0, maxzoom: 19 }],
+        layers: [{ id: 'carto', type: 'raster', source: 'carto', minzoom: 0, maxzoom: 20 }],
       },
       center,
       zoom: 6,
@@ -86,18 +101,19 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
 
       // Fetch route segments with different colors
       setRouteLoading(true)
-      
+      let distanceMeters = 0
+
       for (let i = 0; i < coords.length - 1; i++) {
-        const segmentCoords = await fetchRouteSegment(coords[i], coords[i + 1])
+        const segment = await fetchRouteSegment(coords[i], coords[i + 1])
+        distanceMeters += segment.distance
         const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length]
-        
-        // Add each segment as a separate source
+
         m.addSource(`route-segment-${i}`, {
           type: 'geojson',
           data: {
             type: 'Feature',
             properties: {},
-            geometry: { type: 'LineString', coordinates: segmentCoords },
+            geometry: { type: 'LineString', coordinates: segment.coords },
           },
         })
 
@@ -107,11 +123,11 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
           type: 'line',
           source: `route-segment-${i}`,
           layout: { 'line-join': 'round', 'line-cap': 'round' },
-          paint: { 
-            'line-color': color, 
-            'line-width': 12, 
-            'line-opacity': 0.15,
-            'line-blur': 6
+          paint: {
+            'line-color': color,
+            'line-width': 14,
+            'line-opacity': 0.18,
+            'line-blur': 8,
           },
         })
 
@@ -138,36 +154,59 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
             'line-color': '#ffffff',
             'line-width': 1.5,
             'line-dasharray': [3, 3],
-            'line-opacity': 0.8,
+            'line-opacity': 0.85,
           },
         })
       }
-      
+
+      setTotalKm(Math.round(distanceMeters / 1000))
       setRouteLoading(false)
 
-      // ── Simple Markers - Just Location Names ──────────────────────
+      // ── Numbered sequence markers ─────────────────────────────────
       valid.forEach((loc, i) => {
-        const el = document.createElement('div')
-        el.style.cssText = `cursor: pointer;`
+        const isStart = i === 0
+        const isEnd = i === valid.length - 1
+        const color = isStart ? START_COLOR : isEnd ? END_COLOR : SEGMENT_COLORS[i % SEGMENT_COLORS.length]
+        const badge = isStart ? 'Start' : isEnd ? 'End' : `Stop ${i}`
 
-        const color = i === 0 ? '#10b981' : i === valid.length - 1 ? '#ef4444' : SEGMENT_COLORS[i % SEGMENT_COLORS.length]
-        
-        // Simple label only
+        const el = document.createElement('div')
+        el.className = 'route-marker'
+        el.style.animationDelay = `${i * 0.12}s`
+
         el.innerHTML = `
-          <div style="
-            background: white;
-            color: ${color};
-            font-size: 13px;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            border: 2px solid ${color};
-          ">${loc.name}</div>
+          <div style="display:flex; align-items:center; gap:7px;">
+            <div style="
+              position: relative;
+              width: 30px; height: 30px;
+              flex-shrink: 0;
+              background: ${color};
+              border: 3px solid #ffffff;
+              border-radius: 50%;
+              box-shadow: 0 3px 10px rgba(0,0,0,0.28);
+              color: #fff;
+              font-size: 13px;
+              font-weight: 700;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">${i + 1}</div>
+            <div style="
+              display: flex;
+              flex-direction: column;
+              background: #ffffff;
+              border-radius: 8px;
+              padding: 4px 10px;
+              box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+              border-left: 3px solid ${color};
+              line-height: 1.15;
+            ">
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: ${color};">${badge}</span>
+              <span style="font-size: 13px; font-weight: 600; color: #1f2937; white-space: nowrap;">${loc.name}</span>
+            </div>
+          </div>
         `
 
-        new maplibregl.Marker({ element: el, anchor: 'center' })
+        new maplibregl.Marker({ element: el, anchor: 'left' })
           .setLngLat([Number(loc.lng), Number(loc.lat)])
           .addTo(m)
       })
@@ -176,7 +215,7 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
       if (coords.length > 1) {
         const bounds = new maplibregl.LngLatBounds()
         coords.forEach(c => bounds.extend(c))
-        m.fitBounds(bounds, { padding: 80, maxZoom: 10, duration: 1500 })
+        m.fitBounds(bounds, { padding: { top: 90, bottom: 70, left: 90, right: 70 }, maxZoom: 10, duration: 1500 })
       }
     })
 
@@ -188,36 +227,69 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
 
   if (valid.length === 0) return null
 
+  const startName = valid[0]?.name
+  const endName = valid[valid.length - 1]?.name
+
   return (
-    <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl" style={{ height }}>
+    <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl ring-1 ring-black/5" style={{ height }}>
       {loading && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-orange-100">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100">
           <Loader2 className="w-10 h-10 animate-spin text-orange-600 mb-3" />
           <p className="text-sm font-medium text-orange-700">Loading route map...</p>
         </div>
       )}
-      
+
       <div ref={containerRef} className="w-full h-full" />
 
-      {/* Simple Legend */}
-      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-md px-3 py-2 border border-gray-200">
-        <div className="flex items-center gap-3 text-xs font-medium text-gray-600">
-          <span>Route Map</span>
+      {/* Route summary card */}
+      <div className="absolute top-4 left-4 max-w-[280px] bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div className="px-4 py-3">
+          <div className="flex items-center gap-2 mb-2.5">
+            <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-sm">
+              <Route className="w-4 h-4 text-white" />
+            </span>
+            <span className="text-sm font-bold text-gray-900">Tour Route</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
+              <MapPin className="w-3 h-3" /> {startName}
+            </span>
+            <span className="text-gray-300">→</span>
+            <span className="inline-flex items-center gap-1 font-semibold text-red-500">
+              <Flag className="w-3 h-3" /> {endName}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex border-t border-gray-100 divide-x divide-gray-100 text-center">
+          <div className="flex-1 py-2">
+            <div className="text-base font-bold text-gray-900">{valid.length}</div>
+            <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Stops</div>
+          </div>
+          <div className="flex-1 py-2">
+            <div className="text-base font-bold text-gray-900">
+              {routeLoading ? '…' : totalKm > 0 ? `${totalKm}` : '—'}
+            </div>
+            <div className="text-[10px] uppercase tracking-wide text-gray-400 font-medium">Total km</div>
+          </div>
         </div>
       </div>
 
       {routeLoading && (
-        <div className="absolute top-4 right-4 bg-orange-500 text-white px-3 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
+        <div className="absolute bottom-4 left-4 bg-orange-500 text-white px-3 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
           <Loader2 className="w-3 h-3 animate-spin" />
           Calculating route...
         </div>
       )}
 
       <style jsx global>{`
+        .route-marker {
+          animation: markerDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
         @keyframes markerDrop {
-          0%   { transform: translateY(-100px) scale(0); opacity: 0; }
-          60%  { transform: translateY(10px) scale(1.1); opacity: 1; }
-          80%  { transform: translateY(-5px) scale(0.95); }
+          0%   { transform: translateY(-40px) scale(0.6); opacity: 0; }
+          60%  { transform: translateY(4px) scale(1.05); opacity: 1; }
           100% { transform: translateY(0) scale(1); opacity: 1; }
         }
         .maplibregl-ctrl-attrib {

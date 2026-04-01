@@ -30,14 +30,18 @@ export function LocationPicker({ selectedIds, onChange, singleSelect, locations:
   const [loading,  setLoading]  = useState(false)
 
   useEffect(() => {
-    // Only fetch if locations weren't passed as prop
-    if (!propLocations) {
-      setLoading(true)
-      locationAdminService.getAll()
-        .then(setAll)
-        .catch(() => {})
-        .finally(() => setLoading(false))
+    // If locations are passed as a prop, keep internal state in sync
+    // (the prop may load asynchronously and start as an empty array).
+    if (propLocations) {
+      setAll(propLocations)
+      return
     }
+    // Otherwise fetch them ourselves
+    setLoading(true)
+    locationAdminService.getAll()
+      .then(setAll)
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }, [propLocations])
 
   const selected = all.filter(l => selectedIds.includes(l.id))
