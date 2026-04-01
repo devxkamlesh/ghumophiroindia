@@ -58,8 +58,28 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
   const [loading, setLoading] = useState(true)
   const [routeLoading, setRouteLoading] = useState(false)
   const [totalKm, setTotalKm] = useState(0)
+  const [mapActive, setMapActive] = useState(false)
 
   const valid = locations.filter(l => l.lat && l.lng && !isNaN(Number(l.lat)) && !isNaN(Number(l.lng)))
+
+  // Toggle scroll-zoom based on whether user has clicked into the map
+  useEffect(() => {
+    const m = mapRef.current
+    if (!m) return
+    if (mapActive) m.scrollZoom.enable()
+    else m.scrollZoom.disable()
+  }, [mapActive])
+
+  // Click outside the map → deactivate scroll-zoom so page scrolling resumes
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setMapActive(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutside)
+    return () => document.removeEventListener('mousedown', handleOutside)
+  }, [])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current || valid.length === 0) return
@@ -89,6 +109,7 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
       zoom: 6,
       pitchWithRotate: false,
       dragRotate: false,
+      scrollZoom: false, // disabled until user clicks into the map
     })
 
     mapRef.current.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
@@ -169,44 +190,62 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
         const color = isStart ? START_COLOR : isEnd ? END_COLOR : SEGMENT_COLORS[i % SEGMENT_COLORS.length]
         const badge = isStart ? 'Start' : isEnd ? 'End' : `Stop ${i}`
 
+        // Show the label on the left side for end-of-row stops so it
+        // doesn't run off the right edge of the map.
+        const labelOnLeft = i === valid.length - 1
+
         const el = document.createElement('div')
         el.className = 'route-marker'
         el.style.animationDelay = `${i * 0.12}s`
+        // The element itself is exactly the pin circle, so its center
+        // lands precisely on the GPS coordinate. The name label is
+        // absolutely positioned and does not affect the anchor.
+        el.style.cssText += 'position: relative; width: 32px; height: 32px;'
+
+        const labelPosition = labelOnLeft
+          ? 'right: 40px;'
+          : 'left: 40px;'
 
         el.innerHTML = `
-          <div style="display:flex; align-items:center; gap:7px;">
-            <div style="
-              position: relative;
-              width: 30px; height: 30px;
-              flex-shrink: 0;
-              background: ${color};
-              border: 3px solid #ffffff;
-              border-radius: 50%;
-              box-shadow: 0 3px 10px rgba(0,0,0,0.28);
-              color: #fff;
-              font-size: 13px;
-              font-weight: 700;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            ">${i + 1}</div>
-            <div style="
-              display: flex;
-              flex-direction: column;
-              background: #ffffff;
-              border-radius: 8px;
-              padding: 4px 10px;
-              box-shadow: 0 3px 10px rgba(0,0,0,0.18);
-              border-left: 3px solid ${color};
-              line-height: 1.15;
-            ">
-              <span style="font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: ${color};">${badge}</span>
-              <span style="font-size: 13px; font-weight: 600; color: #1f2937; white-space: nowrap;">${loc.name}</span>
-            </div>
+          <div style="
+            position: absolute;
+            inset: 0;
+            background: ${color};
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.30);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+          ">${i + 1}</div>
+          <div class="marker-label" style="
+            position: absolute;
+            top: 50%;
+            ${labelPosition}
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 4px 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+            border-left: 3px solid ${color};
+            line-height: 1.15;
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease;
+          ">
+            <span style="font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: ${color};">${badge}</span>
+            <span style="font-size: 13px; font-weight: 600; color: #1f2937; white-space: nowrap;">${loc.name}</span>
           </div>
         `
 
-        new maplibregl.Marker({ element: el, anchor: 'left' })
+        new maplibregl.Marker({ element: el, anchor: 'center' })
           .setLngLat([Number(loc.lng), Number(loc.lat)])
           .addTo(m)
       })
@@ -215,7 +254,20 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
       if (coords.length > 1) {
         const bounds = new maplibregl.LngLatBounds()
         coords.forEach(c => bounds.extend(c))
-        m.fitBounds(bounds, { padding: { top: 90, bottom: 70, left: 90, right: 70 }, maxZoom: 10, duration: 1500 })
+        // Reserve space at the top so the summary card (top-left) never
+        // sits on top of the markers. Scaled down on narrow screens.
+        const cw = containerRef.current?.clientWidth ?? 0
+        const compact = cw > 0 && cw < 480
+        m.fitBounds(bounds, {
+          padding: {
+            top: 60,
+            bottom: compact ? 150 : 200,
+            left: 60,
+            right: 60,
+          },
+          maxZoom: 10,
+          duration: 1500,
+        })
       }
     })
 
@@ -231,7 +283,11 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
   const endName = valid[valid.length - 1]?.name
 
   return (
-    <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl ring-1 ring-black/5" style={{ height }}>
+    <div
+      className="relative w-full rounded-3xl overflow-hidden shadow-2xl ring-1 ring-black/5"
+      style={{ height }}
+      onClick={() => setMapActive(true)}
+    >
       {loading && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100">
           <Loader2 className="w-10 h-10 animate-spin text-orange-600 mb-3" />
@@ -239,10 +295,22 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
         </div>
       )}
 
+      {/* Click-to-activate overlay — shown while scroll-zoom is off */}
+      {!mapActive && !loading && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <div className="bg-black/50 backdrop-blur-sm text-white text-sm font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-lg">
+            <svg className="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12l7 7 7-7" />
+            </svg>
+            Click to interact with map
+          </div>
+        </div>
+      )}
+
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Route summary card */}
-      <div className="absolute top-4 left-4 max-w-[280px] bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="absolute bottom-4 left-4 max-w-[280px] bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="px-4 py-3">
           <div className="flex items-center gap-2 mb-2.5">
             <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-sm">
@@ -277,7 +345,7 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
       </div>
 
       {routeLoading && (
-        <div className="absolute bottom-4 left-4 bg-orange-500 text-white px-3 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
+        <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-2 rounded-xl shadow-lg text-xs font-medium flex items-center gap-2">
           <Loader2 className="w-3 h-3 animate-spin" />
           Calculating route...
         </div>
@@ -286,6 +354,13 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
       <style jsx global>{`
         .route-marker {
           animation: markerDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+          cursor: pointer;
+        }
+        .route-marker:hover {
+          z-index: 10 !important;
+        }
+        .route-marker:hover .marker-label {
+          opacity: 1 !important;
         }
         @keyframes markerDrop {
           0%   { transform: translateY(-40px) scale(0.6); opacity: 0; }
