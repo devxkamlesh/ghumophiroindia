@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { Calendar, Phone, Plus, X, ChevronDown, Hotel, Info } from 'lucide-react'
+import { Calendar, Phone, Plus, X, ChevronDown, Info } from 'lucide-react'
 import type { Tour } from '@/types'
 
 // Portal for modals
@@ -22,9 +22,7 @@ const TOUR_TYPES = [
 
 interface RoomData {
   adults: number
-  childrenWithBed: number
-  childrenWithoutBed: number
-  infants: number
+  children: number
 }
 
 function generateDepartures(duration: number) {
@@ -55,13 +53,18 @@ interface Props {
 }
 
 // Traveler Counter Component
-function TravelerCounter({ label, sublabel, value, onChange, min = 0 }: {
+function TravelerCounter({ label, sublabel, value, onChange, min = 0, max = 99, disabled = false }: {
   label: string
   sublabel: string
   value: number
   onChange: (val: number) => void
   min?: number
+  max?: number
+  disabled?: boolean
 }) {
+  const canDecrease = value > min
+  const canIncrease = value < max && !disabled
+
   return (
     <div>
       <div className="text-[10px] text-gray-600 font-medium mb-1">
@@ -71,8 +74,8 @@ function TravelerCounter({ label, sublabel, value, onChange, min = 0 }: {
       <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
         <button
           type="button"
-          onClick={() => onChange(value - 1)}
-          disabled={value <= min}
+          onClick={() => canDecrease && onChange(value - 1)}
+          disabled={!canDecrease}
           className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         >
           <span className="text-gray-700 font-bold">−</span>
@@ -82,8 +85,9 @@ function TravelerCounter({ label, sublabel, value, onChange, min = 0 }: {
         </span>
         <button
           type="button"
-          onClick={() => onChange(value + 1)}
-          className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 transition-colors"
+          onClick={() => canIncrease && onChange(value + 1)}
+          disabled={!canIncrease}
+          className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
         >
           <span className="text-gray-700 font-bold">+</span>
         </button>
@@ -98,59 +102,36 @@ export default function BookingCalculator({ tour, onBook }: Props) {
 
   const [tourType, setTourType] = useState('standard')
   const [selectedDate, setSelectedDate] = useState<Date | null>(departures[0] ?? null)
-  const [rooms, setRooms] = useState<RoomData[]>([
-    { adults: 2, childrenWithBed: 0, childrenWithoutBed: 0, infants: 0 }
-  ])
+  const [adults, setAdults] = useState(2)
+  const [children, setChildren] = useState(0)
   const [mobile, setMobile] = useState('')
   const [email, setEmail] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
 
-  // Add/remove rooms
-  const addRoom = () => {
-    if (rooms.length < 3) {
-      setRooms([...rooms, { adults: 1, childrenWithBed: 0, childrenWithoutBed: 0, infants: 0 }])
-    }
-  }
+  const MAX_TRAVELERS = 4
 
-  const removeRoom = (index: number) => {
-    if (rooms.length > 1) {
-      setRooms(rooms.filter((_, i) => i !== index))
-    }
-  }
+  // Calculate total travelers
+  const totalTravelers = adults + children
 
-  // Update room data
-  const updateRoom = (index: number, field: keyof RoomData, value: number) => {
-    const newRooms = [...rooms]
-    newRooms[index] = { ...newRooms[index], [field]: Math.max(0, value) }
-    setRooms(newRooms)
-  }
+  // Validate max travelers
+  const canAddAdult = totalTravelers < MAX_TRAVELERS
+  const canAddChild = totalTravelers < MAX_TRAVELERS
 
   // Calculate total price
   const calculatePrice = () => {
     const tourMultiplier = TOUR_TYPES.find(t => t.key === tourType)?.multiplier ?? 1.0
-    let total = 0
 
-    rooms.forEach(room => {
-      // Adults: full price
-      total += room.adults * basePrice * tourMultiplier
-      
-      // Children with bed: 80% of adult price
-      total += room.childrenWithBed * basePrice * tourMultiplier * 0.8
-      
-      // Children without bed: 50% of adult price
-      total += room.childrenWithoutBed * basePrice * tourMultiplier * 0.5
-      
-      // Infants: free (no charge)
-    })
+    // Adults: full price
+    const adultTotal = adults * basePrice * tourMultiplier
+    
+    // Children: 70% of adult price
+    const childTotal = children * basePrice * tourMultiplier * 0.7
 
-    return Math.round(total)
+    return Math.round(adultTotal + childTotal)
   }
 
   const totalPrice = calculatePrice()
-  const totalTravelers = rooms.reduce((sum, room) => 
-    sum + room.adults + room.childrenWithBed + room.childrenWithoutBed + room.infants, 0
-  )
 
   // Group departures by month
   const byMonth: Record<string, Date[]> = {}
@@ -218,82 +199,54 @@ export default function BookingCalculator({ tour, onBook }: Props) {
         </div>
       </div>
 
-      {/* Traveller Details - Card Style */}
+      {/* Traveller Details - Simplified */}
       <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <label className="text-sm font-bold text-gray-900">Traveller Details</label>
-            <p className="text-[10px] text-gray-500 mt-0.5">{rooms.length} {rooms.length === 1 ? 'Room' : 'Rooms'} • {totalTravelers} Travelers</p>
-          </div>
-          {rooms.length < 3 && (
-            <button
-              type="button"
-              onClick={addRoom}
-              className="flex items-center gap-1 px-3 py-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 rounded-lg text-xs font-semibold transition-colors"
-            >
-              <Plus className="w-3 h-3" /> Room
-            </button>
-          )}
+        <div className="mb-3">
+          <label className="text-sm font-bold text-gray-900">Traveller Details</label>
+          <p className="text-[10px] text-gray-500 mt-0.5">
+            {totalTravelers} of {MAX_TRAVELERS} travelers
+            {totalTravelers >= MAX_TRAVELERS && (
+              <span className="text-orange-600 font-semibold ml-1">(Max reached)</span>
+            )}
+          </p>
         </div>
 
-        <div className="space-y-2">
-          {rooms.map((room, index) => (
-            <div key={index} className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-700 bg-primary-50 px-2 py-1 rounded-lg">
-                  <Hotel className="w-3 h-3" />
-                  Room {index + 1}
-                </span>
-                {rooms.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeRoom(index)}
-                    className="p-1 hover:bg-red-50 rounded-lg transition-colors group"
-                  >
-                    <X className="w-3.5 h-3.5 text-gray-400 group-hover:text-red-500" />
-                  </button>
-                )}
-              </div>
+        <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-xl p-4">
+          <div className="grid grid-cols-2 gap-3">
+            {/* Adults */}
+            <TravelerCounter
+              label="Adult"
+              sublabel="12+ yrs"
+              value={adults}
+              onChange={(val) => setAdults(val)}
+              min={1}
+              max={MAX_TRAVELERS}
+              disabled={!canAddAdult && adults < MAX_TRAVELERS}
+            />
 
-              <div className="grid grid-cols-2 gap-2">
-                {/* Adults */}
-                <TravelerCounter
-                  label="Adult"
-                  sublabel="12+ yrs"
-                  value={room.adults}
-                  onChange={(val) => updateRoom(index, 'adults', val)}
-                  min={1}
-                />
+            {/* Children */}
+            <TravelerCounter
+              label="Child"
+              sublabel="Below 12 yrs"
+              value={children}
+              onChange={(val) => setChildren(val)}
+              min={0}
+              max={MAX_TRAVELERS - 1}
+              disabled={!canAddChild && children < MAX_TRAVELERS}
+            />
+          </div>
 
-                {/* Children with bed */}
-                <TravelerCounter
-                  label="Child+"
-                  sublabel="With bed"
-                  value={room.childrenWithBed}
-                  onChange={(val) => updateRoom(index, 'childrenWithBed', val)}
-                  min={0}
-                />
-
-                {/* Children without bed */}
-                <TravelerCounter
-                  label="Child"
-                  sublabel="No bed"
-                  value={room.childrenWithoutBed}
-                  onChange={(val) => updateRoom(index, 'childrenWithoutBed', val)}
-                  min={0}
-                />
-
-                {/* Infants */}
-                <TravelerCounter
-                  label="Infant"
-                  sublabel="0-2 yrs"
-                  value={room.infants}
-                  onChange={(val) => updateRoom(index, 'infants', val)}
-                  min={0}
-                />
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">Pricing:</span>
+              <div className="text-right">
+                <p className="text-gray-700">
+                  <span className="font-semibold">Adult:</span> 100% • 
+                  <span className="font-semibold ml-1">Child:</span> 70%
+                </p>
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
