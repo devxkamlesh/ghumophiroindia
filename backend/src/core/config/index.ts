@@ -11,6 +11,7 @@ interface Config {
   database: {
     url: string
     directUrl: string
+    ssl: boolean
   }
   redis: {
     url: string
@@ -57,6 +58,8 @@ const config: Config = {
   database: {
     url: process.env.DATABASE_URL || '',
     directUrl: process.env.DIRECT_URL || '',
+    // SSL on by default (managed hosts like Supabase need it); set DB_SSL=false for self-hosted Postgres without SSL
+    ssl: (process.env.DB_SSL ?? 'true').toLowerCase() !== 'false',
   },
   
   redis: {

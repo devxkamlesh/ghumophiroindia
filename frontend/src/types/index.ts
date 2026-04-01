@@ -101,8 +101,16 @@ export interface Booking {
   customerPhone: string
   customerCountry: string
   numberOfTravelers: number
+  numberOfAdults?: number | null
+  numberOfChildren?: number | null
   startDate: string
   endDate: string
+  departureCity?: string | null
+  roomsCount?: number | null
+  travelGoing?: string | null
+  travelReturn?: string | null
+  addons?: Record<string, number> | null
+  passengers?: Array<{ name?: string; mobile?: string; gender?: string; age?: string; type?: 'adult' | 'child' }> | null
   totalPrice: string
   specialRequests?: string
   status: BookingStatus
@@ -127,6 +135,15 @@ export interface CreateBookingInput {
   numberOfTravelers: number
   startDate: string
   specialRequests?: string
+  // Rich booking selection (optional)
+  numberOfAdults?: number
+  numberOfChildren?: number
+  departureCity?: string
+  roomsCount?: number
+  travelGoing?: string
+  travelReturn?: string
+  addons?: Record<string, number>
+  passengers?: Array<{ name?: string; mobile?: string; gender?: string; age?: string; type?: 'adult' | 'child' }>
 }
 
 // ─── Inquiries ────────────────────────────────────────────────────────────────

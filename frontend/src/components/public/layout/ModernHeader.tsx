@@ -110,25 +110,9 @@ export default function ModernHeader() {
   const [budget, setBudget]       = React.useState('')
   const [groupType, setGroupType] = React.useState('')
   const [scrolled, setScrolled]   = React.useState(false)
-  const [navHidden, setNavHidden] = React.useState(false)
-  const lastScrollY = React.useRef(0)
 
   React.useEffect(() => {
-    const h = () => {
-      const y = window.scrollY
-      setScrolled(y > 8)
-
-      // Auto-hide nav links row based on scroll direction (only the nav row,
-      // not the main bar). Keep visible near the top of the page.
-      if (y < 120) {
-        setNavHidden(false)
-      } else if (y > lastScrollY.current + 6) {
-        setNavHidden(true)   // scrolling down → hide nav links
-      } else if (y < lastScrollY.current - 6) {
-        setNavHidden(false)  // scrolling up → show nav links
-      }
-      lastScrollY.current = y
-    }
+    const h = () => setScrolled(window.scrollY > 8)
     window.addEventListener('scroll', h, { passive: true })
     return () => window.removeEventListener('scroll', h)
   }, [])
@@ -166,7 +150,7 @@ export default function ModernHeader() {
     )}>
 
       {/* ══ ROW 1: Logo · Search pill · Right icons ══ */}
-      <div className="border-b border-gray-100">
+      <div>
         <div className="container-custom px-4 lg:px-6">
           <div className="flex items-center h-[82px] gap-3">
 
@@ -385,11 +369,8 @@ export default function ModernHeader() {
         </div>
       </div>
 
-      {/* ══ ROW 2: Nav links — desktop only (auto-hide on scroll down) ══ */}
-      <div className={cn(
-        'hidden lg:block bg-gradient-to-r from-orange-50/30 to-transparent border-t border-gray-50 transition-all duration-300 ease-in-out',
-        navHidden ? 'max-h-0 opacity-0 border-transparent overflow-hidden' : 'max-h-16 opacity-100 overflow-visible'
-      )}>
+      {/* ══ ROW 2: Nav links — desktop only (always visible) ══ */}
+      <div className="hidden lg:block overflow-visible">
         <div className="container-custom px-4 lg:px-6">
           <div className="flex items-center h-12">
             {/* Left spacer - same width as logo */}
