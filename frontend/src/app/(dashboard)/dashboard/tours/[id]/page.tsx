@@ -11,6 +11,12 @@ import { LocationPicker } from '@/components/dashboard/shared/LocationPicker'
 
 const cls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all'
 
+const MEALS = [
+  { key: 'breakfast', label: 'Breakfast' },
+  { key: 'lunch',     label: 'Lunch' },
+  { key: 'dinner',    label: 'Dinner' },
+]
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-5">
@@ -54,7 +60,7 @@ type FormState = {
   images: string[]; highlights: string[]; included: string[]; excluded: string[]
   destinations: string[]
   locationIds: number[]
-  itinerary: Array<{ day: number; title: string; description: string; activityLocationIds: number[]; locationId: number | null }>
+  itinerary: Array<{ day: number; title: string; description: string; activityLocationIds: number[]; locationId: number | null; meals: string[] }>
   isFeatured: boolean; isActive: boolean
 }
 
@@ -76,8 +82,8 @@ function tourToForm(t: Tour): FormState {
     destinations:    (t.destinations ?? []).length > 0 ? t.destinations : [''],
     locationIds:     t.locationIds ?? [],
     itinerary:       (t.itinerary ?? []).length > 0
-      ? t.itinerary.map(d => ({ ...d, activityLocationIds: d.activityLocationIds ?? [], locationId: d.locationId ?? null }))
-      : [{ day: 1, title: '', description: '', activityLocationIds: [], locationId: null }],
+      ? t.itinerary.map(d => ({ ...d, activityLocationIds: d.activityLocationIds ?? [], locationId: d.locationId ?? null, meals: (d as any).meals ?? [] }))
+      : [{ day: 1, title: '', description: '', activityLocationIds: [], locationId: null, meals: [] }],
     isFeatured: t.isFeatured,
     isActive:   t.isActive,
   }
@@ -151,7 +157,7 @@ export default function EditTourPage() {
     setForm(p => p ? { ...p, itinerary: p.itinerary.map((d, idx) => idx === i ? { ...d, [field]: val } : d) } : p)
 
   const addDay = () =>
-    setForm(p => p ? { ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activityLocationIds: [], locationId: null }] } : p)
+    setForm(p => p ? { ...p, itinerary: [...p.itinerary, { day: p.itinerary.length + 1, title: '', description: '', activityLocationIds: [], locationId: null, meals: [] }] } : p)
 
   const removeDay = (i: number) =>
     setForm(p => p ? { ...p, itinerary: p.itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, day: idx + 1 })) } : p)
@@ -198,6 +204,7 @@ export default function EditTourPage() {
             activities:          d.activityLocationIds
               .map(id => allLocations.find(l => l.id === id)?.name ?? '')
               .filter(Boolean),
+            meals:               d.meals ?? [],
           }))
           .filter(d => d.title.trim()),
         isFeatured: form.isFeatured,
@@ -267,7 +274,7 @@ export default function EditTourPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Price (₹)</label>
-              <input type="number" min="0" step="100" value={form.price} onChange={e => set('price')(parseFloat(e.target.value) || 0)} className={cls} />
+              <input type="number" min="0" step="any" value={form.price} onChange={e => set('price')(parseFloat(e.target.value) || 0)} className={cls} />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Group Size</label>
@@ -370,6 +377,32 @@ export default function EditTourPage() {
                     selectedIds={day.activityLocationIds}
                     onChange={ids => updateDay(i, 'activityLocationIds', ids)}
                   />
+                </div>
+
+                {/* Meals */}
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">🍽 Meals included</p>
+                  <div className="flex flex-wrap gap-2">
+                    {MEALS.map(m => {
+                      const active = (day.meals ?? []).includes(m.key)
+                      return (
+                        <button
+                          key={m.key}
+                          type="button"
+                          onClick={() => updateDay(i, 'meals', active
+                            ? (day.meals ?? []).filter(x => x !== m.key)
+                            : [...(day.meals ?? []), m.key])}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                            active
+                              ? 'bg-primary-50 border-primary-300 text-primary-700'
+                              : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+                          }`}
+                        >
+                          {active ? '✓ ' : ''}{m.label}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             ))}

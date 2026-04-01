@@ -130,6 +130,10 @@ const MEAL_TYPES = [
 ]
 
 function detectMeals(day: Itinerary) {
+  // Prefer explicit meals set by admin; fall back to detecting from text
+  if (day.meals && day.meals.length > 0) {
+    return MEAL_TYPES.filter(m => day.meals!.includes(m.key))
+  }
   const text = [day.title, day.description, ...(day.activities ?? [])].join(' ')
   return MEAL_TYPES.filter(m => m.match.test(text))
 }

@@ -19,6 +19,7 @@ export const createTourSchema = z.object({
     title: z.string().min(1),
     description: z.string().min(1),
     activities: z.array(z.string()).optional().default([]),
+    meals: z.array(z.enum(['breakfast', 'lunch', 'dinner'])).optional().default([]),
     locationId: z.number().int().positive().nullable().optional(),
     activityLocationIds: z.array(z.number().int().positive()).optional().default([]),
   })).min(1, 'At least one day itinerary is required'),
