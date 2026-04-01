@@ -74,8 +74,18 @@ export const bookings = pgTable('bookings', {
   customerPhone:     text('customer_phone').notNull(),
   customerCountry:   text('customer_country').notNull(),
   numberOfTravelers: integer('number_of_travelers').notNull(),
+  numberOfAdults:    integer('number_of_adults'),
+  numberOfChildren:  integer('number_of_children'),
   startDate:         timestamp('start_date').notNull(),
   endDate:           timestamp('end_date').notNull(),
+  departureCity:     text('departure_city'),
+  roomsCount:        integer('rooms_count'),
+  travelGoing:       text('travel_going'),
+  travelReturn:      text('travel_return'),
+  addons:            jsonb('addons').$type<Record<string, number>>(),
+  passengers:        jsonb('passengers').$type<Array<{
+    name?: string; mobile?: string; gender?: string; age?: string; type?: 'adult' | 'child'
+  }>>(),
   totalPrice:        decimal('total_price', { precision: 10, scale: 2 }).notNull(),
   specialRequests:   text('special_requests'),
   status:            text('status').notNull().default('pending'),
