@@ -55,6 +55,79 @@ function ListField({ label, items, onChange, placeholder }: {
 }
 
 // ── AI Import ─────────────────────────────────────────────────────────────────
+// Builds a ready-to-fill JSON template using REAL location ids from the DB
+function buildJsonTemplate(locations: LocationNode[]): string {
+  const cityIds  = locations.filter(l => l.type === 'city').map(l => l.id)
+  const placeIds = locations.filter(l => l.type === 'place').map(l => l.id)
+  const anyIds   = locations.map(l => l.id)
+  const tourIds  = ([...cityIds.slice(0, 2), ...placeIds.slice(0, 3)].length ? [...cityIds.slice(0, 2), ...placeIds.slice(0, 3)] : anyIds.slice(0, 4))
+  const mainId   = cityIds[0] ?? anyIds[0] ?? 1
+  const act1     = placeIds.slice(0, 2).length ? placeIds.slice(0, 2) : anyIds.slice(0, 2)
+  const act2     = placeIds.slice(2, 5).length ? placeIds.slice(2, 5) : anyIds.slice(0, 3)
+
+  const template = {
+    title: 'Royal Rajasthan Heritage Tour – 7 Days from Jaipur',
+    description: 'Explore Jaipur, Jodhpur & Udaipur on a 7-day Rajasthan heritage tour of forts, palaces and culture.',
+    longDescription: 'Paragraph 1 about the tour, destinations and what makes it special.\\n\\nParagraph 2 about who it suits and the best time to visit.',
+    duration: 7,
+    price: 28999,
+    maxGroupSize: 16,
+    difficulty: 'easy',
+    category: 'heritage',
+    isFeatured: false,
+    images: [
+      'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200&q=80',
+      'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=1200&q=80',
+      'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&q=80',
+      'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80',
+    ],
+    highlights: [
+      '🏰 Explore the magnificent Amber Fort',
+      '🛶 Boat ride on serene Lake Pichola',
+      '🐫 Sunset camel safari in the Thar desert',
+      '🍽️ Authentic Rajasthani thali dinner',
+      '🛍️ Shop the colourful bazaars of Jaipur',
+      '🌅 Golden-hour views from Mehrangarh Fort',
+    ],
+    included: [
+      '6 nights hotel accommodation (double sharing)',
+      'Daily breakfast and dinner',
+      'AC private vehicle with driver',
+      'English-speaking local guide',
+      'All monument entry fees',
+      'Airport/station pickup and drop',
+    ],
+    excluded: [
+      'Flight/train tickets to the start city',
+      'Lunch (unless mentioned)',
+      'Personal expenses and shopping',
+      'Travel insurance',
+      'Camera fees at monuments',
+      'Tips for guide and driver',
+    ],
+    locationIds: tourIds,
+    itinerary: [
+      {
+        day: 1,
+        title: 'Arrival in Jaipur',
+        description: 'Arrive in the Pink City\\nMeet our representative and transfer to hotel\\nEvening free to explore local bazaars\\nWelcome dinner',
+        locationId: mainId,
+        activityLocationIds: act1,
+        meals: ['dinner'],
+      },
+      {
+        day: 2,
+        title: 'Jaipur Sightseeing',
+        description: 'Morning departure after breakfast\\nVisit Amber Fort with guide\\nExplore City Palace, Hawa Mahal and Jantar Mantar\\nEvening at leisure',
+        locationId: mainId,
+        activityLocationIds: act2,
+        meals: ['breakfast', 'dinner'],
+      },
+    ],
+  }
+  return JSON.stringify(template, null, 2)
+}
+
 function buildAIPrompt(locations: LocationNode[]) {
   const fmt = (t: string) => locations.filter(l => l.type === t)
     .map(l => `  { "id": ${l.id}, "name": "${l.name}", "slug": "${l.slug}", "type": "${t}" }`)
@@ -68,103 +141,55 @@ function buildAIPrompt(locations: LocationNode[]) {
 
   return `You are a travel + SEO expert. Create ONE realistic, sellable Indian tour package as STRICT JSON only (no markdown, no commentary).
 
-AVAILABLE LOCATIONS (use ONLY these exact ids/names/slugs):
+AVAILABLE LOCATIONS — copy ids ONLY from this list (never invent ids):
 [
 ${locationList}
 ]
 
 WRITING RULES (keep it simple, clear, and SEO-friendly):
-- title: 50–60 chars, include the main destination + a keyword (e.g. "Royal Rajasthan Heritage Tour – 7 Days from Jaipur").
-- description: 1–2 sentences (~140 chars) for listing cards and meta description — naturally include destination keywords.
-- longDescription: 2–3 short paragraphs (use \\n\\n between them). Mention destinations, who it suits, key experiences, and best time to visit. Write for humans, lightly keyword-rich. No keyword stuffing.
-- highlights: 6–8 short benefit-led points. Start EACH with a relevant emoji (e.g. "🏰 Explore Amber Fort", "🐫 Sunset camel safari"). These render as emoji points on the site.
-- included / excluded: 6–10 specific, realistic items each.
+- title: 50–60 chars, include the main destination + a keyword.
+- description: 1–2 sentences (~140 chars) — doubles as the meta description.
+- longDescription: 2–3 short paragraphs (use \\n\\n between them), human-readable, lightly keyword-rich.
+- highlights: 6–8 short points, EACH starting with a relevant emoji.
+- included / excluded: 6–10 specific items each.
 - price: per person INR (whole number). duration: total days. maxGroupSize: 8–25.
 - difficulty: "easy" | "moderate" | "challenging". category: "city" | "heritage" | "desert" | "custom".
-- images: 4–6 real Unsplash URLs ("https://images.unsplash.com/photo-XXXX?w=1200&q=80").
-- locationIds: 3–8 ids from the list, ordered by travel route.
+- images: 4–6 real Unsplash URLs.
 
-ITINERARY RULES (IMPORTANT):
-- One object per day with: day (number), title, description (60–110 words), locationId (main location id for the day), activityLocationIds (2–5 place ids), and "meals".
-- "meals": an ARRAY listing the meals included that day, using ONLY these values: "breakfast", "lunch", "dinner".
-  • Day 1 (arrival) usually ["dinner"]. Middle days usually ["breakfast","dinner"] or ["breakfast","lunch","dinner"]. Last day usually ["breakfast"].
-- The chosen meals show as Breakfast/Lunch/Dinner chips on the public page, so set them realistically for every day.
+LOCATION RULES (CRITICAL — these link to real DB locations):
+- "locationIds": 3–8 ids from the list above (tour-level "Locations" field + destinations). Use ONLY real ids — invented ids are ignored.
+- Each day MUST set "locationId" (main id) and "activityLocationIds" (places to visit) using ids from the SAME list.
 
-RETURN EXACTLY THIS SHAPE:
-{
-  "title": "Royal Rajasthan Heritage Tour – 7 Days from Jaipur",
-  "description": "Explore Jaipur, Jodhpur & Udaipur on a 7-day Rajasthan heritage tour of forts, palaces and culture.",
-  "longDescription": "Para 1...\\n\\nPara 2...",
-  "duration": 7,
-  "price": 28999,
-  "maxGroupSize": 16,
-  "difficulty": "easy",
-  "category": "heritage",
-  "isFeatured": false,
-  "images": [
-    "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200&q=80",
-    "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=1200&q=80",
-    "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&q=80",
-    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80"
-  ],
-  "highlights": [
-    "🏰 Explore the magnificent Amber Fort",
-    "🛶 Boat ride on serene Lake Pichola",
-    "🐫 Sunset camel safari in the Thar desert",
-    "🍽️ Authentic Rajasthani thali dinner",
-    "🛍️ Shop the colourful bazaars of Jaipur",
-    "🌅 Golden-hour views from Mehrangarh Fort"
-  ],
-  "included": [
-    "6 nights hotel accommodation (double sharing)",
-    "Daily breakfast and dinner",
-    "AC private vehicle with driver",
-    "English-speaking local guide",
-    "All monument entry fees",
-    "Airport/station pickup and drop"
-  ],
-  "excluded": [
-    "Flight/train tickets to the start city",
-    "Lunch (unless mentioned)",
-    "Personal expenses and shopping",
-    "Travel insurance",
-    "Camera fees at monuments",
-    "Tips for guide and driver"
-  ],
-  "locationIds": [12, 23, 34, 45],
-  "itinerary": [
-    {
-      "day": 1,
-      "title": "Arrival in Jaipur",
-      "description": "Arrive in the Pink City, meet our representative and transfer to your heritage hotel. Evening free to explore the local bazaars before a welcome dinner.",
-      "locationId": 12,
-      "activityLocationIds": [23, 34],
-      "meals": ["dinner"]
-    },
-    {
-      "day": 2,
-      "title": "Jaipur Sightseeing",
-      "description": "Full day exploring Amber Fort, City Palace, Hawa Mahal and Jantar Mantar with your guide. Evening at leisure.",
-      "locationId": 12,
-      "activityLocationIds": [45, 56, 67],
-      "meals": ["breakfast", "dinner"]
-    }
-  ]
-}`
+ITINERARY RULES:
+- One object per day: day, title, description, locationId, activityLocationIds (2–5 ids), and "meals".
+- "description": 3–6 activity description bullets separated by \\n (newline). Each bullet describes a time-of-day activity (e.g., "Morning 9 AM approx Departure from Delhi to Shimla", "Enroute Lunch", "Evening reach at Shimla", "Check in & Rest in Leisure", "Dinner & Overnight stay at Hotel"). Focus on what happens, not place names.
+- "activityLocationIds": 2–5 real location ids from the list that are visited this day (these show as place-name bullets under the description).
+- "meals": ARRAY using ONLY "breakfast" | "lunch" | "dinner". Day 1 → ["dinner"], middle days → ["breakfast","dinner"], last day → ["breakfast"].
+
+RETURN EXACTLY THIS JSON SHAPE (ids below are REAL from your list — adjust to fit the tour):
+${buildJsonTemplate(locations)}`
 }
 
 function AIImportPanel({ onImport, locations }: { onImport: (data: any) => void; locations: LocationNode[] }) {
   const [json, setJson] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [tplCopied, setTplCopied] = useState(false)
   const [open, setOpen] = useState(true)
 
   const prompt = buildAIPrompt(locations)
+  const template = buildJsonTemplate(locations)
 
   const copyPrompt = () => {
     navigator.clipboard.writeText(prompt)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const copyTemplate = () => {
+    navigator.clipboard.writeText(template)
+    setTplCopied(true)
+    setTimeout(() => setTplCopied(false), 2000)
   }
 
   const handleImport = () => {
@@ -231,11 +256,15 @@ function AIImportPanel({ onImport, locations }: { onImport: (data: any) => void;
           </button>
 
           <details>
-            <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors select-none">
-              View JSON template ↓
+            <summary className="text-xs text-gray-400 cursor-pointer hover:text-gray-600 transition-colors select-none flex items-center justify-between">
+              <span>JSON template (real location ids)</span>
+              <button type="button" onClick={(e) => { e.preventDefault(); copyTemplate() }}
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-colors ${tplCopied ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                <Copy className="w-3 h-3" /> {tplCopied ? 'Copied!' : 'Copy'}
+              </button>
             </summary>
             <pre className="mt-2 text-xs bg-gray-50 border border-gray-100 rounded-xl p-3 overflow-auto max-h-48 text-gray-600 leading-relaxed whitespace-pre-wrap">
-              {prompt}
+              {template}
             </pre>
           </details>
         </div>
@@ -294,6 +323,11 @@ export default function NewTourPage() {
     setForm(p => ({ ...p, itinerary: p.itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, day: idx + 1 })) }))
 
   const handleAIImport = (data: any) => {
+    const validIds = new Set(allLocations.map(l => l.id))
+    const keepIds = (arr: any): number[] => Array.isArray(arr) ? arr.map(Number).filter(id => validIds.has(id)) : []
+
+    const importedLocationIds = keepIds(data.locationIds)
+
     setForm(prev => ({
       ...prev,
       title:           data.title           ?? prev.title,
@@ -310,20 +344,23 @@ export default function NewTourPage() {
       highlights:      data.highlights?.length ? data.highlights : prev.highlights,
       included:        data.included?.length   ? data.included   : prev.included,
       excluded:        data.excluded?.length   ? data.excluded   : prev.excluded,
-      // Use real locationIds from AI response
-      locationIds:     data.locationIds?.length ? data.locationIds : prev.locationIds,
-      // Auto-generate destinations from location names
-      destinations:    data.locationIds?.length
-        ? data.locationIds.map((id: number) => allLocations.find(l => l.id === id)?.name ?? '').filter(Boolean)
+      // Only keep location ids that exist in the DB (drop invented ones)
+      locationIds:     importedLocationIds.length ? importedLocationIds : prev.locationIds,
+      // Auto-generate destinations from real location names
+      destinations:    importedLocationIds.length
+        ? importedLocationIds.map(id => allLocations.find(l => l.id === id)?.name ?? '').filter(Boolean)
         : (data.destinations?.length ? data.destinations : prev.destinations),
-      itinerary: data.itinerary?.length ? data.itinerary.map((d: any, i: number) => ({
-        day:                 d.day ?? i + 1,
-        title:               d.title ?? '',
-        description:         d.description ?? '',
-        locationId:          d.locationId ?? null,
-        activityLocationIds: d.activityLocationIds ?? [],
-        meals:               Array.isArray(d.meals) ? d.meals.filter((m: string) => ['breakfast', 'lunch', 'dinner'].includes(m)) : [],
-      })) : prev.itinerary,
+      itinerary: data.itinerary?.length ? data.itinerary.map((d: any, i: number) => {
+        const mainId = validIds.has(Number(d.locationId)) ? Number(d.locationId) : null
+        return {
+          day:                 d.day ?? i + 1,
+          title:               d.title ?? '',
+          description:         d.description ?? '',
+          locationId:          mainId,
+          activityLocationIds: keepIds(d.activityLocationIds),
+          meals:               Array.isArray(d.meals) ? d.meals.filter((m: string) => ['breakfast', 'lunch', 'dinner'].includes(m)) : [],
+        }
+      }) : prev.itinerary,
     }))
   }
 
@@ -534,9 +571,9 @@ export default function NewTourPage() {
                       className={cls} placeholder="e.g. Amber Fort & City Palace" />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-gray-500 mb-1.5">Description</p>
-                    <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)}
-                      className={cls} placeholder="What happens this day…" />
+                    <p className="text-xs font-medium text-gray-500 mb-1.5">Description <span className="text-xs text-gray-400 font-normal">(one activity per line)</span></p>
+                    <textarea rows={4} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)}
+                      className={cls} placeholder="Morning 9 AM approx Departure from Delhi to Shimla&#10;Enroute Lunch&#10;Evening reach at Shimla&#10;Check in & Rest in Leisure&#10;Dinner & Overnight stay at Hotel" />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-500 mb-1.5">🗺 Places to visit (activities)</p>

@@ -162,6 +162,17 @@ function ItineraryDay({ day, isLast }: { day: Itinerary; isLast: boolean }) {
       <div className="flex-1 min-w-0 pb-7">
         <h4 className="text-sm font-bold text-primary-600 mb-2.5">{day.title}</h4>
 
+        {day.description && (
+          <ul className="space-y-1.5 mb-3">
+            {day.description.split('\n').filter(Boolean).map((line, j) => (
+              <li key={j} className="flex items-start gap-2.5 text-sm text-gray-600">
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-400 mt-[7px] flex-shrink-0" />
+                <span className="leading-relaxed">{line.trim()}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
         {activities.length > 0 && (
           <ul className="space-y-1.5 mb-3">
             {activities.map((a, j) => (
