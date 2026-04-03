@@ -12,7 +12,7 @@ cloudinary.config({
 })
 
 const router  = Router()
-const upload  = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } }) // 10 MB
+const upload  = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } }) // 50 MB
 
 // POST /api/v1/upload/image
 // Admin only — uploads a single image to Cloudinary and returns the secure URL
