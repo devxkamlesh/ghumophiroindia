@@ -2,40 +2,27 @@
 
 import Link from 'next/link'
 import { motion, type Variants } from 'motion/react'
+import type { Banner } from '@/types'
 
-interface Category {
+interface CategoryCard {
   title: string
   image: string
   href: string
+  subtitle?: string
 }
 
-const CATEGORIES: Category[] = [
-  {
-    title: 'Treks & Trails',
-    image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=600&q=80',
-    href: '/tours?category=treks',
-  },
-  {
-    title: 'Spiti Valley Tour',
-    image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=600&q=80',
-    href: '/tours?category=spiti-valley',
-  },
-  {
-    title: 'Weekend trips from Delhi',
-    image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80',
-    href: '/tours?category=weekend-trips',
-  },
-  {
-    title: 'Backpacking Trips',
-    image: 'https://images.unsplash.com/photo-1533692328991-08159ff19fca?w=600&q=80',
-    href: '/tours?category=backpacking',
-  },
-  {
-    title: 'Char Dham Package',
-    image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=600&q=80',
-    href: '/tours?category=char-dham',
-  },
+// Used only when the backend returns nothing (e.g. API unreachable or not seeded).
+const FALLBACK_CARDS: CategoryCard[] = [
+  { title: 'City Tours',    image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=600&q=80', href: '/tours?category=city' },
+  { title: 'Heritage Tours', image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600&q=80', href: '/tours?category=heritage' },
+  { title: 'Desert Safari', image: 'https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=600&q=80', href: '/tours?category=desert' },
+  { title: 'Backpacking Trips', image: 'https://images.unsplash.com/photo-1533692328991-08159ff19fca?w=600&q=80', href: '/tours' },
+  { title: 'Custom Tours',  image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&q=80', href: '/custom-tour' },
 ]
+
+interface Props {
+  banners?: Banner[]
+}
 
 // Vertical offsets (lg+ only) to lay the cards along a gentle curve/arch
 const CURVE_OFFSETS = ['lg:mt-14', 'lg:mt-6', 'lg:mt-0', 'lg:mt-6', 'lg:mt-14']
@@ -52,7 +39,18 @@ const cardVariants: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
 }
 
-export default function AdsBanner() {
+export default function AdsBanner({ banners = [] }: Props) {
+  // Map backend category banners → display cards, falling back to defaults when empty.
+  const cards: CategoryCard[] =
+    banners.length > 0
+      ? banners.map(b => ({
+          title: b.title,
+          image: b.image,
+          href: b.linkUrl || '/tours',
+          subtitle: b.subtitle || b.linkText || 'See More',
+        }))
+      : FALLBACK_CARDS
+
   return (
     <section className="relative overflow-hidden bg-emerald-50/40 py-16 md:py-20">
       <div className="w-full px-4 sm:px-6 lg:px-10">
@@ -78,10 +76,12 @@ export default function AdsBanner() {
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.2 }}
-          className="grid grid-cols-2 items-start gap-6 sm:grid-cols-3 lg:grid-cols-5"
+          className={`grid grid-cols-2 items-start gap-6 sm:grid-cols-3 ${
+            cards.length >= 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'
+          }`}
         >
-          {CATEGORIES.map((cat, i) => (
-            <motion.div key={cat.title} variants={cardVariants} className={CURVE_OFFSETS[i] ?? ''}>
+          {cards.map((cat, i) => (
+            <motion.div key={`${cat.title}-${i}`} variants={cardVariants} className={CURVE_OFFSETS[i] ?? ''}>
               <Link href={cat.href} className="group block text-center">
                 <div className="relative aspect-square w-full overflow-hidden rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl shadow-md transition-[transform,box-shadow] duration-500 ease-out will-change-transform group-hover:-translate-y-1.5 group-hover:shadow-2xl">
                   {/* Image (gentle zoom — transform only) */}
@@ -101,7 +101,7 @@ export default function AdsBanner() {
                   {cat.title}
                 </h3>
                 <span className="mt-1 block text-xs font-medium text-slate-400 transition-colors duration-300 group-hover:text-[#f97316]">
-                  See More
+                  {cat.subtitle}
                 </span>
               </Link>
             </motion.div>

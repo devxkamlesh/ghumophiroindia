@@ -173,6 +173,7 @@ export const banners = pgTable('banners', {
   linkText: varchar('link_text', { length: 100 }).default('Book Now'),
   displayOrder: integer('display_order').default(0),
   isActive: boolean('is_active').default(true),
+  position: varchar('position', { length: 50 }).notNull().default('hero'), // 'hero' | 'category'
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })

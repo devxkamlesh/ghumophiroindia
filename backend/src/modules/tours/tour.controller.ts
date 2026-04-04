@@ -107,6 +107,19 @@ export class TourController {
   }
 
   /**
+   * Get tour categories with counts (public)
+   * GET /api/v1/tours/categories
+   */
+  async getCategories(req: Request, res: Response, next: NextFunction) {
+    try {
+      const categories = await tourService.getCategories()
+      sendSuccess(res, { categories }, 'Tour categories retrieved successfully')
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  /**
    * Get tour statistics (admin only)
    * GET /api/v1/tours/stats
    */

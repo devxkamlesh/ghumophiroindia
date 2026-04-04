@@ -8,13 +8,21 @@ import { z } from 'zod'
 
 const idParam = z.object({ id: z.coerce.number().int().positive() })
 
+const positionValues = ['hero', 'category'] as const
+type BannerPosition = (typeof positionValues)[number]
+
+function parsePosition(value: unknown): BannerPosition | undefined {
+  return positionValues.includes(value as BannerPosition) ? (value as BannerPosition) : undefined
+}
+
 const router = Router()
 
 // ── Public ────────────────────────────────────────────────────────────────────
 
-router.get('/active', async (_req, res, next) => {
+router.get('/active', async (req, res, next) => {
   try {
-    const banners = await bannerService.getActive()
+    const position = parsePosition(req.query.position)
+    const banners = await bannerService.getActive(position)
     sendSuccess(res, { banners })
   } catch (e) { next(e) }
 })
@@ -23,9 +31,10 @@ router.get('/active', async (_req, res, next) => {
 
 router.use(authenticate, authorize('admin'))
 
-router.get('/', async (_req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const banners = await bannerService.getAll()
+    const position = parsePosition(req.query.position)
+    const banners = await bannerService.getAll(position)
     sendSuccess(res, { banners })
   } catch (e) { next(e) }
 })
