@@ -26,6 +26,7 @@ function BannerModal({
       linkText: 'Book Now',
       displayOrder: 0,
       isActive: true,
+      position: 'hero',
     }
   )
   const [saving, setSaving] = useState(false)
@@ -81,6 +82,34 @@ function BannerModal({
               {error}
             </div>
           )}
+
+          {/* Section / Position */}
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+              Section <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { value: 'hero', label: 'Hero Slider', hint: '1920×600' },
+                { value: 'category', label: 'Tour Categories', hint: 'Square image' },
+              ] as const).map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => set('position', opt.value)}
+                  className={cn(
+                    'rounded-xl border px-3 py-2.5 text-left transition-colors',
+                    (form.position ?? 'hero') === opt.value
+                      ? 'border-primary-500 bg-primary-50 ring-1 ring-primary-500'
+                      : 'border-gray-200 hover:border-primary-300'
+                  )}
+                >
+                  <span className="block text-sm font-semibold text-gray-900">{opt.label}</span>
+                  <span className="block text-xs text-gray-500">{opt.hint}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Title */}
           <div>
@@ -169,7 +198,10 @@ function BannerModal({
                 </>
               ) : (
                 <>
-                  <ImageIcon className="w-4 h-4" /> Upload image (1920x600 recommended)
+                  <ImageIcon className="w-4 h-4" />
+                  {(form.position ?? 'hero') === 'category'
+                    ? 'Upload image (square ~600×600 recommended)'
+                    : 'Upload image (1920×600 recommended)'}
                 </>
               )}
             </label>
@@ -385,6 +417,82 @@ export default function BannersPage() {
   const activeBanners = banners.filter(b => b.isActive)
   const inactiveBanners = banners.filter(b => !b.isActive)
 
+  const heroBanners = banners.filter(b => (b.position ?? 'hero') === 'hero')
+  const categoryBanners = banners.filter(b => b.position === 'category')
+
+  // Renders a single banner row (shared between the Hero and Category groups)
+  const renderRow = (banner: Banner) => (
+    <div
+      key={banner.id}
+      className={cn(
+        'flex items-center gap-4 p-4 rounded-xl border transition-colors group',
+        banner.isActive
+          ? 'border-green-200 bg-green-50/50 hover:bg-green-50'
+          : 'border-gray-200 bg-gray-50/50 hover:bg-gray-50'
+      )}
+    >
+      {/* Drag Handle */}
+      <div className="flex-shrink-0 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
+        <GripVertical className="w-5 h-5 text-gray-400" />
+      </div>
+
+      {/* Image Preview */}
+      <div className="w-32 h-20 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" />
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="text-sm font-semibold text-gray-900">{banner.title}</h3>
+          {banner.isActive ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+              <Eye className="w-3 h-3" /> Active
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+              <EyeOff className="w-3 h-3" /> Inactive
+            </span>
+          )}
+        </div>
+        {banner.subtitle && <p className="text-xs text-gray-600 mb-0.5">{banner.subtitle}</p>}
+        {banner.description && <p className="text-xs text-gray-500">{banner.description}</p>}
+        <div className="flex items-center gap-3 mt-2">
+          <span className="text-xs text-gray-400">Order: {banner.displayOrder}</span>
+          {banner.linkUrl && (
+            <a
+              href={banner.linkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary-600 hover:underline flex items-center gap-1"
+            >
+              {banner.linkText || 'Link'} <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => setModal({ mode: 'edit', banner })}
+          className="p-2 hover:bg-white rounded-lg transition-colors"
+          title="Edit"
+        >
+          <Edit className="w-4 h-4 text-gray-600" />
+        </button>
+        <button
+          onClick={() => setDeleting(banner)}
+          className="p-2 hover:bg-white rounded-lg transition-colors"
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4 text-red-500" />
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="space-y-6">
       {/* Toast */}
@@ -415,7 +523,7 @@ export default function BannersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Banners</h1>
-          <p className="text-gray-500 mt-1 text-sm">Manage homepage hero banners</p>
+          <p className="text-gray-500 mt-1 text-sm">Manage hero slider & tour category card images</p>
         </div>
         <button
           onClick={() => setModal({ mode: 'add' })}
@@ -481,78 +589,41 @@ export default function BannersPage() {
             </button>
           </div>
         ) : (
-          <div className="space-y-3">
-            {banners.map(banner => (
-              <div
-                key={banner.id}
-                className={cn(
-                  'flex items-center gap-4 p-4 rounded-xl border transition-colors group',
-                  banner.isActive
-                    ? 'border-green-200 bg-green-50/50 hover:bg-green-50'
-                    : 'border-gray-200 bg-gray-50/50 hover:bg-gray-50'
-                )}
-              >
-                {/* Drag Handle */}
-                <div className="flex-shrink-0 cursor-move opacity-0 group-hover:opacity-100 transition-opacity">
-                  <GripVertical className="w-5 h-5 text-gray-400" />
-                </div>
-
-                {/* Image Preview */}
-                <div className="w-32 h-20 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={banner.image} alt={banner.title} className="w-full h-full object-cover" />
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="text-sm font-semibold text-gray-900">{banner.title}</h3>
-                    {banner.isActive ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                        <Eye className="w-3 h-3" /> Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                        <EyeOff className="w-3 h-3" /> Inactive
-                      </span>
-                    )}
-                  </div>
-                  {banner.subtitle && <p className="text-xs text-gray-600 mb-0.5">{banner.subtitle}</p>}
-                  {banner.description && <p className="text-xs text-gray-500">{banner.description}</p>}
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-gray-400">Order: {banner.displayOrder}</span>
-                    {banner.linkUrl && (
-                      <a
-                        href={banner.linkUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-primary-600 hover:underline flex items-center gap-1"
-                      >
-                        {banner.linkText || 'Link'} <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setModal({ mode: 'edit', banner })}
-                    className="p-2 hover:bg-white rounded-lg transition-colors"
-                    title="Edit"
-                  >
-                    <Edit className="w-4 h-4 text-gray-600" />
-                  </button>
-                  <button
-                    onClick={() => setDeleting(banner)}
-                    className="p-2 hover:bg-white rounded-lg transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </button>
-                </div>
+          <div className="space-y-8">
+            {/* Hero Slider group */}
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <h2 className="text-sm font-bold text-gray-900">Hero Slider</h2>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                  {heroBanners.length}
+                </span>
               </div>
-            ))}
+              {heroBanners.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-400">
+                  No hero banners yet
+                </p>
+              ) : (
+                <div className="space-y-3">{heroBanners.map(renderRow)}</div>
+              )}
+            </div>
+
+            {/* Tour Categories group */}
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <h2 className="text-sm font-bold text-gray-900">Tour Categories</h2>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500">
+                  {categoryBanners.length}
+                </span>
+                <span className="text-xs text-gray-400">— "Wonderful Place For You" cards</span>
+              </div>
+              {categoryBanners.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-center text-sm text-gray-400">
+                  No category cards yet
+                </p>
+              ) : (
+                <div className="space-y-3">{categoryBanners.map(renderRow)}</div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -561,11 +632,10 @@ export default function BannersPage() {
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">
         <p className="font-medium mb-1">💡 Banner Tips:</p>
         <ul className="list-disc list-inside space-y-1 text-xs">
-          <li>Recommended image size: 1920x600 pixels</li>
-          <li>Use high-quality images for best results</li>
-          <li>Only active banners will show on homepage</li>
-          <li>Banners rotate automatically every 4 seconds</li>
-          <li>Lower display order shows first</li>
+          <li><strong>Hero Slider</strong>: large rotating banners (1920×600). Rotate every ~4 seconds.</li>
+          <li><strong>Tour Categories</strong>: the 5 "Wonderful Place For You" cards — use square images (~600×600).</li>
+          <li>Pick the section at the top of the Add/Edit form.</li>
+          <li>Only active banners show on the homepage. Lower display order shows first.</li>
         </ul>
       </div>
     </div>

@@ -1,73 +1,200 @@
 import Link from 'next/link'
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react'
+import {
+  Facebook,
+  Instagram,
+  Twitter,
+  Mail,
+  Phone,
+  MapPin,
+  MessageCircle,
+  ShieldCheck,
+  Headphones,
+  BadgeCheck,
+  ArrowRight,
+} from 'lucide-react'
+import { siteConfig } from '@/config/site'
+
+const quickLinks = [
+  { label: 'About Us', href: '/about' },
+  { label: 'All Tours', href: '/tours' },
+  { label: 'Custom Tour', href: '/custom-tour' },
+  { label: 'Business', href: '/business' },
+  { label: 'Contact Us', href: '/contact' },
+]
+
+const popularTours = [
+  { label: 'Golden Triangle', href: '/tours?search=golden+triangle' },
+  { label: 'Rajasthan Tours', href: '/tours?search=rajasthan' },
+  { label: 'Jaipur Tours', href: '/destinations/jaipur' },
+  { label: 'Udaipur Tours', href: '/destinations/udaipur' },
+  { label: 'Desert Safari', href: '/destinations/jaisalmer' },
+]
+
+const trustBadges = [
+  { icon: ShieldCheck, title: 'Secure Booking', subtitle: 'Safe & encrypted payments' },
+  { icon: BadgeCheck, title: 'Verified Tours', subtitle: 'Handpicked experiences' },
+  { icon: Headphones, title: '24/7 Support', subtitle: 'Always here to help' },
+]
 
 export default function Footer() {
+  const year = new Date().getFullYear()
+
   return (
-    <footer className="bg-gray-900 text-gray-300">
-      <div className="container-custom py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <footer className="bg-gray-950 text-gray-300">
+      {/* ── Top CTA band ───────────────────────────────────────────────── */}
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700">
+        <div className="container-custom flex flex-col items-center justify-between gap-4 py-8 text-center md:flex-row md:text-left">
           <div>
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">GP</span>
-              </div>
-              <span className="font-sans text-2xl font-bold text-white">Ghumo Phiro India</span>
-            </div>
-            <p className="text-gray-400 mb-4">
-              Your trusted partner for unforgettable journeys through the royal land of Rajasthan.
+            <h3 className="text-xl font-bold text-white md:text-2xl">
+              Ready for your next adventure?
+            </h3>
+            <p className="mt-1 text-sm text-white/85">
+              Talk to our travel experts and craft your perfect Rajasthan journey.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="hover:text-primary-400 transition-colors">
-                <Facebook className="w-5 h-5" />
+          </div>
+          <div className="flex flex-shrink-0 flex-wrap items-center justify-center gap-3">
+            <a
+              href={siteConfig.links.whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-primary-700 shadow-sm transition-transform hover:scale-105"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Chat on WhatsApp
+            </a>
+            <Link
+              href="/custom-tour"
+              className="inline-flex items-center gap-2 rounded-full border border-white/70 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+            >
+              Plan My Trip
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Trust badges ───────────────────────────────────────────────── */}
+      <div className="border-b border-white/5">
+        <div className="container-custom grid grid-cols-1 gap-6 py-8 sm:grid-cols-3">
+          {trustBadges.map(({ icon: Icon, title, subtitle }) => (
+            <div key={title} className="flex items-center gap-3">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-500/10 text-primary-400">
+                <Icon className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-white">{title}</p>
+                <p className="text-sm text-gray-400">{subtitle}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Main columns ───────────────────────────────────────────────── */}
+      <div className="container-custom py-14">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4">
+          {/* Brand */}
+          <div>
+            <div className="mb-4 flex items-center space-x-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-primary-700">
+                <span className="text-lg font-bold text-white">{siteConfig.shortName}</span>
+              </div>
+              <span className="font-sans text-2xl font-bold text-white">{siteConfig.name}</span>
+            </div>
+            <p className="mb-5 text-gray-400">
+              Your trusted partner for unforgettable journeys through the royal land of Rajasthan and incredible India.
+            </p>
+            <div className="flex space-x-3">
+              <a
+                href={siteConfig.links.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 transition-colors hover:bg-primary-500 hover:text-white"
+              >
+                <Facebook className="h-4 w-4" />
               </a>
-              <a href="#" className="hover:text-primary-400 transition-colors">
-                <Instagram className="w-5 h-5" />
+              <a
+                href={siteConfig.links.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 transition-colors hover:bg-primary-500 hover:text-white"
+              >
+                <Instagram className="h-4 w-4" />
               </a>
-              <a href="#" className="hover:text-primary-400 transition-colors">
-                <Twitter className="w-5 h-5" />
+              <a
+                href={siteConfig.links.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Twitter"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 transition-colors hover:bg-primary-500 hover:text-white"
+              >
+                <Twitter className="h-4 w-4" />
               </a>
             </div>
           </div>
 
+          {/* Quick Links */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li><Link href="/about" className="hover:text-primary-400 transition-colors">About Us</Link></li>
-              <li><Link href="/tours" className="hover:text-primary-400 transition-colors">All Tours</Link></li>
-              <li><Link href="/custom-tour" className="hover:text-primary-400 transition-colors">Custom Tour</Link></li>
-              <li><Link href="/business" className="hover:text-primary-400 transition-colors">Business</Link></li>
-              <li><Link href="/contact" className="hover:text-primary-400 transition-colors">Contact Us</Link></li>
+            <h3 className="mb-4 text-lg font-bold text-white">Quick Links</h3>
+            <ul className="space-y-2.5">
+              {quickLinks.map(link => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="inline-flex items-center gap-1.5 text-gray-400 transition-colors hover:text-primary-400"
+                  >
+                    <span className="h-1 w-1 rounded-full bg-primary-500" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
+          {/* Popular Tours */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Popular Tours</h3>
-            <ul className="space-y-2">
-              <li><Link href="/tours?search=golden+triangle" className="hover:text-primary-400 transition-colors">Golden Triangle</Link></li>
-              <li><Link href="/tours?search=rajasthan" className="hover:text-primary-400 transition-colors">Rajasthan Tours</Link></li>
-              <li><Link href="/destinations/jaipur" className="hover:text-primary-400 transition-colors">Jaipur Tours</Link></li>
-              <li><Link href="/destinations/udaipur" className="hover:text-primary-400 transition-colors">Udaipur Tours</Link></li>
-              <li><Link href="/destinations/jaisalmer" className="hover:text-primary-400 transition-colors">Desert Safari</Link></li>
+            <h3 className="mb-4 text-lg font-bold text-white">Popular Tours</h3>
+            <ul className="space-y-2.5">
+              {popularTours.map(link => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="inline-flex items-center gap-1.5 text-gray-400 transition-colors hover:text-primary-400"
+                  >
+                    <span className="h-1 w-1 rounded-full bg-primary-500" />
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
+          {/* Contact */}
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Contact Info</h3>
-            <ul className="space-y-3">
-              <li className="flex items-start space-x-3">
-                <MapPin className="w-5 h-5 text-primary-400 flex-shrink-0 mt-1" />
-                <span>123 MI Road, Jaipur, Rajasthan 302001, India</span>
+            <h3 className="mb-4 text-lg font-bold text-white">Contact Info</h3>
+            <ul className="space-y-3.5">
+              <li className="flex items-start gap-3">
+                <MapPin className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-400" />
+                <span className="text-gray-400">{siteConfig.contact.address}</span>
               </li>
-              <li className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-primary-400 flex-shrink-0" />
-                <a href="tel:+919876543210" className="hover:text-primary-400 transition-colors">
-                  +91 98765 43210
+              <li className="flex items-center gap-3">
+                <Phone className="h-5 w-5 flex-shrink-0 text-primary-400" />
+                <a
+                  href={`tel:${siteConfig.contact.phone.replace(/\s+/g, '')}`}
+                  className="text-gray-400 transition-colors hover:text-primary-400"
+                >
+                  {siteConfig.contact.phone}
                 </a>
               </li>
-              <li className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-primary-400 flex-shrink-0" />
-                <a href="mailto:info@ghumophiroindia.com" className="hover:text-primary-400 transition-colors">
-                  info@ghumophiroindia.com
+              <li className="flex items-center gap-3">
+                <Mail className="h-5 w-5 flex-shrink-0 text-primary-400" />
+                <a
+                  href={`mailto:${siteConfig.contact.email}`}
+                  className="break-all text-gray-400 transition-colors hover:text-primary-400"
+                >
+                  {siteConfig.contact.email}
                 </a>
               </li>
             </ul>
@@ -75,14 +202,15 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-gray-800">
+      {/* ── Bottom bar ─────────────────────────────────────────────────── */}
+      <div className="border-t border-white/5">
         <div className="container-custom py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-            <p>&copy; 2026 Ghumo Phiro India. All rights reserved.</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link href="/contact" className="hover:text-primary-400 transition-colors">Privacy Policy</Link>
-              <Link href="/contact" className="hover:text-primary-400 transition-colors">Terms of Service</Link>
-              <Link href="/destinations" className="hover:text-primary-400 transition-colors">Sitemap</Link>
+          <div className="flex flex-col items-center justify-between gap-4 text-sm text-gray-400 md:flex-row">
+            <p>&copy; {year} {siteConfig.name}. All rights reserved.</p>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+              <Link href="/contact" className="transition-colors hover:text-primary-400">Privacy Policy</Link>
+              <Link href="/contact" className="transition-colors hover:text-primary-400">Terms of Service</Link>
+              <Link href="/destinations" className="transition-colors hover:text-primary-400">Sitemap</Link>
             </div>
           </div>
         </div>

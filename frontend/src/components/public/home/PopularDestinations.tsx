@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { motion } from 'motion/react'
 import type { LocationNode } from '@/types'
@@ -14,6 +14,10 @@ export default function PopularDestinations({ locations = [] }: Props) {
   const popularStates = locations.filter(l => l.type === 'state' && l.isPopular)
   const [activeIndex, setActiveIndex] = useState(Math.floor(popularStates.length / 2))
 
+  // Pointer/touch swipe tracking
+  const dragStartX = useRef<number | null>(null)
+  const didSwipe = useRef(false)
+
   if (popularStates.length === 0) return null
 
   const goToPrev = () => {
@@ -22,6 +26,25 @@ export default function PopularDestinations({ locations = [] }: Props) {
 
   const goToNext = () => {
     setActiveIndex(prev => (prev === popularStates.length - 1 ? 0 : prev + 1))
+  }
+
+  // ── Swipe / drag handlers (works for touch + mouse) ───────────────────────
+  const SWIPE_THRESHOLD = 50
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    dragStartX.current = e.clientX
+    didSwipe.current = false
+  }
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (dragStartX.current === null) return
+    const deltaX = e.clientX - dragStartX.current
+    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      didSwipe.current = true
+      if (deltaX < 0) goToNext()
+      else goToPrev()
+    }
+    dragStartX.current = null
   }
 
   return (
@@ -37,7 +60,12 @@ export default function PopularDestinations({ locations = [] }: Props) {
         </div>
 
         {/* Overlapping Cards Container (440:630 aspect ratio, infinite loop, progressive scale) */}
-        <div className="relative mx-auto flex h-[580px] items-center justify-center overflow-hidden px-2 md:h-[680px] md:px-4">{popularStates.map((state, index) => {
+        <div
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          className="relative mx-auto flex h-[580px] touch-pan-y select-none items-center justify-center overflow-hidden px-2 md:h-[680px] md:px-4"
+          style={{ cursor: popularStates.length > 1 ? 'grab' : 'default' }}
+        >{popularStates.map((state, index) => {
             // Calculate offset with wrap-around for infinite loop
             let offset = index - activeIndex
             const halfLength = Math.floor(popularStates.length / 2)
@@ -78,7 +106,10 @@ export default function PopularDestinations({ locations = [] }: Props) {
                   filter: `blur(${blur}px) brightness(${isFocused ? 1 : 0.7})`,
                 }}
                 transition={{ duration: 0.6, ease: EASE }}
-                onClick={() => setActiveIndex(index)}
+                onClick={() => {
+                  if (didSwipe.current) return
+                  setActiveIndex(index)
+                }}
                 className="absolute cursor-pointer"
                 style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
               >

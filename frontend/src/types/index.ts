@@ -10,6 +10,7 @@ export interface Banner {
   linkText?: string | null
   displayOrder: number
   isActive: boolean
+  position?: 'hero' | 'category'
   createdAt: string
   updatedAt: string
 }
@@ -41,6 +42,13 @@ export interface Tour {
   isFeatured: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface TourCategory {
+  category: string   // slug, e.g. "city" | "heritage" | "desert" | "custom"
+  label: string      // human-friendly label, e.g. "City Tours"
+  count: number      // number of active tours in this category
+  image: string | null
 }
 
 export interface TourLocation {

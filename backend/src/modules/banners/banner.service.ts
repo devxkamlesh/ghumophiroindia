@@ -1,8 +1,10 @@
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import db from '../../core/database'
 import { banners } from '../../core/database/schema'
 import { NotFoundError } from '../../shared/errors'
 import logger from '../../core/logger'
+
+type BannerPosition = 'hero' | 'category'
 
 interface CreateBannerInput {
   title: string
@@ -13,6 +15,7 @@ interface CreateBannerInput {
   linkText?: string
   displayOrder?: number
   isActive?: boolean
+  position?: BannerPosition
 }
 
 interface UpdateBannerInput {
@@ -24,18 +27,25 @@ interface UpdateBannerInput {
   linkText?: string
   displayOrder?: number
   isActive?: boolean
+  position?: BannerPosition
 }
 
 export class BannerService {
-  async getAll() {
-    return db.select().from(banners).orderBy(banners.displayOrder, banners.id)
-  }
-
-  async getActive() {
+  async getAll(position?: BannerPosition) {
     return db
       .select()
       .from(banners)
-      .where(eq(banners.isActive, true))
+      .where(position ? eq(banners.position, position) : undefined)
+      .orderBy(banners.displayOrder, banners.id)
+  }
+
+  async getActive(position?: BannerPosition) {
+    const conditions = [eq(banners.isActive, true)]
+    if (position) conditions.push(eq(banners.position, position))
+    return db
+      .select()
+      .from(banners)
+      .where(and(...conditions))
       .orderBy(banners.displayOrder, banners.id)
   }
 
@@ -55,8 +65,9 @@ export class BannerService {
       linkText: data.linkText ?? 'Book Now',
       displayOrder: data.displayOrder ?? 0,
       isActive: data.isActive ?? true,
+      position: data.position ?? 'hero',
     }).returning()
-    
+
     logger.info(`Banner created: ${banner.title}`)
     return banner
   }
@@ -73,6 +84,7 @@ export class BannerService {
     if (data.linkText !== undefined) updateData.linkText = data.linkText
     if (data.displayOrder !== undefined) updateData.displayOrder = data.displayOrder
     if (data.isActive !== undefined) updateData.isActive = data.isActive
+    if (data.position !== undefined) updateData.position = data.position
 
     const [updated] = await db.update(banners).set(updateData).where(eq(banners.id, id)).returning()
     logger.info(`Banner updated: ${updated.title}`)
