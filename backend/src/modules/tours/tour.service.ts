@@ -1,4 +1,4 @@
-import { eq, and, gte, lte, desc, asc, sql, inArray } from 'drizzle-orm'
+import { eq, and, gte, lte, desc, asc, sql } from 'drizzle-orm'
 import db from '../../core/database'
 import { tours, tourLocations, locations } from '../../core/database/schema'
 import { NotFoundError, ConflictError } from '../../shared/errors'

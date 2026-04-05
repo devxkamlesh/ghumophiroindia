@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
 import { ZodSchema } from 'zod'
-import { ValidationError } from '../shared/errors'
 
 /**
  * Validate request body against Zod schema

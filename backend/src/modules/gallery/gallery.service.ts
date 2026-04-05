@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, ilike } from 'drizzle-orm'
+import { eq, and, desc, sql } from 'drizzle-orm'
 import db from '../../core/database'
 import { galleryImages } from '../../core/database/schema'
 import { NotFoundError } from '../../shared/errors'

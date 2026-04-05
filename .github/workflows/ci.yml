@@ -33,7 +33,9 @@ jobs:
         run: npm ci
 
       - name: Lint
-        run: npm run lint
+        run: |
+          npm run lint -w backend
+          npm run lint -w frontend
 
       - name: Typecheck
         run: npm run typecheck

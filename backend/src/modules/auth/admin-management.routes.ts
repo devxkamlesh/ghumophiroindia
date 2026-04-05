@@ -4,7 +4,7 @@
  * Only one superadmin exists — cannot be changed via API
  */
 import { Router } from 'express'
-import { eq, ne } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import db from '../../core/database'
 import { users } from '../../core/database/schema'
 import { authenticate, requireSuperAdmin } from '../../middleware/auth.middleware'
