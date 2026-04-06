@@ -27,8 +27,6 @@ export default function FeaturedTours({ tours }: Props) {
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
-  if (!tours || tours.length === 0) return null
-
   const checkScroll = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
@@ -36,7 +34,6 @@ export default function FeaturedTours({ tours }: Props) {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10)
   }, [])
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     checkScroll()
     const el = scrollRef.current
@@ -48,6 +45,8 @@ export default function FeaturedTours({ tours }: Props) {
       window.removeEventListener('resize', checkScroll)
     }
   }, [checkScroll])
+
+  if (!tours || tours.length === 0) return null
 
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current
