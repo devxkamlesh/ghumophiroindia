@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
   Search, Bell, LogOut, User, Settings,
@@ -17,13 +18,13 @@ import { usePathname } from 'next/navigation'
 
 const navigation = [
   { name: 'Dashboard',       href: '/dashboard',                    icon: LayoutDashboard },
-  { name: 'Tours',           href: '/dashboard/tours',              icon: MapPin },
-  { name: 'Locations',       href: '/dashboard/locations',          icon: Globe },
-  { name: 'Gallery',         href: '/dashboard/gallery',            icon: Images },
   { name: 'Bookings',        href: '/dashboard/bookings',           icon: Calendar },
   { name: 'Inquiries',       href: '/dashboard/inquiries',          icon: MessageSquare },
   { name: 'Custom Requests', href: '/dashboard/custom-requests',    icon: Wand2 },
   { name: 'Reviews',         href: '/dashboard/reviews',            icon: Star },
+  { name: 'Tours',           href: '/dashboard/tours',              icon: MapPin },
+  { name: 'Locations',       href: '/dashboard/locations',          icon: Globe },
+  { name: 'Gallery',         href: '/dashboard/gallery',            icon: Images },
   { name: 'Analytics',       href: '/dashboard/analytics',          icon: BarChart3 },
   { name: 'Settings',        href: '/dashboard/settings',           icon: Settings },
 ]
@@ -80,13 +81,8 @@ export default function DashboardHeader() {
               <SheetHeader className="px-5 py-4 border-b border-gray-100">
                 <SheetTitle asChild>
                   <Link href="/dashboard" className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">GP</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-gray-900 leading-none">Ghumo Phiro India</p>
-                      <p className="text-xs text-orange-500 font-medium mt-0.5">Admin Panel</p>
-                    </div>
+                    <Image src="/images/ghumofirologo.png" alt="Ghumo Firo India" width={130} height={38} className="h-9 w-auto object-contain" />
+                    <span className="rounded-md bg-orange-100 px-1.5 py-0.5 text-xs font-semibold text-orange-700">Admin</span>
                   </Link>
                 </SheetTitle>
               </SheetHeader>
@@ -158,13 +154,8 @@ export default function DashboardHeader() {
 
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-xs">GP</span>
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-sm font-bold text-gray-900 leading-none">Ghumo Phiro India</p>
-              <p className="text-xs text-orange-500 font-medium">Admin Panel</p>
-            </div>
+            <Image src="/images/ghumofirologo.png" alt="Ghumo Firo India" width={140} height={42} className="h-9 w-auto object-contain" priority />
+            <span className="hidden rounded-md bg-orange-100 px-1.5 py-0.5 text-xs font-semibold text-orange-700 sm:inline">Admin</span>
           </Link>
         </div>
 

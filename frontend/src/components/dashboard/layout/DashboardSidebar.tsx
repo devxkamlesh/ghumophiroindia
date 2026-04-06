@@ -19,6 +19,15 @@ const groups = [
     ],
   },
   {
+    label: 'Operations',
+    items: [
+      { name: 'Bookings', href: '/dashboard/bookings', icon: Calendar },
+      { name: 'Inquiries', href: '/dashboard/inquiries', icon: MessageSquare },
+      { name: 'Custom Requests', href: '/dashboard/custom-requests', icon: Wand2 },
+      { name: 'Reviews', href: '/dashboard/reviews', icon: Star },
+    ],
+  },
+  {
     label: 'Content',
     items: [
       { name: 'Tours',     href: '/dashboard/tours',     icon: MapPin },
@@ -27,15 +36,6 @@ const groups = [
       { name: 'Banners',   href: '/dashboard/banners',   icon: Image },
       { name: 'Place Cards', href: '/dashboard/place-cards', icon: Image },
       { name: 'Blog',      href: '/dashboard/blog',      icon: FileText },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { name: 'Bookings', href: '/dashboard/bookings', icon: Calendar },
-      { name: 'Inquiries', href: '/dashboard/inquiries', icon: MessageSquare },
-      { name: 'Custom Requests', href: '/dashboard/custom-requests', icon: Wand2 },
-      { name: 'Reviews', href: '/dashboard/reviews', icon: Star },
     ],
   },
   {
@@ -72,17 +72,17 @@ export default function DashboardSidebar() {
       </div>
 
       {/* Nav groups */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
         {groups.map(({ label, items }) => {
           // Filter items by role requirement
           const visible = items.filter((item: any) => !item.role || item.role === me?.role)
           if (visible.length === 0) return null
           return (
           <div key={label}>
-            <p className="px-3 mb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+            <p className="px-3 mb-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
               {label}
             </p>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {visible.map(({ name, href, icon: Icon }: any) => {
                 const active = href === '/dashboard'
                   ? pathname === '/dashboard'
@@ -93,13 +93,13 @@ export default function DashboardSidebar() {
                     key={href}
                     href={href}
                     className={cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border-l-2',
+                      'group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
                       active
-                        ? 'bg-primary-50 text-primary-700 border-primary-500'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 border-transparent'
+                        ? 'bg-primary-600 text-white shadow-sm shadow-primary-600/30'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     )}
                   >
-                    <Icon className={cn('w-4 h-4 flex-shrink-0', active ? 'text-primary-600' : 'text-gray-400')} />
+                    <Icon className={cn('w-[18px] h-[18px] flex-shrink-0', active ? 'text-white' : 'text-gray-400 group-hover:text-gray-600')} />
                     {name}
                   </Link>
                 )
@@ -111,27 +111,27 @@ export default function DashboardSidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className="px-3 py-3 border-t border-gray-100 space-y-0.5">
+      <div className="px-3 py-3 border-t border-gray-100 space-y-1">
         <Link
           href="/my-account"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary-600 hover:bg-primary-50 transition-colors border-l-2 border-transparent"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-primary-600 hover:bg-primary-50 transition-colors"
         >
-          <UserCircle className="w-4 h-4 flex-shrink-0" />
+          <UserCircle className="w-[18px] h-[18px] flex-shrink-0" />
           My Account
         </Link>
         <Link
           href="/"
           target="_blank"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors border-l-2 border-transparent"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
         >
-          <ExternalLink className="w-4 h-4 flex-shrink-0 text-gray-400" />
+          <ExternalLink className="w-[18px] h-[18px] flex-shrink-0 text-gray-400" />
           View Live Site
         </Link>
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors w-full border-l-2 border-transparent"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors w-full"
         >
-          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <LogOut className="w-[18px] h-[18px] flex-shrink-0" />
           Sign out
         </button>
       </div>

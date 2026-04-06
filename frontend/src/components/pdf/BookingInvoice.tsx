@@ -1,6 +1,6 @@
 'use client'
 
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 import type { Booking } from '@/types'
 
 const COMPANY = {
@@ -43,6 +43,7 @@ const s = StyleSheet.create({
   // ── Header ──
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  logo: { width: 132, height: 40, objectFit: 'contain' },
   logoBox: { width: 34, height: 34, borderRadius: 8, backgroundColor: ORANGE, alignItems: 'center', justifyContent: 'center' },
   logoTxt: { color: WHITE, fontSize: 15, fontFamily: 'Helvetica-Bold' },
   brandName: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: NAVY },
@@ -143,14 +144,12 @@ function paymentLabel(status: string, paymentStatus: string) {
 function Header({ booking }: { booking: Booking }) {
   return (
     <View style={s.header}>
-      <View style={s.brandRow}>
-        <View style={s.logoBox}><Text style={s.logoTxt}>G</Text></View>
-        <View>
-          <Text style={s.brandName}>{COMPANY.name}</Text>
-          <Text style={s.brandSub}>{COMPANY.tagline}</Text>
-          <Text style={[s.brandSub, { marginTop: 2 }]}>{COMPANY.address}</Text>
-          <Text style={s.brandSub}>{COMPANY.gst}</Text>
-        </View>
+      <View style={{ maxWidth: 260 }}>
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
+        <Image src="/images/ghumofirologo.png" style={s.logo} />
+        <Text style={[s.brandSub, { marginTop: 4 }]}>{COMPANY.tagline}</Text>
+        <Text style={[s.brandSub, { marginTop: 2 }]}>{COMPANY.address}</Text>
+        <Text style={s.brandSub}>{COMPANY.gst}</Text>
       </View>
       <View style={s.metaPanel}>
         <Text style={s.metaTitle}>INVOICE</Text>
