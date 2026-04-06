@@ -143,6 +143,12 @@ function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
   const endLocation = destinations[destinations.length - 1] || startLocation
   const locationText = startLocation === endLocation ? startLocation : `${startLocation} – ${endLocation}`
 
+  // Cities linked to this tour (from tourLocations join, only type=city)
+  const cities = tour.tourCities || []
+  const citiesText = cities.length > 0
+    ? (cities.length > 3 ? cities.slice(0, 3).join(', ') + '..' : cities.join(', '))
+    : null
+
   return (
     <div className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
       {/* Image */}
@@ -188,6 +194,14 @@ function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
             {tour.title}
           </h3>
         </Link>
+
+        {/* Linked cities */}
+        {citiesText && (
+          <p className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
+            <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-[#f97316]" />
+            <span className="truncate">{citiesText}</span>
+          </p>
+        )}
 
         {/* Meta */}
         <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">

@@ -36,6 +36,7 @@ export interface Tour {
   destinations: string[]      // legacy text array — kept for backward compat
   locationIds?: number[]      // new: linked location IDs
   tourLocations?: TourLocation[] // new: full location objects (joined)
+  tourCities?: string[]          // city names only (for card display)
   rating?: string | number | null
   reviewCount?: number
   isActive: boolean

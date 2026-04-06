@@ -209,6 +209,39 @@ export class TourService {
       limit: 6,
     })
 
+    // Attach linked city names to each tour for card display
+    if (results.length > 0) {
+      const tourIds = results.map(t => t.id)
+      const locRows = await db
+        .select({
+          tourId: tourLocations.tourId,
+          name: locations.name,
+          type: locations.type,
+        })
+        .from(tourLocations)
+        .innerJoin(locations, eq(tourLocations.locationId, locations.id))
+        .where(
+          and(
+            sql`${tourLocations.tourId} IN (${sql.join(tourIds.map(id => sql`${id}`), sql`, `)})`,
+            eq(locations.type, 'city')
+          )
+        )
+        .orderBy(tourLocations.sortOrder)
+
+      // Group by tourId
+      const cityMap = new Map<number, string[]>()
+      for (const row of locRows) {
+        const list = cityMap.get(row.tourId) || []
+        list.push(row.name)
+        cityMap.set(row.tourId, list)
+      }
+
+      // Attach as tourCities field
+      for (const tour of results) {
+        (tour as any).tourCities = cityMap.get(tour.id) || []
+      }
+    }
+
     // Cache the results
     await tourCache.setFeaturedTours(results)
     logger.info('Featured tours cached')
