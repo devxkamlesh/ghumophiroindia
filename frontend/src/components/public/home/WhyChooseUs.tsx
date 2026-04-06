@@ -1,115 +1,127 @@
 'use client'
 
-import { Shield, Award, HeadphonesIcon, Sparkles, Users, ThumbsUp } from 'lucide-react'
-import { motion } from 'motion/react'
+import { Shield, Award, Headphones, Sparkles, Users, ThumbsUp } from 'lucide-react'
+import { motion, type Variants } from 'motion/react'
+
+const EASE = [0.25, 0.46, 0.45, 0.94] as const
 
 const features = [
   {
     icon: Shield,
     title: 'Safe & Secure',
-    description: 'Licensed guides, insured vehicles, and 24/7 support for worry-free travel.',
-    gradient: 'from-blue-500 to-cyan-500',
-    glow: 'shadow-blue-500/25',
+    description: 'Licensed guides, insured vehicles, and round-the-clock support for worry-free travel.',
   },
   {
     icon: Award,
-    title: 'Expert Guides',
-    description: 'Local experts with deep knowledge of history, culture, and hidden gems.',
-    gradient: 'from-violet-500 to-purple-500',
-    glow: 'shadow-violet-500/25',
+    title: 'Expert Local Guides',
+    description: 'Handpicked local experts with deep knowledge of history, culture, and hidden gems.',
   },
   {
-    icon: HeadphonesIcon,
+    icon: Headphones,
     title: '24/7 Support',
-    description: 'Round-the-clock assistance before, during, and after your journey.',
-    gradient: 'from-emerald-500 to-teal-500',
-    glow: 'shadow-emerald-500/25',
+    description: 'Real humans available before, during, and after your journey — anytime you need us.',
   },
   {
     icon: Sparkles,
-    title: 'Customizable',
-    description: 'Tailor every aspect of your tour to match your preferences and budget.',
-    gradient: 'from-amber-500 to-orange-500',
-    glow: 'shadow-amber-500/25',
+    title: 'Fully Customizable',
+    description: 'Tailor every detail of your tour to match your interests, pace, and budget.',
   },
   {
     icon: Users,
-    title: 'Small Groups',
-    description: 'Intimate experiences with small group sizes for personalized attention.',
-    gradient: 'from-pink-500 to-rose-500',
-    glow: 'shadow-pink-500/25',
+    title: 'Small Group Sizes',
+    description: 'Intimate, personalised experiences instead of crowded, rushed bus tours.',
   },
   {
     icon: ThumbsUp,
-    title: 'Best Price',
-    description: 'Competitive pricing with no hidden fees and flexible payment options.',
-    gradient: 'from-orange-500 to-red-500',
-    glow: 'shadow-orange-500/25',
+    title: 'Best Price Promise',
+    description: 'Transparent pricing with no hidden fees and flexible, secure payment options.',
   },
 ]
 
 const stats = [
-  { number: '1,200+', label: 'Happy Travelers' },
-  { number: '4+',     label: 'Years Experience' },
-  { number: '4.8/5',  label: 'Average Rating' },
-  { number: '50+',    label: 'Destinations Covered' },
+  { number: '5+',     label: 'Years of Experience' },
+  { number: '12,000+', label: 'Happy Travellers' },
+  { number: '4.9/5',  label: 'Average Rating' },
+  { number: '60+',    label: 'Destinations Covered' },
 ]
+
+const containerVariants: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+}
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 32 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
+}
 
 export default function WhyChooseUs() {
   return (
-    <section className="relative py-20 md:py-28 bg-white overflow-hidden">
-      {/* Decorative background */}
-      <div className="absolute inset-0 -z-0 opacity-[0.4]"
+    <section className="relative overflow-hidden bg-white py-16 md:py-24">
+      {/* Subtle dotted background */}
+      <div
+        className="absolute inset-0 -z-0 opacity-[0.4]"
         style={{
-          backgroundImage:
-            'radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 0)',
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 0)',
           backgroundSize: '28px 28px',
         }}
       />
 
       <div className="container-custom relative">
-
-        {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 text-primary-600 text-sm font-semibold mb-3">
-            <span className="w-4 h-px bg-primary-400" />
+        {/* Header — matches the rest of the homepage */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="mb-14 text-center"
+        >
+          <p className="font-montez text-4xl text-[#f97316] md:text-5xl lg:text-6xl">
             Why Ghumo Phiro India
-            <span className="w-4 h-px bg-primary-400" />
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">Why Choose Us</h2>
-          <p className="text-gray-500 mt-3 text-lg max-w-xl mx-auto">Your trusted partner for unforgettable Rajasthan experiences</p>
-        </div>
+          </p>
+          <h2 className="mt-1 font-poppins text-3xl font-bold text-slate-800 md:text-5xl">
+            Why <span className="text-blue-600">Choose</span> Us
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-sm text-gray-600 md:text-base">
+            For over 5 years we&apos;ve been crafting unforgettable journeys across Rajasthan and incredible
+            India — trusted by thousands of travellers for honest service and memories that last a lifetime.
+          </p>
+        </motion.div>
 
-        {/* Features */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-          {features.map((f, i) => {
+        {/* Feature cards */}
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, amount: 0.2 }}
+          className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        >
+          {features.map((f) => {
             const Icon = f.icon
             return (
               <motion.div
                 key={f.title}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.08 }}
-                className="group relative bg-white rounded-3xl p-7 border border-gray-100 hover:border-transparent hover:shadow-xl transition-all duration-300"
+                variants={cardVariants}
+                className="group relative rounded-3xl border border-gray-100 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl"
               >
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-5 shadow-lg ${f.glow} group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
-                  <Icon className="w-8 h-8 text-white" strokeWidth={2} />
+                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 text-[#f97316] shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:bg-[#f97316] group-hover:text-white">
+                  <Icon className="h-8 w-8" strokeWidth={2} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg mb-2">{f.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{f.description}</p>
+                <h3 className="mb-2 font-poppins text-lg font-bold text-slate-800 transition-colors group-hover:text-[#f97316]">
+                  {f.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-gray-500">{f.description}</p>
               </motion.div>
             )
           })}
-        </div>
+        </motion.div>
 
         {/* Stats bar */}
-        <div className="relative overflow-hidden bg-gray-900 rounded-3xl p-8 md:p-12">
-          {/* glow accents */}
-          <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl" />
-          <div className="absolute -bottom-24 -right-10 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl" />
+        <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-8 md:p-12">
+          <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-[#f97316]/20 blur-3xl" />
+          <div className="absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-amber-500/20 blur-3xl" />
 
-          <div className="relative grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="relative grid grid-cols-2 gap-8 md:grid-cols-4">
             {stats.map((s, i) => (
               <motion.div
                 key={s.label}
@@ -119,10 +131,10 @@ export default function WhyChooseUs() {
                 transition={{ duration: 0.4, delay: i * 0.1 }}
                 className="text-center"
               >
-                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-1">
+                <div className="font-poppins text-3xl font-extrabold text-[#f97316] md:text-4xl">
                   {s.number}
                 </div>
-                <div className="text-gray-400 text-sm">{s.label}</div>
+                <div className="mt-1 text-sm text-gray-300">{s.label}</div>
               </motion.div>
             ))}
           </div>
