@@ -36,54 +36,58 @@ const testimonials = [
   },
 ]
 
+const stats = [
+  { value: '4.9/5', label: 'Average Rating', sub: 'Based on 2,500+ reviews' },
+  { value: '12,000+', label: 'Happy Travellers', sub: 'From 50+ countries' },
+  { value: '98%', label: 'Satisfaction Rate', sub: 'Would recommend us' },
+]
+
 export default function Testimonials() {
   return (
-    <section className="py-20 md:py-28 bg-white">
+    <section className="bg-white py-16 md:py-24">
       <div className="container-custom">
 
         {/* Header */}
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 text-primary-600 text-sm font-semibold mb-3">
-            <span className="w-4 h-px bg-primary-400" />
-            Testimonials
-            <span className="w-4 h-px bg-primary-400" />
-          </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">What Travelers Say</h2>
-          <p className="text-gray-500 mt-3 text-lg max-w-xl mx-auto">Real experiences from happy customers around the world</p>
+        <div className="mb-14 text-center">
+          <p className="font-montez text-4xl text-[#f97316] md:text-5xl lg:text-6xl">
+            What Travelers Say
+          </p>
+          <h2 className="mt-1 font-poppins text-3xl font-bold text-slate-800 md:text-5xl">
+            Loved by <span className="text-blue-600">Travellers</span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-sm text-gray-600 md:text-base">
+            Real experiences from happy customers around the world
+          </p>
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-14">
+        <div className="mb-14 grid grid-cols-1 gap-6 md:grid-cols-3">
           {testimonials.map(t => (
             <div key={t.name}
-              className="group relative bg-white border border-gray-100 hover:border-primary-200 rounded-2xl p-7 hover:shadow-xl transition-all duration-300">
+              className="group relative rounded-2xl border border-gray-100 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl">
 
-              {/* Quote watermark */}
-              <Quote className="absolute top-5 right-5 w-12 h-12 text-gray-100 group-hover:text-primary-50 transition-colors" />
+              <Quote className="absolute right-5 top-5 h-12 w-12 text-gray-100 transition-colors group-hover:text-orange-50" />
 
-              {/* Stars */}
-              <div className="flex gap-0.5 mb-5">
+              <div className="mb-5 flex gap-0.5">
                 {Array.from({ length: t.rating }).map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                 ))}
               </div>
 
-              {/* Text */}
-              <p className="text-gray-700 text-sm leading-relaxed mb-6 relative z-10">
+              <p className="relative z-10 mb-6 text-sm leading-relaxed text-gray-700">
                 &ldquo;{t.text}&rdquo;
               </p>
 
-              {/* Author */}
-              <div className="flex items-center gap-3 pt-5 border-t border-gray-100">
-                <div className="relative w-11 h-11 rounded-full overflow-hidden ring-2 ring-white shadow-sm shrink-0">
+              <div className="flex items-center gap-3 border-t border-gray-100 pt-5">
+                <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full shadow-sm ring-2 ring-white">
                   <Image src={t.image} alt={t.name} fill className="object-cover" sizes="44px" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-gray-900 text-sm">{t.name}</div>
-                  <div className="text-gray-400 text-xs">{t.flag} {t.country}</div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-poppins text-sm font-bold text-slate-800">{t.name}</div>
+                  <div className="text-xs text-gray-400">{t.flag} {t.country}</div>
                 </div>
-                <div className="text-right shrink-0">
-                  <div className="text-xs text-primary-600 font-medium line-clamp-1">{t.tour}</div>
+                <div className="shrink-0 text-right">
+                  <div className="line-clamp-1 text-xs font-medium text-[#f97316]">{t.tour}</div>
                   <div className="text-xs text-gray-400">{t.date}</div>
                 </div>
               </div>
@@ -92,16 +96,12 @@ export default function Testimonials() {
         </div>
 
         {/* Stats strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { value: '4.9/5', label: 'Average Rating', sub: 'Based on 2,500+ reviews' },
-            { value: '2,500+', label: 'Happy Travelers', sub: 'From 50+ countries' },
-            { value: '98%', label: 'Satisfaction Rate', sub: 'Would recommend us' },
-          ].map(s => (
-            <div key={s.value} className="bg-gray-50 border border-gray-100 rounded-2xl p-6 text-center">
-              <div className="text-3xl font-bold text-gray-900 mb-1">{s.value}</div>
-              <div className="font-semibold text-gray-700 text-sm">{s.label}</div>
-              <div className="text-gray-400 text-xs mt-0.5">{s.sub}</div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {stats.map(s => (
+            <div key={s.value} className="rounded-2xl border border-gray-100 bg-gray-50 p-6 text-center">
+              <div className="mb-1 font-poppins text-3xl font-extrabold text-[#f97316]">{s.value}</div>
+              <div className="text-sm font-semibold text-slate-700">{s.label}</div>
+              <div className="mt-0.5 text-xs text-gray-400">{s.sub}</div>
             </div>
           ))}
         </div>
