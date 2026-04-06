@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { motion, type Variants } from 'motion/react'
-import type { Banner } from '@/types'
+import type { PlaceCard } from '@/types'
 
 interface CategoryCard {
   title: string
@@ -21,7 +21,7 @@ const FALLBACK_CARDS: CategoryCard[] = [
 ]
 
 interface Props {
-  banners?: Banner[]
+  placeCards?: PlaceCard[]
 }
 
 // Vertical offsets (lg+ only) to lay the cards along a gentle curve/arch
@@ -39,15 +39,15 @@ const cardVariants: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
 }
 
-export default function AdsBanner({ banners = [] }: Props) {
-  // Map backend category banners → display cards, falling back to defaults when empty.
+export default function AdsBanner({ placeCards = [] }: Props) {
+  // Map backend place cards → display cards, falling back to defaults when empty.
   const cards: CategoryCard[] =
-    banners.length > 0
-      ? banners.map(b => ({
-          title: b.title,
-          image: b.image,
-          href: b.linkUrl || '/tours',
-          subtitle: b.subtitle || b.linkText || 'See More',
+    placeCards.length > 0
+      ? placeCards.map(pc => ({
+          title: pc.title,
+          image: pc.image,
+          href: pc.linkUrl || '/tours',
+          subtitle: pc.subtitle || 'See More',
         }))
       : FALLBACK_CARDS
 
@@ -70,7 +70,7 @@ export default function AdsBanner({ banners = [] }: Props) {
           </h2>
         </motion.div>
 
-        {/* Cards laid along a curve. Hover effects are pure CSS (GPU-composited). */}
+        {/* Cards laid along a curve */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -84,16 +84,11 @@ export default function AdsBanner({ banners = [] }: Props) {
             <motion.div key={`${cat.title}-${i}`} variants={cardVariants} className={CURVE_OFFSETS[i] ?? ''}>
               <Link href={cat.href} className="group block text-center">
                 <div className="relative aspect-square w-full overflow-hidden rounded-tl-[2.5rem] rounded-br-[2.5rem] rounded-tr-xl rounded-bl-xl shadow-md transition-[transform,box-shadow] duration-500 ease-out will-change-transform group-hover:-translate-y-1.5 group-hover:shadow-2xl">
-                  {/* Image (gentle zoom — transform only) */}
                   <div
                     className="absolute inset-0 transform-gpu bg-cover bg-center transition-transform duration-700 ease-out will-change-transform group-hover:scale-105"
                     style={{ backgroundImage: `url('${cat.image}')` }}
                   />
-
-                  {/* Brightness lift via white overlay opacity (GPU-composited, cheap) */}
                   <div className="absolute inset-0 bg-white opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-10" />
-
-                  {/* Shine: one-shot on hover-in, no reverse (CSS keyframe, not group-hover transition) */}
                   <div className="card-shine absolute inset-y-0 left-0 z-10" />
                 </div>
 

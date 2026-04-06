@@ -143,10 +143,12 @@ function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
   const endLocation = destinations[destinations.length - 1] || startLocation
   const locationText = startLocation === endLocation ? startLocation : `${startLocation} – ${endLocation}`
 
-  // Cities linked to this tour (from tourLocations join, only type=city)
-  const cities = tour.tourCities || []
-  const citiesText = cities.length > 0
-    ? (cities.length > 3 ? cities.slice(0, 3).join(', ') + '..' : cities.join(', '))
+  // City locations from tour_locations join (only cities)
+  const cityNames = (tour.tourLocations || [])
+    .filter(l => l.type === 'city')
+    .map(l => l.name)
+  const cityText = cityNames.length > 0
+    ? (cityNames.length > 3 ? cityNames.slice(0, 3).join(', ') + '..' : cityNames.join(', '))
     : null
 
   return (
@@ -195,16 +197,8 @@ function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
           </h3>
         </Link>
 
-        {/* Linked cities */}
-        {citiesText && (
-          <p className="mb-3 flex items-center gap-1.5 text-xs text-gray-500">
-            <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-[#f97316]" />
-            <span className="truncate">{citiesText}</span>
-          </p>
-        )}
-
         {/* Meta */}
-        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
           {rating && (
             <span className="flex items-center gap-1 font-medium text-gray-700">
               <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
@@ -221,6 +215,14 @@ function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
             Max {tour.maxGroupSize}
           </span>
         </div>
+
+        {/* City locations */}
+        {cityText && (
+          <div className="mb-4 flex items-start gap-1.5 text-xs text-gray-500">
+            <MapPin className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#f97316]" />
+            <span className="line-clamp-1">{cityText}</span>
+          </div>
+        )}
 
         {/* Price */}
         <div className="mb-5 mt-auto">

@@ -25,6 +25,7 @@ const groups = [
       { name: 'Locations', href: '/dashboard/locations', icon: Globe },
       { name: 'Gallery',   href: '/dashboard/gallery',   icon: Images },
       { name: 'Banners',   href: '/dashboard/banners',   icon: Image },
+      { name: 'Place Cards', href: '/dashboard/place-cards', icon: Image },
       { name: 'Blog',      href: '/dashboard/blog',      icon: FileText },
     ],
   },

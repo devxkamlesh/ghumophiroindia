@@ -7,7 +7,7 @@ import WhyChooseUs from '@/components/public/home/WhyChooseUs'
 import Testimonials from '@/components/public/home/Testimonials'
 import FAQ from '@/components/public/home/FAQ'
 import CTABand from '@/components/public/home/CTABand'
-import type { Tour, LocationNode, Banner } from '@/types'
+import type { Tour, LocationNode, PlaceCard } from '@/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,12 +22,12 @@ async function getFeaturedTours(): Promise<Tour[]> {
   } catch { return [] }
 }
 
-async function getCategoryBanners(): Promise<Banner[]> {
+async function getPlaceCards(): Promise<PlaceCard[]> {
   try {
-    const res = await fetch(`${API}/banners/active?position=category`, { next: { revalidate: 300 } })
+    const res = await fetch(`${API}/place-cards/active`, { next: { revalidate: 300 } })
     if (!res.ok) return []
     const json = await res.json()
-    return Array.isArray(json.data?.banners) ? json.data.banners : []
+    return Array.isArray(json.data?.placeCards) ? json.data.placeCards : []
   } catch { return [] }
 }
 
@@ -41,16 +41,16 @@ async function getAllLocations(): Promise<LocationNode[]> {
 }
 
 export default async function Home() {
-  const [featuredTours, allLocations, categoryBanners] = await Promise.all([
+  const [featuredTours, allLocations, placeCards] = await Promise.all([
     getFeaturedTours(),
     getAllLocations(),
-    getCategoryBanners(),
+    getPlaceCards(),
   ])
 
   return (
     <>
       <Hero />
-      <AdsBanner banners={categoryBanners} />
+      <AdsBanner placeCards={placeCards} />
       <PopularDestinations locations={allLocations} />
       <FeaturedTours tours={featuredTours} />
       <HowItWorks />

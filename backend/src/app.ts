@@ -13,6 +13,7 @@ import locationRoutes from './modules/locations/location.routes'
 import uploadRoutes from './modules/upload/upload.routes'
 import galleryRoutes from './modules/gallery/gallery.routes'
 import bannerRoutes from './modules/banners/banner.routes'
+import placeCardRoutes from './modules/place-cards/place-card.routes'
 import { setupCacheInvalidation } from './core/cache-invalidator'
 import config from './core/config'
 import logger from './core/logger'
@@ -61,6 +62,7 @@ apiRouter.use('/locations',    locationRoutes)
 apiRouter.use('/upload',       uploadRoutes)
 apiRouter.use('/gallery',      galleryRoutes)
 apiRouter.use('/banners',      bannerRoutes)
+apiRouter.use('/place-cards',  placeCardRoutes)
 
 app.use(`/api/${config.apiVersion}`, apiRouter)
 

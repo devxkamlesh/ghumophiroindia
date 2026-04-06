@@ -173,7 +173,20 @@ export const banners = pgTable('banners', {
   linkText: varchar('link_text', { length: 100 }).default('Book Now'),
   displayOrder: integer('display_order').default(0),
   isActive: boolean('is_active').default(true),
-  position: varchar('position', { length: 50 }).notNull().default('hero'), // 'hero' | 'category'
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+})
+
+// ─── Place Cards ("Wonderful Place For You" section) ──────────────────────────
+
+export const placeCards = pgTable('place_cards', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  subtitle: varchar('subtitle', { length: 255 }),
+  image: varchar('image', { length: 500 }).notNull(),
+  linkUrl: varchar('link_url', { length: 500 }).notNull().default('/tours'),
+  displayOrder: integer('display_order').default(0),
+  isActive: boolean('is_active').default(true),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })

@@ -10,7 +10,18 @@ export interface Banner {
   linkText?: string | null
   displayOrder: number
   isActive: boolean
-  position?: 'hero' | 'category'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PlaceCard {
+  id: number
+  title: string
+  subtitle?: string | null
+  image: string
+  linkUrl: string
+  displayOrder: number
+  isActive: boolean
   createdAt: string
   updatedAt: string
 }
@@ -36,7 +47,6 @@ export interface Tour {
   destinations: string[]      // legacy text array — kept for backward compat
   locationIds?: number[]      // new: linked location IDs
   tourLocations?: TourLocation[] // new: full location objects (joined)
-  tourCities?: string[]          // city names only (for card display)
   rating?: string | number | null
   reviewCount?: number
   isActive: boolean

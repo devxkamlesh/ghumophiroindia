@@ -16,6 +16,7 @@ import type {
   LocationNode,
   Banner,
   TourCategory,
+  PlaceCard,
 } from '@/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ||
@@ -447,16 +448,12 @@ export const locationAdminService = {
 // ─── Banners ──────────────────────────────────────────────────────────────────
 
 export const bannerService = {
-  getActive: async (position?: 'hero' | 'category'): Promise<Banner[]> => {
-    const { data } = await api.get('/banners/active', {
-      params: position ? { position } : undefined,
-    })
+  getActive: async (): Promise<Banner[]> => {
+    const { data } = await api.get('/banners/active')
     return data.data?.banners ?? []
   },
-  getAll: async (position?: 'hero' | 'category'): Promise<Banner[]> => {
-    const { data } = await api.get('/banners', {
-      params: position ? { position } : undefined,
-    })
+  getAll: async (): Promise<Banner[]> => {
+    const { data } = await api.get('/banners')
     return data.data?.banners ?? []
   },
   getById: async (id: number): Promise<Banner> => {
@@ -590,6 +587,37 @@ export const galleryService = {
 
   moveImages: async (publicIds: string[], targetFolder: string): Promise<void> => {
     await api.post('/gallery/move', { publicIds, targetFolder })
+  },
+}
+
+// ─── Place Cards ("Wonderful Place For You") ─────────────────────────────────
+
+export const placeCardService = {
+  getActive: async (): Promise<PlaceCard[]> => {
+    const { data } = await api.get('/place-cards/active')
+    return data.data?.placeCards ?? []
+  },
+  getAll: async (): Promise<PlaceCard[]> => {
+    const { data } = await api.get('/place-cards')
+    return data.data?.placeCards ?? []
+  },
+  getById: async (id: number): Promise<PlaceCard> => {
+    const { data } = await api.get(`/place-cards/${id}`)
+    return data.data.placeCard
+  },
+  create: async (input: Partial<PlaceCard>): Promise<PlaceCard> => {
+    const { data } = await api.post('/place-cards', input)
+    return data.data.placeCard
+  },
+  update: async (id: number, input: Partial<PlaceCard>): Promise<PlaceCard> => {
+    const { data } = await api.patch(`/place-cards/${id}`, input)
+    return data.data.placeCard
+  },
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/place-cards/${id}`)
+  },
+  reorder: async (orders: { id: number; displayOrder: number }[]): Promise<void> => {
+    await api.post('/place-cards/reorder', { orders })
   },
 }
 

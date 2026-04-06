@@ -45,7 +45,7 @@ export default function Hero() {
   const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => {
-    bannerService.getActive('hero')
+    bannerService.getActive()
       .then(data => setBanners(data))
       .catch(err => console.error('Failed to fetch banners:', err))
       .finally(() => setLoading(false))
