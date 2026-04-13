@@ -1,11 +1,29 @@
 'use client';
 
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { Menu, X, User, LogOut } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { authService } from '@/services/api';
 
 export function Header() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    authService.logout();
+    setUser(null);
+    router.push('/');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -28,6 +46,40 @@ export function Header() {
             <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors">
               Contact
             </Link>
+            
+            {user ? (
+              <div className="flex items-center gap-3 ml-4">
+                <Link
+                  href={user.role === 'admin' ? '/dashboard' : '/my-account'}
+                  className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
+                >
+                  <User size={16} />
+                  {user.name}
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut size={16} />
+                  Logout
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 ml-4">
+                <Link href="/login">
+                  <Button variant="ghost" size="sm">
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/register">
+                  <Button size="sm">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
           </nav>
 
           <button
@@ -69,6 +121,48 @@ export function Header() {
             >
               Contact
             </Link>
+            
+            <div className="pt-4 border-t space-y-2">
+              {user ? (
+                <>
+                  <Link
+                    href={user.role === 'admin' ? '/dashboard' : '/my-account'}
+                    className="block text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <User size={16} className="inline mr-2" />
+                    {user.name}
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left text-sm font-medium hover:text-primary transition-colors"
+                  >
+                    <LogOut size={16} className="inline mr-2" />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="block text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="block text-sm font-medium text-primary hover:underline"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
           </nav>
         )}
       </div>
