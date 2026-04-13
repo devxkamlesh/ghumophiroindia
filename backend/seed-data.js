@@ -367,7 +367,7 @@ async function registerAdmin() {
       console.log('✅ Admin user registered successfully');
       console.log('📧 Email:', adminUser.email);
       console.log('🔑 Password:', adminUser.password);
-      return data.data.token;
+      return data.data.accessToken;
     } else {
       if (response.status === 409 || (data.error && data.error.includes('already exists'))) {
         console.log('ℹ️  Admin user already exists, logging in...');
@@ -399,9 +399,11 @@ async function loginAdmin() {
     
     if (response.ok) {
       console.log('✅ Admin logged in successfully');
-      return data.data.token;
+      return data.data.accessToken;
     } else {
-      throw new Error(data.message || 'Failed to login');
+      console.error('❌ Login failed with status:', response.status);
+      console.error('❌ Response:', JSON.stringify(data, null, 2));
+      throw new Error(data.error || data.message || 'Failed to login');
     }
   } catch (error) {
     console.error('❌ Error logging in:', error.message);
