@@ -1,65 +1,59 @@
 'use client'
 
-import { Edit, Trash2, Eye, MoreVertical } from 'lucide-react'
+import { Edit, Trash2, Eye, MapPin } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-// TODO: Fetch from API
-const tours = [
-  {
-    id: 1,
-    title: 'Golden Triangle Tour',
-    duration: 6,
-    price: 599,
-    category: 'Heritage',
-    status: 'active',
-    bookings: 45,
-    rating: 4.9,
-  },
-  {
-    id: 2,
-    title: 'Jaipur City Tour',
-    duration: 2,
-    price: 149,
-    category: 'City',
-    status: 'active',
-    bookings: 28,
-    rating: 4.8,
-  },
-  {
-    id: 3,
-    title: 'Udaipur Lake City',
-    duration: 3,
-    price: 249,
-    category: 'City',
-    status: 'active',
-    bookings: 32,
-    rating: 5.0,
-  },
-  {
-    id: 4,
-    title: 'Jaisalmer Desert Safari',
-    duration: 4,
-    price: 329,
-    category: 'Desert',
-    status: 'active',
-    bookings: 38,
-    rating: 4.9,
-  },
-  {
-    id: 5,
-    title: 'Jodhpur Blue City Tour',
-    duration: 2,
-    price: 179,
-    category: 'City',
-    status: 'inactive',
-    bookings: 15,
-    rating: 4.7,
-  },
-]
+interface Tour {
+  id: string
+  title: string
+  duration: number
+  price: number
+  category?: string
+  status?: string
+  rating?: number
+  reviewCount?: number
+}
 
 export default function ToursTable() {
-  const [selectedTour, setSelectedTour] = useState<number | null>(null)
+  const [tours, setTours] = useState<Tour[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchTours() {
+      try {
+        const response = await fetch('/api/tours')
+        if (response.ok) {
+          const data = await response.json()
+          setTours(data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch tours:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTours()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+        <p className="text-gray-500 mt-4">Loading tours...</p>
+      </div>
+    )
+  }
+
+  if (tours.length === 0) {
+    return (
+      <div className="p-8 text-center text-gray-500">
+        <MapPin className="w-12 h-12 mx-auto mb-2 opacity-50" />
+        <p>No tours found</p>
+      </div>
+    )
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -79,13 +73,7 @@ export default function ToursTable() {
               Category
             </th>
             <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Bookings
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Rating
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-              Status
             </th>
             <th className="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
               Actions
@@ -105,24 +93,14 @@ export default function ToursTable() {
                 ${tour.price}
               </td>
               <td className="px-6 py-4">
-                <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
-                  {tour.category}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-600">
-                {tour.bookings}
+                {tour.category && (
+                  <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+                    {tour.category}
+                  </span>
+                )}
               </td>
               <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                ⭐ {tour.rating}
-              </td>
-              <td className="px-6 py-4">
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  tour.status === 'active'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-700'
-                }`}>
-                  {tour.status}
-                </span>
+                {tour.rating ? `⭐ ${tour.rating}` : '-'}
               </td>
               <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end space-x-2">

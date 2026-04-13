@@ -1,5 +1,5 @@
 {
-  "name": "ghumophiroindia",
+  "name": "ghumofiroindia",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -15,7 +15,9 @@
     "db:pull": "drizzle-kit pull",
     "db:drop": "drizzle-kit drop",
     "db:studio": "drizzle-kit studio",
-    "seed": "tsx --env-file=.env.local scripts/seed.ts"
+    "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "test:auth": "tsx --env-file=.env.local scripts/test-auth.ts",
+    "test:db": "tsx --env-file=.env.local scripts/test-db.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

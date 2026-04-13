@@ -10,15 +10,28 @@ const authRoutes = ['/login', '/register', '/forgot-password']
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
+  
+  // Allow all auth API routes without session check
+  if (pathname.startsWith('/api/v1/auth/')) {
+    return NextResponse.next()
+  }
+  
+  // Allow public API routes (POST endpoints for bookings, inquiries, custom tours)
+  if (
+    (pathname.startsWith('/api/tours') && req.method === 'GET') ||
+    (pathname.startsWith('/api/bookings') && req.method === 'POST') ||
+    (pathname.startsWith('/api/inquiries') && req.method === 'POST') ||
+    (pathname.startsWith('/api/custom-tour') && req.method === 'POST')
+  ) {
+    return NextResponse.next()
+  }
+  
   const session = await getSessionFromRequest(req)
 
-  // Check if route is public
+  // Check if route is public (pages only, API routes handled above)
   const isPublicRoute =
     publicRoutes.includes(pathname) ||
-    pathname.startsWith('/tours/') ||
-    pathname.startsWith('/api/v1/tours') ||
-    pathname.startsWith('/api/v1/inquiries') ||
-    pathname.startsWith('/api/v1/custom-tour')
+    pathname.startsWith('/tours/')
 
   // Check if route is auth route
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route))

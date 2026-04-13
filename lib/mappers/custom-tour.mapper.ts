@@ -14,7 +14,7 @@ export function toCustomTourEntity(input: any) {
     interests: input.interests || [],
     startDate: input.startDate ? new Date(input.startDate) : null,
     additionalInfo: input.additionalInfo || null,
-    status: 'new',
+    status: 'pending',
   }
 }
 

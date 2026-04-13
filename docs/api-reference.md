@@ -1,4 +1,6 @@
-# API Documentation
+# API Reference
+
+Complete API documentation for Ghumo Firo India.
 
 **Base URL:** `http://localhost:3000/api`  
 **Version:** v1  
@@ -22,16 +24,6 @@ Content-Type: application/json
 ```
 
 **Response:** `201 Created`
-```json
-{
-  "user": {
-    "id": "1",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "user"
-  }
-}
-```
 
 ### Login
 ```http
@@ -45,16 +37,6 @@ Content-Type: application/json
 ```
 
 **Response:** `200 OK` + Sets session cookie
-```json
-{
-  "user": {
-    "id": "1",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "user"
-  }
-}
-```
 
 ### Logout
 ```http
@@ -62,28 +44,13 @@ POST /api/v1/auth/logout
 ```
 
 **Response:** `200 OK`
-```json
-{
-  "message": "Logged out successfully"
-}
-```
 
 ### Get Session
 ```http
 GET /api/v1/auth/session
 ```
 
-**Response:** `200 OK`
-```json
-{
-  "user": {
-    "id": "1",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "role": "user"
-  }
-}
-```
+**Response:** `200 OK` with user data
 
 ### Forgot Password
 ```http
@@ -96,11 +63,6 @@ Content-Type: application/json
 ```
 
 **Response:** `200 OK`
-```json
-{
-  "message": "Password reset email sent"
-}
-```
 
 ---
 
@@ -112,78 +74,16 @@ GET /api/tours?destination=Delhi&difficulty=easy&minPrice=1000&maxPrice=5000&pag
 ```
 
 **Query Parameters:**
-- `destination` (optional): Filter by destination name
+- `destination` (optional): Filter by destination
 - `difficulty` (optional): `easy`, `moderate`, `challenging`
 - `minPrice` (optional): Minimum price
 - `maxPrice` (optional): Maximum price
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 10)
 
-**Response:** `200 OK`
-```json
-{
-  "tours": [
-    {
-      "id": "1",
-      "title": "Golden Triangle Tour",
-      "slug": "golden-triangle-tour",
-      "description": "Visit Delhi, Agra, and Jaipur",
-      "duration": 7,
-      "price": 1500,
-      "maxGroupSize": 15,
-      "difficulty": "easy",
-      "category": "heritage",
-      "images": ["url1", "url2"],
-      "highlights": ["Taj Mahal", "Red Fort"],
-      "rating": 4.8,
-      "reviewCount": 120
-    }
-  ],
-  "total": 50,
-  "page": 1,
-  "limit": 10,
-  "totalPages": 5
-}
-```
-
 ### Get Tour by ID
 ```http
-GET /api/tours/1
-```
-
-**Response:** `200 OK`
-```json
-{
-  "id": "1",
-  "title": "Golden Triangle Tour",
-  "slug": "golden-triangle-tour",
-  "description": "Visit Delhi, Agra, and Jaipur",
-  "longDescription": "Detailed description...",
-  "duration": 7,
-  "price": 1500,
-  "maxGroupSize": 15,
-  "difficulty": "easy",
-  "category": "heritage",
-  "images": ["url1", "url2"],
-  "highlights": ["Taj Mahal", "Red Fort"],
-  "included": ["Accommodation", "Meals"],
-  "excluded": ["Flights", "Personal expenses"],
-  "itinerary": [
-    {
-      "day": 1,
-      "title": "Arrival in Delhi",
-      "description": "Welcome to Delhi",
-      "activities": ["Airport pickup", "Hotel check-in"]
-    }
-  ],
-  "destinations": ["Delhi", "Agra", "Jaipur"],
-  "rating": 4.8,
-  "reviewCount": 120,
-  "isActive": true,
-  "isFeatured": true,
-  "createdAt": "2024-01-01T00:00:00Z",
-  "updatedAt": "2024-01-01T00:00:00Z"
-}
+GET /api/tours/:id
 ```
 
 ### Get Featured Tours
@@ -191,33 +91,9 @@ GET /api/tours/1
 GET /api/tours/featured?limit=6
 ```
 
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": "1",
-    "title": "Golden Triangle Tour",
-    "price": 1500,
-    "rating": 4.8,
-    ...
-  }
-]
-```
-
 ### Search Tours
 ```http
 GET /api/tours/search?q=rajasthan&limit=10
-```
-
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": "2",
-    "title": "Rajasthan Heritage Tour",
-    ...
-  }
-]
 ```
 
 ### Create Tour (Admin Only)
@@ -247,11 +123,9 @@ Content-Type: application/json
 }
 ```
 
-**Response:** `201 Created`
-
 ### Update Tour (Admin Only)
 ```http
-PATCH /api/tours/1
+PATCH /api/tours/:id
 Authorization: Required (Admin)
 Content-Type: application/json
 
@@ -261,20 +135,10 @@ Content-Type: application/json
 }
 ```
 
-**Response:** `200 OK`
-
 ### Delete Tour (Admin Only)
 ```http
-DELETE /api/tours/1
+DELETE /api/tours/:id
 Authorization: Required (Admin)
-```
-
-**Response:** `200 OK`
-```json
-{
-  "message": "Tour deleted successfully",
-  "tour": {...}
-}
 ```
 
 ---
@@ -296,57 +160,16 @@ Authorization: Required (Admin)
 - `page` (optional): Page number
 - `limit` (optional): Items per page
 
-**Response:** `200 OK`
-```json
-{
-  "bookings": [
-    {
-      "id": "1",
-      "tourId": "1",
-      "userId": "1",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "phone": "+919876543210",
-      "country": "India",
-      "numberOfTravelers": 2,
-      "startDate": "2024-06-01T00:00:00Z",
-      "endDate": "2024-06-08T00:00:00Z",
-      "totalPrice": 3000,
-      "status": "pending",
-      "paymentStatus": "pending",
-      "createdAt": "2024-01-01T00:00:00Z"
-    }
-  ],
-  "total": 25,
-  "page": 1,
-  "limit": 10,
-  "totalPages": 3
-}
-```
-
 ### Get Booking by ID
 ```http
-GET /api/bookings/1
+GET /api/bookings/:id
 Authorization: Required (User or Admin)
 ```
-
-**Response:** `200 OK`
 
 ### Get User Bookings
 ```http
-GET /api/bookings/user/1?page=1&limit=10
+GET /api/bookings/user/:userId?page=1&limit=10
 Authorization: Required (User or Admin)
-```
-
-**Response:** `200 OK`
-```json
-{
-  "bookings": [...],
-  "total": 5,
-  "page": 1,
-  "limit": 10,
-  "totalPages": 1
-}
 ```
 
 ### Create Booking
@@ -368,11 +191,9 @@ Content-Type: application/json
 }
 ```
 
-**Response:** `201 Created`
-
 ### Update Booking (Admin Only)
 ```http
-PATCH /api/bookings/1
+PATCH /api/bookings/:id
 Authorization: Required (Admin)
 Content-Type: application/json
 
@@ -381,8 +202,6 @@ Content-Type: application/json
   "paymentStatus": "paid"
 }
 ```
-
-**Response:** `200 OK`
 
 ---
 
@@ -399,36 +218,11 @@ Authorization: Required (Admin)
 - `page` (optional): Page number
 - `limit` (optional): Items per page
 
-**Response:** `200 OK`
-```json
-{
-  "inquiries": [
-    {
-      "id": "1",
-      "name": "Jane Smith",
-      "email": "jane@example.com",
-      "phone": "+919876543210",
-      "country": "USA",
-      "tourInterest": "Golden Triangle",
-      "message": "I'm interested in booking...",
-      "status": "new",
-      "createdAt": "2024-01-01T00:00:00Z"
-    }
-  ],
-  "total": 15,
-  "page": 1,
-  "limit": 10,
-  "totalPages": 2
-}
-```
-
 ### Get Inquiry by ID (Admin Only)
 ```http
-GET /api/inquiries/1
+GET /api/inquiries/:id
 Authorization: Required (Admin)
 ```
-
-**Response:** `200 OK`
 
 ### Create Inquiry
 ```http
@@ -441,15 +235,13 @@ Content-Type: application/json
   "phone": "+919876543210",
   "country": "USA",
   "tourInterest": "Golden Triangle",
-  "message": "I'm interested in booking a tour for 4 people"
+  "message": "I'm interested in booking a tour"
 }
 ```
 
-**Response:** `201 Created`
-
 ### Update Inquiry (Admin Only)
 ```http
-PATCH /api/inquiries/1
+PATCH /api/inquiries/:id
 Authorization: Required (Admin)
 Content-Type: application/json
 
@@ -457,8 +249,6 @@ Content-Type: application/json
   "status": "contacted"
 }
 ```
-
-**Response:** `200 OK`
 
 ---
 
@@ -470,41 +260,11 @@ GET /api/custom-tour?page=1&limit=10
 Authorization: Required (Admin)
 ```
 
-**Response:** `200 OK`
-```json
-{
-  "requests": [
-    {
-      "id": "1",
-      "name": "Mike Johnson",
-      "email": "mike@example.com",
-      "phone": "+919876543210",
-      "country": "UK",
-      "numberOfTravelers": 4,
-      "duration": 10,
-      "budget": "$5000-$7000",
-      "destinations": ["Kerala", "Goa"],
-      "interests": ["Beach", "Culture"],
-      "startDate": "2024-07-01T00:00:00Z",
-      "additionalInfo": "Looking for luxury accommodations",
-      "status": "pending",
-      "createdAt": "2024-01-01T00:00:00Z"
-    }
-  ],
-  "total": 8,
-  "page": 1,
-  "limit": 10,
-  "totalPages": 1
-}
-```
-
 ### Get Custom Tour Request by ID (Admin Only)
 ```http
-GET /api/custom-tour/1
+GET /api/custom-tour/:id
 Authorization: Required (Admin)
 ```
-
-**Response:** `200 OK`
 
 ### Create Custom Tour Request
 ```http
@@ -526,11 +286,9 @@ Content-Type: application/json
 }
 ```
 
-**Response:** `201 Created`
-
 ### Update Custom Tour Request Status (Admin Only)
 ```http
-PATCH /api/custom-tour/1
+PATCH /api/custom-tour/:id
 Authorization: Required (Admin)
 Content-Type: application/json
 
@@ -539,9 +297,7 @@ Content-Type: application/json
 }
 ```
 
-**Valid statuses:** `pending`, `in_progress`, `completed`, `cancelled`
-
-**Response:** `200 OK`
+Valid statuses: `pending`, `in_progress`, `completed`, `cancelled`
 
 ---
 
@@ -553,7 +309,7 @@ GET /api/dashboard/stats
 Authorization: Required (Admin)
 ```
 
-**Response:** `200 OK`
+**Response:**
 ```json
 {
   "bookings": {
@@ -576,15 +332,6 @@ Authorization: Required (Admin)
 ```http
 GET /api/dashboard/recent?limit=5
 Authorization: Required (Admin)
-```
-
-**Response:** `200 OK`
-```json
-{
-  "bookings": [...],
-  "inquiries": [...],
-  "customTours": [...]
-}
 ```
 
 ---
@@ -636,48 +383,22 @@ Authorization: Required (Admin)
 
 ## Authentication
 
-All protected endpoints require a valid JWT session cookie. The cookie is automatically set when you login via `/api/v1/auth/login`.
+Protected endpoints require a valid JWT session cookie set via `/api/v1/auth/login`.
 
 ### Admin-Only Endpoints
-- `POST /api/tours`
-- `PATCH /api/tours/:id`
-- `DELETE /api/tours/:id`
-- `GET /api/bookings`
-- `PATCH /api/bookings/:id`
-- `GET /api/inquiries`
-- `GET /api/inquiries/:id`
-- `PATCH /api/inquiries/:id`
-- `GET /api/custom-tour`
-- `GET /api/custom-tour/:id`
-- `PATCH /api/custom-tour/:id`
-- `GET /api/dashboard/stats`
-- `GET /api/dashboard/recent`
+- Tour management (POST, PATCH, DELETE)
+- All bookings, inquiries, custom tour requests
+- Dashboard endpoints
 
 ### User or Admin Endpoints
-- `GET /api/bookings/:id` (user can only access their own)
-- `GET /api/bookings/user/:userId` (user can only access their own)
+- Get own bookings
+- Get booking by ID (own or admin)
 
 ### Public Endpoints
 - All auth endpoints
-- `GET /api/tours`
-- `GET /api/tours/:id`
-- `GET /api/tours/featured`
-- `GET /api/tours/search`
-- `POST /api/bookings`
-- `POST /api/inquiries`
-- `POST /api/custom-tour`
+- GET tours
+- POST bookings, inquiries, custom tour requests
 
 ---
 
-## Rate Limiting
-
-Currently no rate limiting is implemented. Consider adding rate limiting in production.
-
-## CORS
-
-CORS is configured to allow requests from the same origin. Update for production deployment.
-
----
-
-**Last Updated:** March 18, 2026  
-**API Version:** 1.0.0
+**Last Updated:** April 1, 2026

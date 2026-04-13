@@ -5,7 +5,12 @@ import { loginSchema } from '@/lib/validations/user.schema'
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    // Parse request body
+    const body = await req.json().catch(() => {
+      throw new Error('Invalid JSON in request body')
+    })
+    
+    console.log('Login attempt for:', body.email)
 
     // Validate input
     const validatedData = loginSchema.parse(body)
@@ -17,11 +22,14 @@ export async function POST(req: NextRequest) {
     )
 
     if (!user) {
+      console.log('Invalid credentials for:', validatedData.email)
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
       )
     }
+
+    console.log('User authenticated:', user.email)
 
     // Create session
     await createSession({
@@ -30,6 +38,8 @@ export async function POST(req: NextRequest) {
       role: user.role as 'admin' | 'user',
       name: user.name,
     })
+
+    console.log('Session created for:', user.email)
 
     return NextResponse.json({
       success: true,
@@ -42,6 +52,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('Login error:', error)
+    console.error('Error stack:', error.stack)
     
     if (error.name === 'ZodError') {
       return NextResponse.json(
@@ -50,8 +61,12 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Always return JSON error, never HTML
     return NextResponse.json(
-      { error: 'An error occurred during login' },
+      { 
+        error: error.message || 'An error occurred during login',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      },
       { status: 500 }
     )
   }
