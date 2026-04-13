@@ -369,13 +369,13 @@ async function registerAdmin() {
       console.log('🔑 Password:', adminUser.password);
       return data.data.token;
     } else {
-      if (data.message && data.message.includes('already exists')) {
+      if (response.status === 409 || (data.error && data.error.includes('already exists'))) {
         console.log('ℹ️  Admin user already exists, logging in...');
         return await loginAdmin();
       }
       console.error('❌ Registration failed with status:', response.status);
       console.error('❌ Response:', JSON.stringify(data, null, 2));
-      throw new Error(data.message || 'Failed to register admin');
+      throw new Error(data.error || data.message || 'Failed to register admin');
     }
   } catch (error) {
     console.error('❌ Error registering admin:', error.message);
