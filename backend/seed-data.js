@@ -426,7 +426,10 @@ async function createTour(tour, token) {
       console.log(`✅ Created tour: ${tour.title}`);
       return data.data.tour;
     } else {
-      throw new Error(data.message || 'Failed to create tour');
+      console.error(`❌ Failed to create tour "${tour.title}"`);
+      console.error('Status:', response.status);
+      console.error('Response:', JSON.stringify(data, null, 2));
+      throw new Error(data.error || data.message || 'Failed to create tour');
     }
   } catch (error) {
     console.error(`❌ Error creating tour "${tour.title}":`, error.message);
