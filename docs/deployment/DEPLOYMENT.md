@@ -41,7 +41,7 @@ Nginx (Port 80/443) - Reverse Proxy + SSL
 
 ```bash
 # SSH into your VPS
-ssh root@your-vps-ip
+ssh root@187.127.151.137
 
 # Update system
 apt update && apt upgrade -y

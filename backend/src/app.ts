@@ -17,8 +17,36 @@ const app = createServer()
 // API routes
 const apiRouter = require('express').Router()
 
-// Apply rate limiting to all API routes
-apiRouter.use(apiLimiter)
+// Health check endpoint (also available at /api/v1/health)
+apiRouter.get('/health', async (req, res) => {
+  const { checkDatabaseConnection } = await import('./core/database')
+  const { checkRedisConnection } = await import('./core/redis')
+  
+  const dbConnected = await checkDatabaseConnection()
+  const redisConnected = await checkRedisConnection()
+
+  const health = {
+    status: dbConnected ? 'ok' : 'error',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: config.env,
+    services: {
+      database: dbConnected ? 'connected' : 'disconnected',
+      redis: redisConnected ? 'connected' : 'disconnected',
+    },
+  }
+
+  const statusCode = dbConnected ? 200 : 503
+  res.status(statusCode).json(health)
+})
+
+// Apply rate limiting to all API routes except health
+apiRouter.use((req, res, next) => {
+  if (req.path === '/health') {
+    return next()
+  }
+  return apiLimiter(req, res, next)
+})
 
 // Mount module routes
 apiRouter.use('/auth', authRoutes)
