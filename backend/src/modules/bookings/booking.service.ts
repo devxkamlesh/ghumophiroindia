@@ -100,10 +100,40 @@ export class BookingService {
    * Get user bookings
    */
   async getUserBookings(userId: number) {
-    return db.query.bookings.findMany({
+    const userBookings = await db.query.bookings.findMany({
       where: eq(bookings.userId, userId),
       orderBy: desc(bookings.createdAt),
     })
+
+    // Fetch tour details for each booking
+    const bookingsWithTours = await Promise.all(
+      userBookings.map(async (booking) => {
+        const tour = await db.query.tours.findFirst({
+          where: eq(tours.id, booking.tourId!),
+          columns: {
+            id: true,
+            title: true,
+            slug: true,
+            duration: true,
+            destinations: true,
+          },
+        })
+
+        return {
+          ...booking,
+          bookingDate: booking.startDate,
+          numberOfPeople: booking.numberOfTravelers,
+          tour: tour ? {
+            id: tour.id,
+            title: tour.title,
+            destination: Array.isArray(tour.destinations) ? tour.destinations[0] : 'Rajasthan',
+            duration: tour.duration,
+          } : null,
+        }
+      })
+    )
+
+    return bookingsWithTours
   }
 
   /**

@@ -35,6 +35,16 @@ export const bookingService = {
   create: async (booking: Booking): Promise<void> => {
     await api.post('/bookings', booking);
   },
+
+  getMyBookings: async (): Promise<any[]> => {
+    const token = localStorage.getItem('token');
+    const { data } = await api.get('/bookings/my-bookings', {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return data.data.bookings || [];
+  },
 };
 
 export const inquiryService = {
