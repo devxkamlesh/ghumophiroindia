@@ -38,9 +38,14 @@ export default function MyAccountPage() {
           name: profile.name,
           phone: profile.phone || '',
         });
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch profile:', err);
-        router.push('/login');
+        // If 401, clear token and redirect to login
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          router.push('/login');
+        }
       } finally {
         setLoading(false);
       }
