@@ -6,9 +6,9 @@ const API_URL = 'http://187.127.151.137/api/v1';
 // Sample admin user
 const adminUser = {
   name: 'Admin User',
-  email: 'admin@ghumophiro.com',
+  email: 'admin@ghumofiroindia.com',
   password: 'Admin@123456',
-  phone: '+91 9876543210',
+  phone: '+919876543210',
   role: 'admin'
 };
 
@@ -455,9 +455,11 @@ async function seedData() {
     console.log('\n🔐 Admin credentials:');
     console.log(`   Email: ${adminUser.email}`);
     console.log(`   Password: ${adminUser.password}`);
+    console.log('\n🌍 Domain: ghumofiroindia.com (to be configured)');
 
   } catch (error) {
     console.error('\n💥 Seeding failed:', error.message);
+    console.error('Full error:', error);
     process.exit(1);
   }
 }
