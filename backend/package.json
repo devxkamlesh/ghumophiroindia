@@ -1,7 +1,7 @@
 {
-  "name": "ghumo-phiro-backend",
+  "name": "ghumo-firo-backend",
   "version": "1.0.0",
-  "description": "Backend API for Ghumo Phiro India - Tour Booking Platform",
+  "description": "Backend API for Ghumo Firo India - Tour Booking Platform",
   "main": "dist/app.js",
   "scripts": {
     "dev": "tsx watch src/app.ts",
@@ -29,7 +29,7 @@
     "redis",
     "postgresql"
   ],
-  "author": "Ghumo Phiro India",
+  "author": "Ghumo Firo India",
   "license": "MIT",
   "dependencies": {
     "express": "^4.19.2",
