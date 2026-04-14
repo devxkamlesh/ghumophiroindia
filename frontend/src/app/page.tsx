@@ -3,17 +3,93 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { Glow } from '@/components/ui/glow';
+import { ContainerScroll, ContainerSticky, GalleryContainer, GalleryCol } from '@/components/ui/container-scroll';
 import { tourService } from '@/services/api';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import { 
-  Clock, Users, MapPin, Star, Award, Shield, HeadphonesIcon, 
-  ArrowRight, Phone, Search, CheckCircle2,
-  TrendingUp, Heart, Sparkles
+  Clock, Users, MapPin, Star, Award, Shield, 
+  ArrowRight, Phone, DollarSign, Compass, Heart
 } from 'lucide-react';
 import type { Tour } from '@/types';
+
+// Optimized Rajasthan Gallery Images - Reduced for better performance
+const RAJASTHAN_IMAGES_1 = [
+  'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=600&auto=format&fit=crop&q=75',
+];
+
+const RAJASTHAN_IMAGES_2 = [
+  'https://images.unsplash.com/photo-1598091383021-15ddea10925d?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1620766182966-c6eb5ed2b788?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?w=600&auto=format&fit=crop&q=75',
+];
+
+const RAJASTHAN_IMAGES_3 = [
+  'https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1598091383021-15ddea10925d?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=600&auto=format&fit=crop&q=75',
+  'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=600&auto=format&fit=crop&q=75',
+];
+
+// Popular Destinations Data
+const destinations = [
+  {
+    name: 'Jaipur',
+    description: 'The Pink City - A blend of royal heritage and vibrant culture',
+    image: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?q=80&w=2400&auto=format&fit=crop',
+    highlights: ['Amber Fort', 'City Palace', 'Hawa Mahal'],
+  },
+  {
+    name: 'Udaipur',
+    description: 'The City of Lakes - Romance and architectural splendor',
+    image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?q=80&w=2400&auto=format&fit=crop',
+    highlights: ['Lake Pichola', 'City Palace', 'Jag Mandir'],
+  },
+  {
+    name: 'Jaisalmer',
+    description: 'The Golden City - Desert adventures and ancient forts',
+    image: 'https://images.unsplash.com/photo-1609920658906-8223bd289001?q=80&w=2400&auto=format&fit=crop',
+    highlights: ['Jaisalmer Fort', 'Sand Dunes', 'Patwon Ki Haveli'],
+  },
+];
+
+// Features Data
+const features = [
+  {
+    icon: Shield,
+    title: 'Safe & Secure',
+    description: 'Licensed & insured with 24/7 support for your peace of mind',
+    gradient: 'from-orange-500 to-pink-500',
+  },
+  {
+    icon: Award,
+    title: 'Expert Guides',
+    description: 'Local knowledge and authentic experiences with certified guides',
+    gradient: 'from-purple-500 to-pink-500',
+  },
+  {
+    icon: Star,
+    title: 'Best Prices',
+    description: 'No hidden fees with our best price guarantee and exclusive deals',
+    gradient: 'from-blue-500 to-cyan-500',
+  },
+  {
+    icon: Phone,
+    title: '24/7 Support',
+    description: 'Always available to assist you throughout your journey',
+    gradient: 'from-green-500 to-emerald-500',
+  },
+];
 
 export default function HomePage() {
   const [featuredTours, setFeaturedTours] = useState<Tour[]>([]);
@@ -37,382 +113,521 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section with Search */}
-      <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600">
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDE0YzMuMzEgMCA2IDIuNjkgNiA2cy0yLjY5IDYtNiA2LTYtMi42OS02LTYgMi42OS02IDYtNk0yNCAzNmMzLjMxIDAgNiAyLjY5IDYgNnMtMi42OSA2LTYgNi02LTIuNjktNi02IDIuNjktNiA2LTYiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
-        
-        <div className="relative z-10 container mx-auto px-4 py-16">
-          <div className="text-center text-white mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium mb-6">
-              <Sparkles size={16} />
-              <span>Explore Incredible India</span>
-            </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-              Discover the Magic<br />of Rajasthan
-            </h1>
-            <p className="text-lg md:text-xl mb-4 max-w-3xl mx-auto text-white/90">
-              Jaipur • Udaipur • Jaisalmer • Jodhpur • Golden Triangle & Beyond
-            </p>
-            
-            {/* Trust Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-sm">
-              <div className="flex items-center gap-2">
-                <Star className="fill-yellow-400 text-yellow-400" size={18} />
-                <span className="font-semibold">4.9/5 Rating</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users size={18} />
-                <span className="font-semibold">500+ Reviews</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Award size={18} />
-                <span className="font-semibold">10+ Years Experience</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield size={18} />
-                <span className="font-semibold">Safe & Secure</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <HeadphonesIcon size={18} />
-                <span className="font-semibold">24/7 Support</span>
-              </div>
-            </div>
-          </div>
+      {/* Hero Section with Immersive Gallery Scroll - Optimized */}
+      <section className="relative bg-gradient-to-br from-orange-100 via-pink-100 to-orange-200">
+        {/* Vibrant Background Effects */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          {/* Animated Gradient */}
+          <div 
+            className="absolute inset-0 opacity-40"
+            style={{
+              background: "radial-gradient(circle at 50% 50%, hsl(30, 100%, 65%), hsl(340, 100%, 65%))",
+              filter: "blur(120px)",
+            }}
+          />
+        </div>
 
-          {/* Search Box */}
-          <Card className="max-w-4xl mx-auto shadow-2xl">
-            <CardContent className="p-6">
-              <h3 className="text-xl font-bold mb-4 text-center">Find Your Perfect Tour</h3>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Input placeholder="Where to?" className="md:col-span-2" />
-                <Input type="number" placeholder="Duration (days)" />
-                <Input type="number" placeholder="Travelers" />
-              </div>
-              <Link href="/tours" className="block mt-4">
-                <Button className="w-full gradient-primary text-lg py-6">
-                  <Search className="mr-2" size={20} />
-                  Search Tours
-                </Button>
-              </Link>
-              <div className="mt-4 text-center text-sm text-muted-foreground">
-                Popular searches: 
-                <Link href="/tours" className="ml-2 text-primary hover:underline">Golden Triangle</Link>
-                <Link href="/tours" className="ml-2 text-primary hover:underline">Jaipur City Tour</Link>
-                <Link href="/tours" className="ml-2 text-primary hover:underline">Desert Safari</Link>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Dark Overlay for Better Text Contrast - Initially visible */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60 z-[5] pointer-events-none" />
+
+        {/* Additional Black Overlay Between Text and Images - Appears during scroll */}
+        <div className="absolute inset-0 bg-black/70 z-[15] pointer-events-none opacity-0 transition-opacity duration-700" id="scroll-overlay" />
+
+        {/* Sticky Hero Content */}
+        <div className="sticky top-16 md:top-20 z-40 px-3 sm:px-4 md:px-6 pt-8 sm:pt-12 md:pt-16 pb-6 sm:pb-8 text-center relative">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {/* Main Heading */}
+            <div className="mb-4 sm:mb-6">
+              <motion.h1 
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight mb-2 sm:mb-3"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <span className="text-white drop-shadow-lg">
+                  Discover{' '}
+                </span>
+                <span className="bg-gradient-to-r from-orange-400 via-pink-400 to-orange-300 bg-clip-text text-transparent drop-shadow-2xl">
+                  Rajasthan
+                </span>
+              </motion.h1>
+              <motion.p 
+                className="text-sm sm:text-base md:text-lg lg:text-xl text-white/95 font-bold tracking-wide drop-shadow-md"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                Jaipur • Udaipur • Jaisalmer
+              </motion.p>
+            </div>
+
+            {/* Trust Badges */}
+            <motion.div 
+              className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 md:mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
+              {[
+                { icon: Star, text: '4.9/5', color: 'orange' },
+                { icon: Award, text: '14+ Years', color: 'pink' },
+                { icon: Shield, text: 'Safe', color: 'orange' },
+              ].map((badge, idx) => (
+                <motion.div 
+                  key={idx}
+                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-full bg-white shadow-xl border border-white/20"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.6 + idx * 0.1, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ scale: 1.08, y: -2 }}
+                >
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 rounded-full bg-orange-100 flex items-center justify-center">
+                    <badge.icon className={`text-orange-600 ${badge.icon === Star ? 'fill-current' : ''}`} size={12} className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                  </div>
+                  <span className="font-bold text-xs sm:text-sm text-gray-900">{badge.text}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Search Card - Optimized */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Card className="w-full max-w-4xl mx-auto shadow-2xl border-0 bg-white rounded-xl sm:rounded-2xl md:rounded-3xl">
+                <CardContent className="p-3 sm:p-4 md:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 mb-2 sm:mb-3 md:mb-4">
+                  {[
+                    { icon: MapPin, label: 'Where to?', value: 'Select destination' },
+                    { icon: DollarSign, label: 'Budget', value: 'Select budget' },
+                    { icon: Users, label: 'Travelers', value: 'Select travelers' },
+                  ].map((item, idx) => (
+                    <Link key={idx} href="/tours" className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 md:p-4 bg-gray-50 rounded-lg sm:rounded-xl md:rounded-2xl hover:bg-gray-100 transition-colors group">
+                      <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-lg sm:rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                        <item.icon className="text-orange-500" size={16} className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground font-medium mb-0.5">{item.label}</p>
+                        <p className="font-semibold text-xs sm:text-sm truncate">{item.value}</p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+                <Link href="/tours">
+                  <Button className="w-full bg-gradient-to-r from-orange-500 via-pink-500 to-pink-600 hover:from-orange-600 hover:via-pink-600 hover:to-pink-700 py-4 sm:py-5 md:py-6 text-sm sm:text-base font-semibold shadow-lg rounded-lg sm:rounded-xl md:rounded-2xl transition-all hover:shadow-xl">
+                    Search Tours
+                  </Button>
+                </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Optimized Gallery Scroll Animation */}
+        <div className="relative z-10 -mt-16 sm:-mt-24 md:-mt-32">
+          <ContainerScroll className="relative h-[280vh]">
+            <ContainerSticky className="h-screen flex items-center justify-center">
+              <GalleryContainer className="px-2 sm:px-4 max-w-7xl mx-auto">
+                <GalleryCol yRange={['0%', '-20%']} className="-mt-2">
+                  {RAJASTHAN_IMAGES_1.map((imageUrl, index) => (
+                    <motion.img
+                      key={index}
+                      className="aspect-video block h-auto max-h-full w-full rounded-lg shadow-lg"
+                      style={{ objectFit: 'cover', objectPosition: 'center' }}
+                      src={imageUrl}
+                      alt={`Rajasthan ${index + 1}`}
+                      loading={index < 1 ? "eager" : "lazy"}
+                      decoding="async"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                    />
+                  ))}
+                </GalleryCol>
+                <GalleryCol className="mt-[-50%]" yRange={['25%', '-10%']}>
+                  {RAJASTHAN_IMAGES_2.map((imageUrl, index) => (
+                    <motion.img
+                      key={index}
+                      className="aspect-video block h-auto max-h-full w-full rounded-lg shadow-lg"
+                      style={{ objectFit: 'cover', objectPosition: 'center' }}
+                      src={imageUrl}
+                      alt={`Rajasthan ${index + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                    />
+                  ))}
+                </GalleryCol>
+                <GalleryCol yRange={['0%', '-20%']} className="-mt-2">
+                  {RAJASTHAN_IMAGES_3.map((imageUrl, index) => (
+                    <motion.img
+                      key={index}
+                      className="aspect-video block h-auto max-h-full w-full rounded-lg shadow-lg"
+                      style={{ objectFit: 'cover', objectPosition: 'center' }}
+                      src={imageUrl}
+                      alt={`Rajasthan ${index + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                    />
+                  ))}
+                </GalleryCol>
+              </GalleryContainer>
+            </ContainerSticky>
+          </ContainerScroll>
         </div>
       </section>
 
-      {/* Featured Tours */}
-      <section className="section-padding bg-gradient-to-b from-white to-orange-50/30 dark:from-background dark:to-background">
+      {/* Featured Tours - Redesigned */}
+      <section className="py-12 md:py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between mb-12">
-            <div>
-              <div className="inline-block px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-full text-sm font-semibold mb-4">
-                <TrendingUp className="inline mr-1" size={14} />
-                TRENDING NOW
-              </div>
-              <h2 className="text-3xl md:text-5xl font-bold mb-4">Featured Tours</h2>
-              <p className="text-muted-foreground text-lg">
+          {/* Section Header */}
+          <div className="text-center mb-8 md:mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-2 md:mb-3">
+                <span className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">
+                  Featured Tours
+                </span>
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto px-4">
                 Handpicked experiences showcasing the best of Rajasthan
               </p>
-            </div>
-            <Link href="/tours" className="hidden md:block">
-              <Button variant="outline" size="lg">
-                View All Tours
-                <ArrowRight className="ml-2" size={20} />
-              </Button>
-            </Link>
+            </motion.div>
           </div>
 
           {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              <p className="text-muted-foreground mt-4">Loading amazing tours...</p>
+            <div className="flex justify-center items-center py-12 md:py-16">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
             </div>
           ) : featuredTours.length === 0 ? (
-            <Card className="p-12 text-center">
-              <MapPin className="mx-auto mb-4 text-muted-foreground" size={48} />
-              <p className="text-muted-foreground">No tours available. Check back soon!</p>
-            </Card>
+            <div className="text-center py-12 md:py-16">
+              <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-orange-100 to-pink-100 flex items-center justify-center">
+                <MapPin className="text-orange-500" size={32} />
+              </div>
+              <p className="text-sm md:text-base text-muted-foreground">No tours available at the moment</p>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredTours.slice(0, 6).map((tour) => (
-                <Card key={tour.id} className="group overflow-hidden hover:shadow-2xl transition-all duration-300 border-0">
-                  <div className="relative h-64 w-full overflow-hidden">
-                    {tour.images && tour.images[0] ? (
-                      <Image
-                        src={tour.images[0]}
-                        alt={tour.title}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full gradient-secondary flex items-center justify-center">
-                        <MapPin className="text-white" size={64} />
-                      </div>
-                    )}
-                    <div className="absolute top-4 left-4 bg-white dark:bg-gray-900 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                      <Star className="fill-yellow-400 text-yellow-400" size={14} />
-                      <span>Featured</span>
-                    </div>
-                    <div className="absolute top-4 right-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm p-2 rounded-full">
-                      <Heart size={18} className="text-gray-600 dark:text-gray-300" />
-                    </div>
-                  </div>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 mb-2">
-                      <MapPin size={14} />
-                      <span className="font-medium capitalize">{tour.category}</span>
-                    </div>
-                    <h3 className="text-xl font-bold mb-3 line-clamp-2 group-hover:text-primary transition-colors">
-                      {tour.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                      {tour.shortDescription || tour.description}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4 pb-4 border-b">
-                      <div className="flex items-center gap-1">
-                        <Clock size={16} />
-                        <span>{tour.duration} Days</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users size={16} />
-                        <span>Max {tour.maxGroupSize}</span>
-                      </div>
-                    </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 mb-8 md:mb-10">
+                {featuredTours.slice(0, 3).map((tour, index) => (
+                  <motion.div
+                    key={tour.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                  >
+                    <Link href={`/tours/${tour.id}`}>
+                      <Card className="group overflow-hidden hover:shadow-2xl transition-all duration-500 border-0 bg-white h-full">
+                        {/* Image Container */}
+                        <div className="relative h-56 md:h-64 overflow-hidden">
+                          {tour.images && tour.images[0] ? (
+                            <Image
+                              src={tour.images[0]}
+                              alt={tour.title}
+                              fill
+                              className="object-cover group-hover:scale-110 transition-transform duration-700"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600 flex items-center justify-center">
+                              <MapPin className="text-white" size={40} />
+                            </div>
+                          )}
+                          
+                          {/* Gradient Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                          
+                          {/* Category Badge */}
+                          <div className="absolute top-3 left-3 md:top-4 md:left-4 px-2.5 py-1 md:px-3 md:py-1.5 bg-white rounded-full text-xs font-bold capitalize shadow-lg">
+                            {tour.category}
+                          </div>
 
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm text-muted-foreground mb-1">Starting from</div>
-                        <div className="text-2xl font-bold text-primary">
-                          {formatCurrency(tour.price)}
+                          {/* Price Badge */}
+                          <div className="absolute top-3 right-3 md:top-4 md:right-4 px-2.5 py-1 md:px-3 md:py-1.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-full text-xs md:text-sm font-bold shadow-lg">
+                            {formatCurrency(tour.price)}
+                          </div>
+
+                          {/* Bottom Info Overlay */}
+                          <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 text-white">
+                            <h3 className="text-lg md:text-xl font-bold mb-1.5 md:mb-2 line-clamp-2 drop-shadow-lg">
+                              {tour.title}
+                            </h3>
+                            <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm">
+                              <div className="flex items-center gap-1 md:gap-1.5">
+                                <Clock size={14} className="md:w-4 md:h-4" />
+                                <span>{tour.duration} Days</span>
+                              </div>
+                              <div className="flex items-center gap-1 md:gap-1.5">
+                                <Users size={14} className="md:w-4 md:h-4" />
+                                <span>Max {tour.maxGroupSize}</span>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <Link href={`/tours/${tour.id}`}>
-                        <Button className="gradient-primary">
-                          View Details
-                          <ArrowRight className="ml-2" size={16} />
-                        </Button>
-                      </Link>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
 
-          <div className="text-center mt-12 md:hidden">
-            <Link href="/tours">
-              <Button size="lg" variant="outline">
-                View All Tours
-                <ArrowRight className="ml-2" size={20} />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+                        {/* Card Content */}
+                        <CardContent className="p-4 md:p-5">
+                          <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 line-clamp-3">
+                            {tour.shortDescription || tour.description}
+                          </p>
 
-      {/* How It Works */}
-      <section className="section-padding bg-white dark:bg-background">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-sm font-semibold mb-4">
-              SIMPLE PROCESS
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">How It Works</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Book your dream tour in 4 easy steps
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                step: '1',
-                title: 'Browse & Choose',
-                description: 'Explore our curated tours or build your custom itinerary',
-                icon: Search,
-              },
-              {
-                step: '2',
-                title: 'Get in Touch',
-                description: 'Submit your inquiry and our experts will contact you within 24 hours',
-                icon: Phone,
-              },
-              {
-                step: '3',
-                title: 'Customize & Book',
-                description: 'Finalize your itinerary, dates, and make secure payment',
-                icon: CheckCircle2,
-              },
-              {
-                step: '4',
-                title: 'Travel & Enjoy',
-                description: 'Relax and enjoy your perfectly planned Indian adventure',
-                icon: Heart,
-              },
-            ].map((item, index) => (
-              <div key={index} className="relative text-center">
-                <div className="relative inline-block mb-6">
-                  <div className="w-20 h-20 gradient-primary rounded-2xl flex items-center justify-center shadow-lg">
-                    <item.icon className="text-white" size={36} />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-10 h-10 bg-white dark:bg-gray-900 rounded-full flex items-center justify-center font-bold text-primary border-4 border-background">
-                    {item.step}
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
-                {index < 3 && (
-                  <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary to-transparent" />
-                )}
+                          {/* CTA Button */}
+                          <Button 
+                            className="w-full bg-gradient-to-r from-orange-500 via-pink-500 to-pink-600 hover:from-orange-600 hover:via-pink-600 hover:to-pink-700 text-white font-semibold rounded-xl group-hover:shadow-lg transition-all text-sm md:text-base py-2 md:py-2.5"
+                          >
+                            View Details
+                            <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={16} />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  </motion.div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className="mt-16 text-center">
-            <Card className="max-w-3xl mx-auto gradient-primary text-white p-8">
-              <h3 className="text-2xl font-bold mb-4">Ready to start your journey?</h3>
-              <p className="text-white/90 mb-6">
-                Join 500+ happy travelers who trusted us with their Indian adventure
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              {/* View All Button */}
+              <div className="text-center">
                 <Link href="/tours">
-                  <Button size="lg" className="bg-white text-primary hover:bg-white/90">
-                    Browse Tours
-                  </Button>
-                </Link>
-                <Link href="/custom-tour">
-                  <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-primary">
-                    Build Custom Tour
+                  <Button 
+                    size="lg"
+                    variant="outline" 
+                    className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white font-semibold px-6 md:px-8 rounded-full transition-all text-sm md:text-base"
+                  >
+                    Explore All Tours
+                    <ArrowRight className="ml-2" size={18} />
                   </Button>
                 </Link>
               </div>
-            </Card>
-          </div>
+            </>
+          )}
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="section-padding bg-gradient-to-b from-orange-50/30 to-white dark:from-background dark:to-background">
+      {/* Popular Destinations Section */}
+      <section className="py-12 md:py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <div className="inline-block px-4 py-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-sm font-semibold mb-4">
-              WHY GHUMO FIRO INDIA
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">Why Choose Us</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Your trusted partner for unforgettable Rajasthan experiences
-            </p>
+          {/* Section Header */}
+          <div className="text-center mb-8 md:mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-2 md:mb-3">
+                <span className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">
+                  Popular Destinations
+                </span>
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto px-4">
+                Discover the most sought-after cities in Rajasthan
+              </p>
+            </motion.div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                icon: Shield,
-                title: 'Safe & Secure',
-                description: 'Licensed guides, insured vehicles, and 24/7 support for worry-free travel',
-                gradient: 'from-orange-400 to-pink-500',
-              },
-              {
-                icon: Award,
-                title: 'Expert Guides',
-                description: 'Local experts with deep knowledge of history, culture, and hidden gems',
-                gradient: 'from-blue-400 to-purple-500',
-              },
-              {
-                icon: HeadphonesIcon,
-                title: '24/7 Support',
-                description: 'Round-the-clock assistance before, during, and after your journey',
-                gradient: 'from-green-400 to-teal-500',
-              },
-              {
-                icon: Sparkles,
-                title: 'Customizable',
-                description: 'Tailor every aspect of your tour to match your preferences and budget',
-                gradient: 'from-pink-400 to-red-500',
-              },
-              {
-                icon: Users,
-                title: 'Small Groups',
-                description: 'Intimate experiences with small group sizes for personalized attention',
-                gradient: 'from-purple-400 to-pink-500',
-              },
-              {
-                icon: Star,
-                title: 'Best Price',
-                description: 'Competitive pricing with no hidden fees and flexible payment options',
-                gradient: 'from-yellow-400 to-orange-500',
-              },
-            ].map((item, index) => (
-              <Card key={index} className="p-6 hover:shadow-xl transition-all duration-300 border-0">
-                <div className={`w-16 h-16 bg-gradient-to-br ${item.gradient} rounded-2xl flex items-center justify-center mb-4 shadow-lg`}>
-                  <item.icon className="text-white" size={28} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {destinations.map((destination, index) => (
+              <motion.div
+                key={destination.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15, duration: 0.5 }}
+                className="group relative h-[400px] md:h-[450px] rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500"
+              >
+                {/* Image with scale effect */}
+                <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-110">
+                  <img
+                    src={destination.image}
+                    alt={destination.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
-              </Card>
-            ))}
-          </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-16">
-            {[
-              { value: '500+', label: 'Happy Travelers' },
-              { value: '10+', label: 'Years Experience' },
-              { value: '4.9/5', label: 'Average Rating' },
-              { value: '98%', label: 'Satisfaction Rate' },
-            ].map((stat, index) => (
-              <div key={index} className="text-center p-6 rounded-xl bg-white dark:bg-gray-900 shadow-lg">
-                <div className="text-4xl font-bold text-primary mb-2">{stat.value}</div>
-                <div className="text-muted-foreground">{stat.label}</div>
-              </div>
+                {/* Mobile: Always visible info at bottom */}
+                <div className="md:hidden absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
+                  <h3 className="text-2xl font-bold text-white mb-1">
+                    {destination.name}
+                  </h3>
+                  <p className="text-sm text-white/90 mb-3">
+                    {destination.description}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {destination.highlights.map((highlight) => (
+                      <div
+                        key={highlight}
+                        className="rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 border border-white/30"
+                      >
+                        <p className="text-xs text-white font-medium">
+                          {highlight}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Desktop: Hover Content - slides up on hover */}
+                <div className="hidden md:block absolute inset-x-6 bottom-6 p-6 rounded-2xl bg-white/95 backdrop-blur-md border border-gray-200 transition-all duration-500 translate-y-[120%] opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        {destination.name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {destination.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-semibold text-gray-900">
+                        Top Attractions
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {destination.highlights.map((highlight) => (
+                          <div
+                            key={highlight}
+                            className="rounded-full bg-orange-50 px-3 py-1 border border-orange-200"
+                          >
+                            <p className="text-xs text-orange-600 font-medium">
+                              {highlight}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="section-padding gradient-primary text-white">
-        <div className="container mx-auto px-4 text-center">
-          <div className="inline-block px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-medium mb-6">
-            LIMITED TIME OFFER
+      {/* Why Choose Us - Redesigned */}
+      <section className="py-12 md:py-16 bg-white relative overflow-hidden">
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center mb-8 md:mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true }}
+            >
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black mb-2 md:mb-3">
+                <span className="bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 bg-clip-text text-transparent">
+                  Why Choose Us
+                </span>
+              </h2>
+              <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto px-4">
+                Experience the difference with our exceptional service
+              </p>
+            </motion.div>
           </div>
-          <h2 className="text-3xl md:text-5xl font-bold mb-6">
-            Your Dream Journey Starts Here
-          </h2>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto text-white/90">
-            Book now and get 15% OFF on your first tour. Expert planning, unforgettable experiences.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-            <Link href="/custom-tour">
-              <Button size="lg" className="bg-white text-primary hover:bg-white/90 text-lg px-8 py-6">
-                Plan My Trip
-                <ArrowRight className="ml-2" size={20} />
-              </Button>
-            </Link>
-            <Link href="/contact">
-              <Button size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-primary text-lg px-8 py-6">
-                Speak to Expert
-              </Button>
-            </Link>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                whileHover={{ scale: 1.05, y: -5 }}
+                className="relative group"
+              >
+                <div className="h-full p-5 md:p-6 rounded-2xl bg-white border border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300">
+                  <div
+                    className={cn(
+                      'w-14 h-14 md:w-16 md:h-16 rounded-xl bg-gradient-to-br flex items-center justify-center mb-3 md:mb-4 text-white',
+                      feature.gradient
+                    )}
+                  >
+                    <feature.icon size={28} className="md:w-8 md:h-8" />
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-2 md:mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+                    {feature.description}
+                  </p>
+                  <div
+                    className={cn(
+                      'absolute inset-0 rounded-2xl bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none',
+                      feature.gradient
+                    )}
+                  />
+                </div>
+              </motion.div>
+            ))}
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center text-sm">
-            <a href="tel:+919876543210" className="flex items-center gap-2 hover:underline">
-              <Phone size={16} />
-              <span>Call Now +91 98765 43210</span>
-            </a>
-            <a href="https://wa.me/919876543210" className="flex items-center gap-2 hover:underline">
-              <Phone size={16} />
-              <span>WhatsApp Chat Instantly</span>
-            </a>
-          </div>
-          <p className="mt-4 text-white/80 text-sm">Response Time: Under 2 Hours</p>
+        </div>
+
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <Glow variant="center" />
+        </div>
+      </section>
+
+      {/* CTA Section - Redesigned */}
+      <section className="py-12 md:py-16 bg-gradient-to-br from-orange-600 via-pink-600 to-purple-700 text-white relative overflow-hidden">
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3">
+              Ready to Start Your Adventure?
+            </h2>
+            <p className="text-sm md:text-base text-white/90 mb-6 md:mb-8 max-w-xl mx-auto px-4">
+              Book now and get 15% OFF on your first tour
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center mb-6 md:mb-8 px-4">
+              <Link href="/custom-tour" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto bg-white text-primary hover:bg-white/90 font-semibold px-6 md:px-8 py-5 md:py-6 text-sm md:text-base rounded-xl">
+                  Plan My Trip
+                  <ArrowRight className="ml-2" size={16} />
+                </Button>
+              </Link>
+              <Link href="/contact" className="w-full sm:w-auto">
+                <Button variant="outline" className="w-full sm:w-auto border-2 border-white text-white hover:bg-white hover:text-primary font-semibold px-6 md:px-8 py-5 md:py-6 text-sm md:text-base rounded-xl">
+                  Contact Us
+                </Button>
+              </Link>
+            </div>
+
+            <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm text-white/90">
+              <a href="tel:+919876543210" className="flex items-center gap-1.5 hover:text-white transition-colors">
+                <Phone size={14} className="md:w-4 md:h-4" />
+                <span>+91 98765 43210</span>
+              </a>
+              <span className="hidden sm:inline">•</span>
+              <span>Response Time: Under 2 Hours</span>
+            </div>
+          </motion.div>
+        </div>
+
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <Glow variant="center" />
         </div>
       </section>
     </div>

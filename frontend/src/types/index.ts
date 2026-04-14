@@ -1,5 +1,5 @@
 export interface Tour {
-  id: string;
+  id: number;
   title: string;
   slug: string;
   description: string;
@@ -28,7 +28,7 @@ export interface Itinerary {
 }
 
 export interface Booking {
-  tourId: string;
+  tourId: number;
   fullName: string;
   email: string;
   phone: string;

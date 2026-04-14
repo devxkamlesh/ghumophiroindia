@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/deployment/VPS-SETUP.md",
+                "file": "PROJECT_STATUS_REPORT.md",
                 "mode": "preview",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "VPS-SETUP"
+              "title": "PROJECT_STATUS_REPORT"
             }
           }
         ]
@@ -185,23 +185,29 @@
   },
   "active": "2295bc4e91425315",
   "lastOpenFiles": [
+    "frontend/src/app/custom-tour/page.tsx",
+    "frontend/src/app/(dashboard)/dashboard/analytics/page.tsx",
+    "frontend/src/app/(dashboard)/dashboard/custom-requests/page.tsx",
+    "frontend/src/app/(dashboard)/dashboard/inquiries/page.tsx",
+    "frontend/src/app/(dashboard)/dashboard/destinations/page.tsx",
+    "frontend/src/app/(dashboard)/dashboard/destinations",
+    "PROJECT_ARCHITECTURE.md",
+    "PROJECT_STATUS_REPORT.md",
+    "DATABASE_MANAGEMENT_GUIDE.md",
+    "TECH_STACK.md",
+    "sand.webp",
+    "docs/deployment/VPS-SETUP.md",
+    "frontend/public/images/sand.webp",
+    "frontend/src/components/ui/container-scroll.tsx",
+    "frontend/src/components/user-panel/UserPanelLayout.tsx",
+    "frontend/src/components/ui/glow.tsx",
     "frontend/src/components/theme-toggle.tsx",
     "frontend/src/components/theme-provider.tsx",
-    "frontend/src/components/ui/badge.tsx",
-    "frontend/src/app/(user-panel)/my-account/bookings/page.tsx",
-    "frontend/src/app/(user-panel)/my-account/page.tsx",
-    "frontend/src/app/(auth)/register/page.tsx",
-    "frontend/src/app/(auth)/login/page.tsx",
     "FRONTEND_COMPLETE.md",
     "frontend/DEPLOYMENT.md",
     "frontend/IMPLEMENTATION_SUMMARY.md",
     "frontend/QUICKSTART.md",
-    "frontend/tsconfig.tsbuildinfo",
-    "frontend/src/app/contact/page.tsx",
-    "frontend/src/app/about/page.tsx",
-    "frontend/src/app/tours/[id]/page.tsx",
     "docs/deployment/MANUAL-DEPLOY-COMMANDS.md",
-    "docs/deployment/VPS-SETUP.md",
     "docs/deployment/QUICK-START.md",
     "README.md",
     "docs/README.md",
