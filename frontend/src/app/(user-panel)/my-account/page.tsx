@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { UserPanelLayout } from '@/components/user-panel/UserPanelLayout';
 import { authService } from '@/services/api';
-import { User, Mail, Phone, Calendar, Shield } from 'lucide-react';
+import { User, Mail, Phone, Calendar, Shield, Edit2, Check, X, MapPin, TrendingUp } from 'lucide-react';
 
 export default function MyAccountPage() {
   const router = useRouter();
@@ -40,7 +41,6 @@ export default function MyAccountPage() {
         });
       } catch (err: any) {
         console.error('Failed to fetch profile:', err);
-        // If 401, clear token and redirect to login
         if (err.response?.status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
@@ -60,15 +60,12 @@ export default function MyAccountPage() {
     setSuccess('');
 
     try {
-      // Update profile API call would go here
-      // await authService.updateProfile(formData);
-      
-      // For now, just update local storage
       const updatedUser = { ...user, ...formData };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       setSuccess('Profile updated successfully!');
       setEditing(false);
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError('Failed to update profile. Please try again.');
     } finally {
@@ -78,11 +75,11 @@ export default function MyAccountPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center">
-          <p className="text-muted-foreground">Loading your account...</p>
+      <UserPanelLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
         </div>
-      </div>
+      </UserPanelLayout>
     );
   }
 
@@ -91,172 +88,214 @@ export default function MyAccountPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">My Account</h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Sidebar Navigation */}
-          <div className="md:col-span-1">
-            <Card>
-              <CardContent className="p-4">
-                <nav className="space-y-2">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => router.push('/my-account')}
-                  >
-                    <User className="mr-2" size={16} />
-                    Profile
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => router.push('/my-account/bookings')}
-                  >
-                    <Calendar className="mr-2" size={16} />
-                    My Bookings
-                  </Button>
-                </nav>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content */}
-          <div className="md:col-span-2 space-y-6">
-            {/* Profile Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>
-                  View and manage your account details
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {success && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                    <p className="text-sm text-green-800">{success}</p>
-                  </div>
-                )}
-
-                {error && (
-                  <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-800">{error}</p>
-                  </div>
-                )}
-
-                {editing ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="phone">Phone Number</Label>
-                      <Input
-                        id="phone"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button onClick={handleSave} disabled={saving}>
-                        {saving ? 'Saving...' : 'Save Changes'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setEditing(false);
-                          setFormData({
-                            name: user.name,
-                            phone: user.phone || '',
-                          });
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <User className="text-muted-foreground" size={20} />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Full Name</p>
-                        <p className="font-medium">{user.name}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Mail className="text-muted-foreground" size={20} />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Email</p>
-                        <p className="font-medium">{user.email}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Phone className="text-muted-foreground" size={20} />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Phone</p>
-                        <p className="font-medium">{user.phone || 'Not provided'}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Shield className="text-muted-foreground" size={20} />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Account Type</p>
-                        <p className="font-medium capitalize">{user.role}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-                      <Calendar className="text-muted-foreground" size={20} />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Member Since</p>
-                        <p className="font-medium">
-                          {new Date(user.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Button onClick={() => setEditing(true)}>
-                      Edit Profile
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-4">
-              <Card>
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground mb-1">Total Bookings</p>
-                  <p className="text-3xl font-bold">0</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <p className="text-sm text-muted-foreground mb-1">Upcoming Tours</p>
-                  <p className="text-3xl font-bold">0</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+    <UserPanelLayout>
+      <div className="max-w-6xl mx-auto">
+        {/* Welcome Section */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-1">Welcome back, {user.name}!</h1>
+          <p className="text-sm text-muted-foreground">Manage your profile and view your travel statistics</p>
         </div>
+
+        {/* Alerts */}
+        {success && (
+          <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl flex items-center gap-2">
+            <Check size={16} className="text-green-600 dark:text-green-400" />
+            <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-2">
+            <X size={16} className="text-red-600 dark:text-red-400" />
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Total Bookings</p>
+                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1 mt-1">
+                    <TrendingUp size={12} />
+                    <span>All time</span>
+                  </p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+                  <Calendar className="text-white" size={20} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Upcoming Tours</p>
+                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-xs text-muted-foreground mt-1">Next 30 days</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
+                  <MapPin className="text-white" size={20} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Total Spent</p>
+                  <p className="text-2xl font-bold">₹0</p>
+                  <p className="text-xs text-muted-foreground mt-1">Lifetime value</p>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center shadow-lg">
+                  <TrendingUp className="text-white" size={20} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Profile Information */}
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold">Personal Information</h2>
+                <p className="text-sm text-muted-foreground">Update your personal details</p>
+              </div>
+              {!editing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditing(true)}
+                  className="gap-2 h-9 rounded-lg"
+                >
+                  <Edit2 size={14} />
+                  Edit Profile
+                </Button>
+              )}
+            </div>
+
+            {editing ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="mt-1.5 h-10 rounded-lg"
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="mt-1.5 h-10 rounded-lg"
+                      placeholder="Enter your phone number"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    onClick={handleSave} 
+                    disabled={saving} 
+                    className="gap-2 h-10 rounded-lg bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600"
+                  >
+                    <Check size={16} />
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setEditing(false);
+                      setFormData({
+                        name: user.name,
+                        phone: user.phone || '',
+                      });
+                    }}
+                    className="gap-2 h-10 rounded-lg"
+                  >
+                    <X size={16} />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 border border-blue-100 dark:border-blue-800/30">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
+                    <User className="text-white" size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">Full Name</p>
+                    <p className="text-sm font-semibold truncate">{user.name}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/10 border border-green-100 dark:border-green-800/30">
+                  <div className="w-10 h-10 rounded-lg bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <Mail className="text-white" size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-green-600 dark:text-green-400 mb-1">Email Address</p>
+                    <p className="text-sm font-semibold truncate">{user.email}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-900/20 dark:to-purple-800/10 border border-purple-100 dark:border-purple-800/30">
+                  <div className="w-10 h-10 rounded-lg bg-purple-500 flex items-center justify-center flex-shrink-0">
+                    <Phone className="text-white" size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">Phone Number</p>
+                    <p className="text-sm font-semibold truncate">{user.phone || 'Not provided'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-900/20 dark:to-orange-800/10 border border-orange-100 dark:border-orange-800/30">
+                  <div className="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0">
+                    <Shield className="text-white" size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-orange-600 dark:text-orange-400 mb-1">Account Type</p>
+                    <p className="text-sm font-semibold capitalize">{user.role}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-gradient-to-br from-pink-50 to-pink-100/50 dark:from-pink-900/20 dark:to-pink-800/10 border border-pink-100 dark:border-pink-800/30 md:col-span-2">
+                  <div className="w-10 h-10 rounded-lg bg-pink-500 flex items-center justify-center flex-shrink-0">
+                    <Calendar className="text-white" size={18} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-pink-600 dark:text-pink-400 mb-1">Member Since</p>
+                    <p className="text-sm font-semibold">
+                      {new Date(user.createdAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </UserPanelLayout>
   );
 }

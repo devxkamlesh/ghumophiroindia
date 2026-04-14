@@ -24,10 +24,39 @@ export const tourService = {
     return data.data.tours || [];
   },
 
-  getById: async (id: string): Promise<Tour> => {
+  getById: async (id: string | number): Promise<Tour> => {
     const { data } = await api.get(`/tours/${id}`);
     // /tours/:id endpoint returns { tour } wrapped (sendSuccess)
     return data.data.tour;
+  },
+
+  create: async (tourData: Partial<Tour>): Promise<Tour> => {
+    const token = localStorage.getItem('token');
+    const { data } = await api.post('/tours', tourData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return data.data.tour;
+  },
+
+  update: async (id: string | number, tourData: Partial<Tour>): Promise<Tour> => {
+    const token = localStorage.getItem('token');
+    const { data } = await api.patch(`/tours/${id}`, tourData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return data.data.tour;
+  },
+
+  delete: async (id: string | number): Promise<void> => {
+    const token = localStorage.getItem('token');
+    await api.delete(`/tours/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   },
 };
 
