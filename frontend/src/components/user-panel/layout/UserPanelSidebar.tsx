@@ -2,48 +2,33 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Calendar, Heart, MessageSquare, User, Settings, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Calendar, Heart, MessageSquare, User, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { getUser, getToken } from '@/lib/auth'
+import { bookingService } from '@/services/api'
+import type { Booking } from '@/types'
 
 const navigation = [
   { name: 'Dashboard', href: '/my-account', icon: LayoutDashboard },
   { name: 'My Bookings', href: '/my-account/bookings', icon: Calendar },
-  { name: 'Wishlist', href: '/my-account/wishlist', icon: Heart },
-  { name: 'My Reviews', href: '/my-account/reviews', icon: MessageSquare },
   { name: 'Profile', href: '/my-account/profile', icon: User },
-  { name: 'Payment Methods', href: '/my-account/payments', icon: CreditCard },
+  { name: 'Reviews', href: '/my-account/reviews', icon: MessageSquare },
   { name: 'Settings', href: '/my-account/settings', icon: Settings },
 ]
 
 export default function UserPanelSidebar() {
   const pathname = usePathname()
-  const [stats, setStats] = useState({ totalBookings: 0, upcomingTrips: 0, wishlistItems: 0 })
+  const [stats, setStats] = useState({ total: 0, upcoming: 0 })
 
   useEffect(() => {
-    const user = getUser()
-    const token = getToken()
-    if (!user?.id || !token) return
-
-    async function fetchStats() {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/bookings/my-bookings`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        if (response.ok) {
-          const data = await response.json()
-          const bookingsList = data.data?.bookings || data.bookings || data.data || []
-          const upcoming = bookingsList.filter((b: any) =>
-            new Date(b.startDate) > new Date() && b.status !== 'cancelled'
-          ).length
-          setStats({ totalBookings: bookingsList.length, upcomingTrips: upcoming, wishlistItems: 0 })
-        }
-      } catch (error) {
-        console.error('Failed to fetch stats:', error)
-      }
-    }
-    fetchStats()
+    bookingService
+      .getMyBookings()
+      .then((bookings: Booking[]) => {
+        const upcoming = bookings.filter(
+          (b) => new Date(b.startDate) > new Date() && b.status !== 'cancelled'
+        ).length
+        setStats({ total: bookings.length, upcoming })
+      })
+      .catch(() => {}) // silently fail — sidebar stats are non-critical
   }, [])
 
   return (
@@ -62,28 +47,24 @@ export default function UserPanelSidebar() {
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-5 h-5 flex-shrink-0" />
               <span>{item.name}</span>
             </Link>
           )
         })}
       </nav>
 
-      {/* Quick Info */}
-      <div className="p-4 mt-6 border-t border-gray-200">
-        <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3">Account Status</h3>
+      {/* Account Status */}
+      <div className="p-4 mt-4 border-t border-gray-200">
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Account Status</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Total Bookings</span>
-            <span className="font-bold text-gray-900">{stats.totalBookings}</span>
+            <span className="font-bold text-gray-900">{stats.total}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Upcoming Trips</span>
-            <span className="font-bold text-primary-600">{stats.upcomingTrips}</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-600">Wishlist Items</span>
-            <span className="font-bold text-gray-900">{stats.wishlistItems}</span>
+            <span className="font-bold text-primary-600">{stats.upcoming}</span>
           </div>
         </div>
       </div>
