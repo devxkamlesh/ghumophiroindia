@@ -20,12 +20,12 @@ export const updatePaymentStatusSchema = z.object({
 })
 
 export const bookingQuerySchema = z.object({
-  page: z.string().optional().transform(val => val ? parseInt(val, 10) : 1),
-  limit: z.string().optional().transform(val => val ? parseInt(val, 10) : 10),
+  page: z.coerce.number().int().positive().optional().default(1),
+  limit: z.coerce.number().int().positive().max(100).optional().default(10),
   status: z.enum(['pending', 'confirmed', 'cancelled', 'completed']).optional(),
   paymentStatus: z.enum(['pending', 'paid', 'refunded']).optional(),
-  tourId: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
-  userId: z.string().optional().transform(val => val ? parseInt(val, 10) : undefined),
+  tourId: z.coerce.number().int().positive().optional(),
+  userId: z.coerce.number().int().positive().optional(),
 })
 
 export type CreateBookingInput = z.infer<typeof createBookingSchema>

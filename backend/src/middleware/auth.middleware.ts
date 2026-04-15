@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { verifyToken, JWTPayload } from '../shared/jwt'
+import { verifyToken, verifyRefreshToken, JWTPayload } from '../shared/jwt'
 import { UnauthorizedError, ForbiddenError } from '../shared/errors'
 
 // Extend Express Request type
@@ -79,5 +79,30 @@ export const optionalAuth = async (
   } catch (error) {
     // Continue without authentication
     next()
+  }
+}
+
+/**
+ * Authenticate using refresh token (for /refresh endpoint only)
+ */
+export const authenticateRefreshToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const authHeader = req.headers.authorization
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedError('No refresh token provided')
+    }
+
+    const token = authHeader.substring(7)
+    const payload = await verifyRefreshToken(token)
+    req.user = payload
+
+    next()
+  } catch (error) {
+    next(new UnauthorizedError('Invalid or expired refresh token'))
   }
 }

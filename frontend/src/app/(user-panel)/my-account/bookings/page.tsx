@@ -1,207 +1,163 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { UserPanelLayout } from '@/components/user-panel/UserPanelLayout';
-import { bookingService } from '@/services/api';
-import { formatCurrency } from '@/lib/utils';
-import { Calendar, MapPin, Users, Clock } from 'lucide-react';
+import { Calendar, Users, Download, MapPin } from 'lucide-react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import { getUser, getToken } from '@/lib/auth'
 
-interface Booking {
-  id: number;
-  tourId: number;
-  userId: number;
-  numberOfPeople: number;
-  totalPrice: string;
-  bookingDate: string;
-  status: string;
-  paymentStatus: string;
-  specialRequests?: string;
-  createdAt: string;
-  tour?: {
-    id: number;
-    title: string;
-    destination: string;
-    duration: number;
-  };
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'
+
+const statusColors = {
+  confirmed: 'bg-green-100 text-green-700',
+  pending: 'bg-yellow-100 text-yellow-700',
+  completed: 'bg-blue-100 text-blue-700',
+  cancelled: 'bg-red-100 text-red-700',
 }
 
+const fallbackImages = [
+  'https://images.unsplash.com/photo-1564507592333-c60657eea523?q=80&w=300',
+  'https://images.unsplash.com/photo-1609137144813-7d9921338f24?q=80&w=300',
+  'https://images.unsplash.com/photo-1477587458883-47145ed94245?q=80&w=300',
+]
+
 export default function MyBookingsPage() {
-  const router = useRouter();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [bookings, setBookings] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchBookings = async () => {
+    async function fetchBookings() {
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          router.push('/login');
-          return;
+        const user = getUser()
+        const token = getToken()
+        if (!user || !token) {
+          window.location.href = '/login?redirect=/my-account/bookings'
+          return
         }
 
-        const data = await bookingService.getMyBookings();
-        setBookings(data);
-      } catch (err: any) {
-        console.error('Failed to fetch bookings:', err);
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          router.push('/login');
+        const res = await fetch(`${API_URL}/bookings/my-bookings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setBookings(data.data || data.bookings || [])
         }
+      } catch (error) {
+        console.error('Failed to fetch bookings:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-
-    fetchBookings();
-  }, [router]);
-
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
     }
-  };
-
-  const getPaymentStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'paid':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-      case 'failed':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-    }
-  };
+    fetchBookings()
+  }, [])
 
   if (loading) {
     return (
-      <UserPanelLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
-        </div>
-      </UserPanelLayout>
-    );
+      <div className="space-y-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="bg-white rounded-xl border border-gray-200 p-6 animate-pulse">
+            <div className="h-6 bg-gray-200 rounded w-1/3 mb-3"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   return (
-    <UserPanelLayout>
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">My Bookings</h1>
-          <p className="text-sm text-muted-foreground">View and manage your tour bookings</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
+          <p className="text-gray-600 mt-1">View and manage your tour bookings</p>
         </div>
+      </div>
 
-        {bookings.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Calendar className="mx-auto mb-3 text-muted-foreground" size={40} />
-              <h3 className="text-lg font-semibold mb-2">No Bookings Yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                You haven't made any tour bookings yet. Explore our tours!
-              </p>
-              <Link href="/tours">
-                <Button size="sm">Browse Tours</Button>
-              </Link>
-            </CardContent>
-          </Card>
+      <div className="space-y-4">
+        {bookings.length > 0 ? (
+          bookings.map((booking, index) => {
+            const imageUrl = (booking.tourImages && booking.tourImages[0]) || fallbackImages[index % fallbackImages.length]
+            const endDate = new Date(booking.startDate)
+            endDate.setDate(endDate.getDate() + 3)
+
+            return (
+              <div key={booking.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                <div className="flex flex-col md:flex-row">
+                  <div className="relative w-full md:w-48 h-48 flex-shrink-0">
+                    <Image
+                      src={imageUrl}
+                      alt={booking.tourTitle || 'Tour'}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 192px"
+                    />
+                  </div>
+                  <div className="flex-1 p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="text-xs font-mono text-gray-500">#{booking.id}</span>
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${statusColors[booking.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-700'}`}>
+                            {booking.status}
+                          </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900">{booking.tourTitle || 'Tour'}</h3>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-primary-600">₹{Number(booking.totalPrice).toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">Total</div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <div>
+                          <div className="font-medium">Start Date</div>
+                          <div>{new Date(booking.startDate).toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <div>
+                          <div className="font-medium">End Date</div>
+                          <div>{endDate.toLocaleDateString()}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <Users className="w-4 h-4" />
+                        <div>
+                          <div className="font-medium">Travelers</div>
+                          <div>{booking.numberOfTravelers} people</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Link href={`/tours/${booking.tourId}`} className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
+                        View Tour
+                      </Link>
+                      <button className="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors flex items-center space-x-2">
+                        <Download className="w-4 h-4" />
+                        <span>Download Invoice</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })
         ) : (
-          <div className="space-y-3">
-            {bookings.map((booking) => (
-              <Card key={booking.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold truncate">
-                        {booking.tour?.title || 'Tour Details'}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">Booking #{booking.id}</p>
-                    </div>
-                    <div className="flex gap-1.5 ml-2">
-                      <Badge className={`${getStatusColor(booking.status)} text-xs px-2 py-0.5`}>
-                        {booking.status}
-                      </Badge>
-                      <Badge className={`${getPaymentStatusColor(booking.paymentStatus)} text-xs px-2 py-0.5`}>
-                        {booking.paymentStatus}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <MapPin size={14} className="text-muted-foreground flex-shrink-0" />
-                      <span className="truncate">{booking.tour?.destination || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <Clock size={14} className="text-muted-foreground flex-shrink-0" />
-                      <span>{booking.tour?.duration || 0}D</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <Users size={14} className="text-muted-foreground flex-shrink-0" />
-                      <span>{booking.numberOfPeople} {booking.numberOfPeople === 1 ? 'person' : 'people'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <Calendar size={14} className="text-muted-foreground flex-shrink-0" />
-                      <span className="truncate">
-                        {new Date(booking.bookingDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                  </div>
-
-                  {booking.specialRequests && (
-                    <div className="p-2 bg-muted/50 rounded-lg mb-3">
-                      <p className="text-xs font-medium mb-0.5">Special Requests:</p>
-                      <p className="text-xs text-muted-foreground">{booking.specialRequests}</p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-3 border-t">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Total Amount</p>
-                      <p className="text-lg font-bold text-primary">
-                        {formatCurrency(parseFloat(booking.totalPrice))}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {booking.tour && (
-                        <Link href={`/tours/${booking.tourId}`}>
-                          <Button variant="outline" size="sm" className="h-8 text-xs">
-                            View Tour
-                          </Button>
-                        </Link>
-                      )}
-                      {booking.status.toLowerCase() === 'pending' && (
-                        <Button size="sm" variant="destructive" className="h-8 text-xs">
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">No bookings yet</h3>
+            <p className="text-gray-600 mb-6">Start your adventure by booking a tour</p>
+            <Link href="/tours" className="inline-block px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors">
+              Browse Tours
+            </Link>
           </div>
         )}
       </div>
-    </UserPanelLayout>
-  );
+    </div>
+  )
 }

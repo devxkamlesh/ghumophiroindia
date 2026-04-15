@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import bookingService from './booking.service'
-import { sendSuccess, sendPaginated } from '../../shared/response'
-import { bookingLimiter } from '../../middleware/rateLimiter'
+import { sendSuccess } from '../../shared/response'
 import type { CreateBookingInput, UpdateBookingStatusInput, UpdatePaymentStatusInput, BookingQueryInput } from './booking.validator'
 
 export class BookingController {
@@ -27,16 +26,13 @@ export class BookingController {
    */
   async getBookings(req: Request, res: Response, next: NextFunction) {
     try {
-      const query: BookingQueryInput = req.query as any
+      const query = req.query as unknown as BookingQueryInput
       const result = await bookingService.getBookings(query)
-      
-      sendPaginated(
-        res,
-        result.bookings,
-        result.pagination.page,
-        result.pagination.limit,
-        result.pagination.total
-      )
+
+      sendSuccess(res, {
+        bookings: result.bookings,
+        pagination: result.pagination,
+      }, 'Bookings retrieved successfully')
     } catch (error) {
       next(error)
     }

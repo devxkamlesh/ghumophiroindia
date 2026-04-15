@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import authController from './auth.controller'
-import { authenticate, optionalAuth } from '../../middleware/auth.middleware'
+import { authenticate, authenticateRefreshToken, optionalAuth } from '../../middleware/auth.middleware'
 import { validateBody } from '../../middleware/validate.middleware'
 import { authLimiter } from '../../middleware/rateLimiter'
 import {
@@ -8,6 +8,8 @@ import {
   loginSchema,
   updateProfileSchema,
   changePasswordSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from './auth.validator'
 
 const router = Router()
@@ -27,8 +29,26 @@ router.post(
   authController.login
 )
 
+// Password reset (public, rate limited)
+router.post(
+  '/forgot-password',
+  authLimiter,
+  validateBody(forgotPasswordSchema),
+  authController.forgotPassword
+)
+
+router.post(
+  '/reset-password',
+  authLimiter,
+  validateBody(resetPasswordSchema),
+  authController.resetPassword
+)
+
 // Session route (optional auth)
 router.get('/session', optionalAuth, authController.getSession)
+
+// Refresh token route (uses refresh token, not access token)
+router.post('/refresh', authenticateRefreshToken, authController.refreshToken)
 
 // Protected routes (require authentication)
 router.use(authenticate)
@@ -48,7 +68,5 @@ router.post(
   validateBody(changePasswordSchema),
   authController.changePassword
 )
-
-router.post('/refresh', authController.refreshToken)
 
 export default router

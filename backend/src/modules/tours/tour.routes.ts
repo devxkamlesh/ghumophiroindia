@@ -38,7 +38,7 @@ router.get(
 router.use(authenticate, authorize('admin'))
 
 router.get(
-  '/admin/stats',
+  '/stats',
   tourController.getTourStats
 )
 

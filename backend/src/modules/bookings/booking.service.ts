@@ -19,6 +19,10 @@ export class BookingService {
       throw new NotFoundError('Tour not found')
     }
 
+    if (!tour.isActive) {
+      throw new NotFoundError('Tour not found')
+    }
+
     // Calculate end date and total price
     const startDate = new Date(data.startDate)
     const endDate = new Date(startDate)
@@ -65,9 +69,6 @@ export class BookingService {
       orderBy: desc(bookings.createdAt),
       limit,
       offset,
-      with: {
-        tourId: true,
-      },
     })
 
     return {
