@@ -22,8 +22,8 @@ export default function DashboardGuard({ children }: { children: React.ReactNode
         return
       }
 
-      // 2. Role check from localStorage (fast path — avoids network on every nav)
-      if (user.role !== 'admin') {
+      // 2. Role check — admin and superadmin can access dashboard
+      if (user.role !== 'admin' && user.role !== 'superadmin') {
         router.replace('/my-account')
         return
       }
