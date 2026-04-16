@@ -1,321 +1,261 @@
 'use client'
 
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Font,
-} from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import type { Booking } from '@/types'
 
-// ── Styles ────────────────────────────────────────────────────────────────────
+const COMPANY = {
+  name:    'Ghumo Phiro India',
+  tagline: 'Explore India, One Journey at a Time',
+  address: 'Jaipur, Rajasthan — 302001, India',
+  gst:     'GST: 08XXXXX1234X1ZX',
+  phone:   '+91 98765 43210',
+  email:   'support@ghumophiroindia.com',
+  web:     'ghumophiroindia.com',
+}
+
+const GREEN  = '#16a34a'
+const DGREEN = '#166534'
+const GRAY   = '#6b7280'
+const DARK   = '#111827'
+const MID    = '#374151'
+const LIGHT  = '#f9fafb'
+const BORDER = '#e5e7eb'
+
 const s = StyleSheet.create({
-  page: {
-    fontFamily: 'Helvetica',
-    fontSize: 10,
-    color: '#1a1a1a',
-    backgroundColor: '#ffffff',
-    padding: 40,
-  },
+  page:        { fontFamily: 'Helvetica', fontSize: 10, color: DARK, backgroundColor: '#fff', padding: 40 },
 
   // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 32,
-    paddingBottom: 20,
-    borderBottomWidth: 2,
-    borderBottomColor: '#16a34a',
-  },
-  brand: { flexDirection: 'column', gap: 2 },
-  brandName: { fontSize: 22, fontFamily: 'Helvetica-Bold', color: '#16a34a' },
-  brandTagline: { fontSize: 9, color: '#6b7280' },
-  invoiceMeta: { alignItems: 'flex-end', gap: 3 },
-  invoiceTitle: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: '#111827' },
-  invoiceNum: { fontSize: 10, color: '#6b7280' },
-  statusBadge: {
-    marginTop: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-  },
+  header:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, paddingBottom: 18, borderBottomWidth: 2, borderBottomColor: GREEN },
+  brandName:   { fontSize: 20, fontFamily: 'Helvetica-Bold', color: GREEN },
+  brandSub:    { fontSize: 8.5, color: GRAY, marginTop: 2 },
+  invoiceTitle:{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: DARK, textAlign: 'right' },
+  invoiceNum:  { fontSize: 9, color: GRAY, textAlign: 'right', marginTop: 2 },
+
+  // Payment status banner
+  paidBanner:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20 },
+  pendingBanner:{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fefce8', borderWidth: 1, borderColor: '#fde68a', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20 },
+  bannerLabel: { fontSize: 9, color: GRAY },
+  bannerValue: { fontSize: 11, fontFamily: 'Helvetica-Bold' },
+  bannerRight: { alignItems: 'flex-end' },
+
+  // 2-col
+  row2:        { flexDirection: 'row', gap: 14 },
+  col:         { flex: 1 },
 
   // Section
-  section: { marginBottom: 20 },
-  sectionTitle: {
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-    color: '#6b7280',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
+  secTitle:    { fontSize: 8, fontFamily: 'Helvetica-Bold', color: GRAY, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 7 },
 
-  // Two-column layout
-  row2: { flexDirection: 'row', gap: 16 },
-  col: { flex: 1 },
+  // Card
+  card:        { backgroundColor: LIGHT, borderRadius: 5, padding: 11, borderWidth: 1, borderColor: BORDER, marginBottom: 16 },
+  cardLabel:   { fontSize: 7.5, color: '#9ca3af', marginBottom: 2 },
+  cardVal:     { fontSize: 10, fontFamily: 'Helvetica-Bold', color: DARK },
+  cardSm:      { fontSize: 9, color: MID, marginTop: 2 },
 
-  // Info card
-  card: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 6,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  cardLabel: { fontSize: 8, color: '#9ca3af', marginBottom: 2 },
-  cardValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#111827' },
-  cardValueSm: { fontSize: 9, color: '#374151' },
+  // 4-col schedule
+  scheduleRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  scheduleBox: { flex: 1, backgroundColor: LIGHT, borderRadius: 5, padding: 9, borderWidth: 1, borderColor: BORDER },
 
   // Table
-  table: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 6, overflow: 'hidden' },
-  tableHead: { flexDirection: 'row', backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 8 },
-  tableRow: { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
-  tableRowAlt: { backgroundColor: '#fafafa' },
-  th: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#6b7280', textTransform: 'uppercase' },
-  td: { fontSize: 9, color: '#374151' },
-  tdBold: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#111827' },
+  table:       { borderWidth: 1, borderColor: BORDER, borderRadius: 5, overflow: 'hidden', marginBottom: 14 },
+  tHead:       { flexDirection: 'row', backgroundColor: '#f3f4f6', paddingHorizontal: 11, paddingVertical: 7 },
+  tRow:        { flexDirection: 'row', paddingHorizontal: 11, paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  tRowAlt:     { backgroundColor: '#fafafa' },
+  th:          { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: GRAY, textTransform: 'uppercase' },
+  td:          { fontSize: 9, color: MID },
+  tdB:         { fontSize: 9, fontFamily: 'Helvetica-Bold', color: DARK },
 
   // Totals
-  totalsBox: {
-    marginLeft: 'auto',
-    width: 220,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 7 },
-  totalRowFinal: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    backgroundColor: '#16a34a',
-  },
-  totalLabel: { fontSize: 9, color: '#6b7280' },
-  totalValue: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#111827' },
-  totalLabelFinal: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#ffffff' },
-  totalValueFinal: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#ffffff' },
+  totalsWrap:  { marginLeft: 'auto', width: 210, borderWidth: 1, borderColor: BORDER, borderRadius: 5, overflow: 'hidden', marginBottom: 16 },
+  totRow:      { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 11, paddingVertical: 7 },
+  totRowFinal: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 11, paddingVertical: 9, backgroundColor: GREEN },
+  totLabel:    { fontSize: 9, color: GRAY },
+  totVal:      { fontSize: 9, fontFamily: 'Helvetica-Bold', color: DARK },
+  totLabelF:   { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#fff' },
+  totValF:     { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#fff' },
+
+  // Policy box
+  policyBox:   { backgroundColor: '#f8fafc', borderWidth: 1, borderColor: BORDER, borderRadius: 5, padding: 10, marginBottom: 14 },
+  policyTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: MID, marginBottom: 5 },
+  policyItem:  { fontSize: 8, color: GRAY, marginBottom: 3 },
 
   // Footer
-  footer: {
-    marginTop: 32,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  footerText: { fontSize: 8, color: '#9ca3af' },
-  footerBrand: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#16a34a' },
-
-  // Note box
-  noteBox: {
-    backgroundColor: '#f0fdf4',
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-    borderRadius: 6,
-    padding: 10,
-    marginBottom: 20,
-  },
-  noteText: { fontSize: 9, color: '#166534' },
+  footer:      { marginTop: 20, paddingTop: 14, borderTopWidth: 1, borderTopColor: BORDER },
+  footerRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  footerLabel: { fontSize: 8, color: GRAY },
+  footerBrand: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: GREEN },
+  footerNote:  { fontSize: 7.5, color: '#9ca3af', marginTop: 8, textAlign: 'center' },
 })
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function fmt(d: string) {
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 }
-
-function fmtPrice(p: string | number) {
-  return `₹${Number(p).toLocaleString('en-IN')}`
+function fmtP(p: string | number) {
+  return `INR ${Number(p).toLocaleString('en-IN')}`
 }
 
-function statusColor(status: string): string {
-  const map: Record<string, string> = {
-    confirmed: '#dcfce7',
-    pending:   '#fef9c3',
-    completed: '#dbeafe',
-    cancelled: '#fee2e2',
-  }
-  return map[status] ?? '#f3f4f6'
+function paymentLabel(status: string, paymentStatus: string): { text: string; color: string; bg: string; border: string } {
+  if (paymentStatus === 'paid')     return { text: '✓ Payment Received — Fully Paid', color: DGREEN, bg: '#f0fdf4', border: '#bbf7d0' }
+  if (paymentStatus === 'refunded') return { text: '↩ Payment Refunded',              color: '#6d28d9', bg: '#f5f3ff', border: '#ddd6fe' }
+  if (status === 'confirmed')       return { text: '⏳ Advance Confirmed — Balance Due on Arrival', color: '#92400e', bg: '#fefce8', border: '#fde68a' }
+  return                                   { text: '⏳ Awaiting Payment Confirmation', color: '#92400e', bg: '#fefce8', border: '#fde68a' }
 }
 
-function statusTextColor(status: string): string {
-  const map: Record<string, string> = {
-    confirmed: '#166534',
-    pending:   '#854d0e',
-    completed: '#1e40af',
-    cancelled: '#991b1b',
-  }
-  return map[status] ?? '#374151'
-}
-
-// ── Document ──────────────────────────────────────────────────────────────────
-interface Props {
-  booking: Booking
-}
-
-export function BookingInvoicePDF({ booking }: Props) {
+export function BookingInvoicePDF({ booking }: { booking: Booking }) {
   const start    = new Date(booking.startDate)
   const end      = new Date(booking.endDate)
   const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-  const priceNum = Number(booking.totalPrice)
-  const perPerson = booking.numberOfTravelers > 0
-    ? Math.round(priceNum / booking.numberOfTravelers)
-    : priceNum
+  const total    = Number(booking.totalPrice)
+  const perPax   = booking.numberOfTravelers > 0 ? Math.round(total / booking.numberOfTravelers) : total
+  const gstAmt   = Math.round(total * 5 / 105) // 5% GST included
+  const base     = total - gstAmt
+  const payment  = paymentLabel(booking.status, booking.paymentStatus)
 
   return (
-    <Document
-      title={`Invoice #${booking.id} — Ghumo Phiro India`}
-      author="Ghumo Phiro India"
-      subject="Tour Booking Invoice"
-    >
+    <Document title={`Invoice #${booking.id} — ${COMPANY.name}`} author={COMPANY.name} subject="Tour Booking Invoice">
       <Page size="A4" style={s.page}>
 
         {/* ── Header ── */}
         <View style={s.header}>
-          <View style={s.brand}>
-            <Text style={s.brandName}>Ghumo Phiro India</Text>
-            <Text style={s.brandTagline}>Explore India, One Journey at a Time</Text>
-            <Text style={[s.brandTagline, { marginTop: 4 }]}>ghumophiroindia.com</Text>
+          <View>
+            <Text style={s.brandName}>{COMPANY.name}</Text>
+            <Text style={s.brandSub}>{COMPANY.tagline}</Text>
+            <Text style={[s.brandSub, { marginTop: 3 }]}>{COMPANY.address}</Text>
+            <Text style={[s.brandSub, { marginTop: 1 }]}>{COMPANY.gst}</Text>
+            <Text style={[s.brandSub, { marginTop: 1 }]}>{COMPANY.phone}  |  {COMPANY.email}</Text>
           </View>
-          <View style={s.invoiceMeta}>
+          <View>
             <Text style={s.invoiceTitle}>INVOICE</Text>
             <Text style={s.invoiceNum}>#{String(booking.id).padStart(6, '0')}</Text>
             <Text style={s.invoiceNum}>Issued: {fmt(booking.createdAt)}</Text>
-            <View style={[s.statusBadge, { backgroundColor: statusColor(booking.status) }]}>
-              <Text style={{ color: statusTextColor(booking.status) }}>
-                {booking.status.toUpperCase()}
-              </Text>
-            </View>
+            <Text style={[s.invoiceNum, { marginTop: 4, fontFamily: 'Helvetica-Bold', color: booking.status === 'confirmed' ? DGREEN : '#92400e' }]}>
+              Booking: {booking.status.toUpperCase()}
+            </Text>
           </View>
         </View>
 
-        {/* ── Bill To + Tour Info ── */}
-        <View style={[s.row2, s.section]}>
+        {/* ── Payment status banner ── */}
+        <View style={{ backgroundColor: payment.bg, borderWidth: 1, borderColor: payment.border, borderRadius: 6, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View>
+            <Text style={[s.bannerLabel, { marginBottom: 2 }]}>Payment Status</Text>
+            <Text style={[s.bannerValue, { color: payment.color }]}>{payment.text}</Text>
+          </View>
+          <View style={s.bannerRight}>
+            <Text style={[s.bannerLabel, { marginBottom: 2 }]}>Booking ID</Text>
+            <Text style={[s.bannerValue, { color: DARK }]}>#{String(booking.id).padStart(6, '0')} ✓ Verified</Text>
+          </View>
+        </View>
+
+        {/* ── Bill To + Tour ── */}
+        <View style={[s.row2, { marginBottom: 0 }]}>
           <View style={s.col}>
-            <Text style={s.sectionTitle}>Bill To</Text>
+            <Text style={s.secTitle}>Bill To</Text>
             <View style={s.card}>
-              <Text style={s.cardValue}>{booking.customerName}</Text>
-              <Text style={[s.cardValueSm, { marginTop: 4 }]}>{booking.customerEmail}</Text>
-              <Text style={s.cardValueSm}>{booking.customerPhone}</Text>
-              {booking.customerCountry && (
-                <Text style={s.cardValueSm}>{booking.customerCountry}</Text>
-              )}
+              <Text style={s.cardVal}>{booking.customerName}</Text>
+              <Text style={s.cardSm}>{booking.customerEmail}</Text>
+              <Text style={s.cardSm}>{booking.customerPhone}</Text>
+              {booking.customerCountry && <Text style={s.cardSm}>{booking.customerCountry}</Text>}
             </View>
           </View>
           <View style={s.col}>
-            <Text style={s.sectionTitle}>Tour Details</Text>
+            <Text style={s.secTitle}>Tour Package</Text>
             <View style={s.card}>
-              <Text style={s.cardValue}>
-                {booking.tour?.title ?? `Tour Booking #${booking.id}`}
-              </Text>
-              {booking.tour?.destination && (
-                <Text style={[s.cardValueSm, { marginTop: 4 }]}>
-                  📍 {booking.tour.destination}
-                </Text>
-              )}
-              <Text style={[s.cardValueSm, { marginTop: 2 }]}>
-                ⏱ {duration} day{duration !== 1 ? 's' : ''}
-              </Text>
+              <Text style={s.cardVal}>{booking.tour?.title ?? `Tour #${booking.tourId}`}</Text>
+              {booking.tour?.destination && <Text style={s.cardSm}>Location: {booking.tour.destination}</Text>}
+              <Text style={s.cardSm}>Duration: {duration} day{duration !== 1 ? 's' : ''}</Text>
+              <Text style={s.cardSm}>Travelers: {booking.numberOfTravelers} person{booking.numberOfTravelers !== 1 ? 's' : ''}</Text>
             </View>
           </View>
         </View>
 
-        {/* ── Trip Dates ── */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Trip Schedule</Text>
-          <View style={s.row2}>
-            <View style={[s.card, s.col]}>
-              <Text style={s.cardLabel}>Check-in Date</Text>
-              <Text style={s.cardValue}>{fmt(booking.startDate)}</Text>
+        {/* ── Schedule ── */}
+        <Text style={s.secTitle}>Trip Schedule</Text>
+        <View style={s.scheduleRow}>
+          {[
+            { label: 'Check-in',       value: fmt(booking.startDate) },
+            { label: 'Check-out',      value: fmt(booking.endDate) },
+            { label: 'Duration',       value: `${duration} days` },
+            { label: 'Group Size',     value: `${booking.numberOfTravelers} person${booking.numberOfTravelers !== 1 ? 's' : ''}` },
+          ].map(({ label, value }) => (
+            <View key={label} style={s.scheduleBox}>
+              <Text style={s.cardLabel}>{label}</Text>
+              <Text style={s.cardVal}>{value}</Text>
             </View>
-            <View style={[s.card, s.col]}>
-              <Text style={s.cardLabel}>Check-out Date</Text>
-              <Text style={s.cardValue}>{fmt(booking.endDate)}</Text>
-            </View>
-            <View style={[s.card, s.col]}>
-              <Text style={s.cardLabel}>Travelers</Text>
-              <Text style={s.cardValue}>{booking.numberOfTravelers} person{booking.numberOfTravelers !== 1 ? 's' : ''}</Text>
-            </View>
-            <View style={[s.card, s.col]}>
-              <Text style={s.cardLabel}>Payment Status</Text>
-              <Text style={s.cardValue}>{booking.paymentStatus.toUpperCase()}</Text>
-            </View>
-          </View>
+          ))}
         </View>
 
-        {/* ── Line Items ── */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Booking Summary</Text>
-          <View style={s.table}>
-            <View style={s.tableHead}>
-              <Text style={[s.th, { flex: 3 }]}>Description</Text>
-              <Text style={[s.th, { flex: 1, textAlign: 'right' }]}>Qty</Text>
-              <Text style={[s.th, { flex: 1.5, textAlign: 'right' }]}>Unit Price</Text>
-              <Text style={[s.th, { flex: 1.5, textAlign: 'right' }]}>Amount</Text>
-            </View>
-            <View style={s.tableRow}>
-              <Text style={[s.tdBold, { flex: 3 }]}>
-                {booking.tour?.title ?? `Tour Package #${booking.id}`}
-              </Text>
-              <Text style={[s.td, { flex: 1, textAlign: 'right' }]}>{booking.numberOfTravelers}</Text>
-              <Text style={[s.td, { flex: 1.5, textAlign: 'right' }]}>{fmtPrice(perPerson)}</Text>
-              <Text style={[s.tdBold, { flex: 1.5, textAlign: 'right' }]}>{fmtPrice(priceNum)}</Text>
-            </View>
-            {booking.specialRequests && (
-              <View style={[s.tableRow, s.tableRowAlt]}>
-                <Text style={[s.td, { flex: 3, color: '#6b7280', fontStyle: 'italic' }]}>
-                  Note: {booking.specialRequests}
-                </Text>
-                <Text style={[s.td, { flex: 1 }]} />
-                <Text style={[s.td, { flex: 1.5 }]} />
-                <Text style={[s.td, { flex: 1.5 }]} />
-              </View>
-            )}
+        {/* ── Line items ── */}
+        <Text style={s.secTitle}>Booking Summary</Text>
+        <View style={s.table}>
+          <View style={s.tHead}>
+            <Text style={[s.th, { flex: 3 }]}>Description</Text>
+            <Text style={[s.th, { flex: 1, textAlign: 'right' }]}>Qty</Text>
+            <Text style={[s.th, { flex: 1.5, textAlign: 'right' }]}>Unit Price</Text>
+            <Text style={[s.th, { flex: 1.5, textAlign: 'right' }]}>Amount</Text>
           </View>
+          <View style={s.tRow}>
+            <Text style={[s.tdB, { flex: 3 }]}>{booking.tour?.title ?? `Tour Package #${booking.id}`}</Text>
+            <Text style={[s.td,  { flex: 1, textAlign: 'right' }]}>{booking.numberOfTravelers}</Text>
+            <Text style={[s.td,  { flex: 1.5, textAlign: 'right' }]}>{fmtP(perPax)}</Text>
+            <Text style={[s.tdB, { flex: 1.5, textAlign: 'right' }]}>{fmtP(total)}</Text>
+          </View>
+          {booking.specialRequests && (
+            <View style={[s.tRow, s.tRowAlt]}>
+              <Text style={[s.td, { flex: 7, color: GRAY }]}>Note: {booking.specialRequests}</Text>
+            </View>
+          )}
         </View>
 
         {/* ── Totals ── */}
-        <View style={s.totalsBox}>
-          <View style={s.totalRow}>
-            <Text style={s.totalLabel}>Subtotal</Text>
-            <Text style={s.totalValue}>{fmtPrice(priceNum)}</Text>
+        <View style={s.totalsWrap}>
+          <View style={s.totRow}>
+            <Text style={s.totLabel}>Base Fare</Text>
+            <Text style={s.totVal}>{fmtP(base)}</Text>
           </View>
-          <View style={[s.totalRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb' }]}>
-            <Text style={s.totalLabel}>Tax / GST</Text>
-            <Text style={s.totalValue}>Included</Text>
+          <View style={[s.totRow, { borderTopWidth: 1, borderTopColor: BORDER }]}>
+            <Text style={s.totLabel}>GST @ 5% (included)</Text>
+            <Text style={s.totVal}>{fmtP(gstAmt)}</Text>
           </View>
-          <View style={s.totalRowFinal}>
-            <Text style={s.totalLabelFinal}>Total Amount</Text>
-            <Text style={s.totalValueFinal}>{fmtPrice(priceNum)}</Text>
+          <View style={s.totRowFinal}>
+            <Text style={s.totLabelF}>Total Amount</Text>
+            <Text style={s.totValF}>{fmtP(total)}</Text>
           </View>
         </View>
 
-        {/* ── Note ── */}
-        {booking.status === 'confirmed' && (
-          <View style={[s.noteBox, { marginTop: 20 }]}>
-            <Text style={s.noteText}>
-              ✓ Your booking is confirmed. Please carry this invoice and a valid photo ID on the day of your tour.
-              For any queries, contact us at support@ghumophiroindia.com
+        {/* ── Cancellation policy ── */}
+        <View style={s.policyBox}>
+          <Text style={s.policyTitle}>Cancellation & Refund Policy</Text>
+          <Text style={s.policyItem}>• Free cancellation up to 48 hours before the tour start date.</Text>
+          <Text style={s.policyItem}>• 50% refund for cancellations between 24–48 hours before start.</Text>
+          <Text style={s.policyItem}>• No refund for cancellations within 24 hours of start.</Text>
+          <Text style={s.policyItem}>• Refunds are processed within 5–7 business days.</Text>
+        </View>
+
+        {/* ── Confirmation note ── */}
+        {(booking.status === 'confirmed' || booking.status === 'completed') && (
+          <View style={{ backgroundColor: '#f0fdf4', borderWidth: 1, borderColor: '#bbf7d0', borderRadius: 5, padding: 10, marginBottom: 14 }}>
+            <Text style={{ fontSize: 9, color: DGREEN }}>
+              ✓ Your booking is confirmed. Please carry this invoice and a valid government-issued photo ID on the day of your tour.
             </Text>
           </View>
         )}
 
         {/* ── Footer ── */}
         <View style={s.footer}>
-          <View>
-            <Text style={s.footerText}>Thank you for choosing Ghumo Phiro India!</Text>
-            <Text style={s.footerText}>This is a computer-generated invoice and does not require a signature.</Text>
+          <View style={s.footerRow}>
+            <View>
+              <Text style={s.footerBrand}>{COMPANY.name}</Text>
+              <Text style={s.footerLabel}>{COMPANY.address}</Text>
+              <Text style={s.footerLabel}>{COMPANY.gst}</Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={s.footerLabel}>Support: {COMPANY.phone}</Text>
+              <Text style={s.footerLabel}>{COMPANY.email}</Text>
+              <Text style={s.footerLabel}>{COMPANY.web}</Text>
+            </View>
           </View>
-          <Text style={s.footerBrand}>ghumophiroindia.com</Text>
+          <Text style={s.footerNote}>
+            This is a computer-generated invoice and does not require a physical signature. Thank you for choosing {COMPANY.name}!
+          </Text>
         </View>
 
       </Page>
