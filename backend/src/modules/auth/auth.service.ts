@@ -6,6 +6,7 @@ import { hashPassword, comparePassword } from '../../shared/password'
 import { generateToken, generateRefreshToken } from '../../shared/jwt'
 import { ConflictError, UnauthorizedError, NotFoundError } from '../../shared/errors'
 import { setCache, getCache, deleteCache } from '../../core/redis'
+import emailService from '../../shared/email'
 import logger from '../../core/logger'
 import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput, ForgotPasswordInput, ResetPasswordInput } from './auth.validator'
 
@@ -224,8 +225,11 @@ export class AuthService {
     // Store userId against the token in Redis (or log if Redis unavailable)
     await setCache(cacheKey, user.id, RESET_TOKEN_TTL)
 
-    // TODO: Send email with reset link containing the token
-    // For now, log the token so it can be used during development
+    // Send password reset email
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
+    emailService.sendPasswordReset(user.email, user.name, resetToken, frontendUrl)
+      .catch(err => logger.warn(`[email] Password reset email failed: ${err.message}`))
+
     logger.info(`Password reset token for ${user.email}: ${resetToken} (expires in 1 hour)`)
 
     return { message: 'If that email exists, a reset link has been sent.' }

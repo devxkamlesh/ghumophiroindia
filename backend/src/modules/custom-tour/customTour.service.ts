@@ -2,6 +2,8 @@ import { eq, desc, sql } from 'drizzle-orm'
 import db from '../../core/database'
 import { customTourRequests } from '../../core/database/schema'
 import { NotFoundError } from '../../shared/errors'
+import emailService from '../../shared/email'
+import logger from '../../core/logger'
 import type { CreateCustomTourInput, UpdateCustomTourStatusInput } from './customTour.validator'
 
 export class CustomTourService {
@@ -10,6 +12,17 @@ export class CustomTourService {
       ...data,
       startDate: data.startDate ? new Date(data.startDate) : null,
     }).returning()
+
+    // Send acknowledgement email (non-blocking)
+    emailService.sendCustomTourAcknowledgement({
+      name:              data.name,
+      email:             data.email,
+      destinations:      data.destinations,
+      duration:          data.duration,
+      numberOfTravelers: data.numberOfTravelers,
+      budget:            data.budget,
+    }).catch(err => logger.warn(`[email] Custom tour ack failed: ${err.message}`))
+
     return request
   }
 
