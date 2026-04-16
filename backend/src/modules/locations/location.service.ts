@@ -56,18 +56,27 @@ export class LocationService {
   }
 
   async create(data: CreateLocationInput) {
-    // Check slug unique
     const [existing] = await db.select({ id: locations.id }).from(locations).where(eq(locations.slug, data.slug)).limit(1)
     if (existing) throw new ConflictError('A location with this slug already exists')
 
-    // Build path from parent
     let path = data.slug
     if (data.parentId) {
       const parent = await this.getById(data.parentId)
       path = `${parent.path}/${data.slug}`
     }
 
-    const [loc] = await db.insert(locations).values({ ...data, path }).returning()
+    const [loc] = await db.insert(locations).values({
+      name:        data.name,
+      slug:        data.slug,
+      type:        data.type,
+      parentId:    data.parentId ?? null,
+      path,
+      lat:         data.lat != null ? String(data.lat) : null,
+      lng:         data.lng != null ? String(data.lng) : null,
+      description: data.description ?? null,
+      image:       data.image ?? null,
+      isActive:    true,
+    }).returning()
     logger.info(`Location created: ${loc.name} (${loc.type})`)
     return loc
   }
@@ -80,19 +89,27 @@ export class LocationService {
       if (dup) throw new ConflictError('Slug already in use')
     }
 
-    // Rebuild path if slug or parentId changed
-    let path = existing.path
     const newSlug     = data.slug     ?? existing.slug
     const newParentId = data.parentId ?? existing.parentId
 
+    let path = newSlug
     if (newParentId) {
       const parent = await this.getById(newParentId)
       path = `${parent.path}/${newSlug}`
-    } else {
-      path = newSlug
     }
 
-    const [updated] = await db.update(locations).set({ ...data, path }).where(eq(locations.id, id)).returning()
+    const updateData: Record<string, unknown> = {}
+    if (data.name        !== undefined) updateData.name        = data.name
+    if (data.slug        !== undefined) updateData.slug        = data.slug
+    if (data.type        !== undefined) updateData.type        = data.type
+    if (data.parentId    !== undefined) updateData.parentId    = data.parentId
+    if (data.description !== undefined) updateData.description = data.description
+    if (data.image       !== undefined) updateData.image       = data.image
+    if (data.lat         !== undefined) updateData.lat         = data.lat != null ? String(data.lat) : null
+    if (data.lng         !== undefined) updateData.lng         = data.lng != null ? String(data.lng) : null
+    updateData.path = path
+
+    const [updated] = await db.update(locations).set(updateData).where(eq(locations.id, id)).returning()
     logger.info(`Location updated: ${updated.name}`)
     return updated
   }
