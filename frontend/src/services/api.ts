@@ -1,5 +1,5 @@
-import axios, { AxiosRequestConfig } from 'axios'
-import { getToken } from '@/lib/auth'
+import axios from 'axios'
+import { getToken, getRefreshToken, updateAccessToken, clearAuth } from '@/lib/auth'
 import type {
   Tour,
   Booking,
@@ -10,6 +10,10 @@ import type {
   AuthResponse,
   AuthUser,
   PaginationMeta,
+  MapCore,
+  MapFull,
+  MapPlace,
+  MapTour,
 } from '@/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
@@ -20,7 +24,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Attach token automatically on every request
+// ── Request interceptor: attach Bearer token ──────────────────────────────────
 api.interceptors.request.use((config) => {
   const token = getToken()
   if (token) {
@@ -29,10 +33,73 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Unwrap the standard { success, data, message } envelope
+// ── Response interceptor: unwrap envelope + handle 401 ───────────────────────
+let isRefreshing = false
+let failedQueue: Array<{ resolve: (v: string) => void; reject: (e: unknown) => void }> = []
+
+function processQueue(error: unknown, token: string | null) {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) reject(error)
+    else resolve(token!)
+  })
+  failedQueue = []
+}
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config
+
+    // Auto-refresh on 401, but only once per request (_retry flag)
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      const refreshToken = getRefreshToken()
+
+      if (!refreshToken) {
+        // No refresh token — clear auth and redirect to login
+        clearAuth()
+        if (typeof window !== 'undefined') {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        }
+        return Promise.reject(new Error('Session expired. Please log in again.'))
+      }
+
+      if (isRefreshing) {
+        // Queue this request until the refresh completes
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        }).then((newToken) => {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`
+          return api(originalRequest)
+        })
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        const { data } = await axios.post(
+          `${BASE_URL}/auth/refresh`,
+          {},
+          { headers: { Authorization: `Bearer ${refreshToken}` } }
+        )
+        const newAccessToken: string = data.data.accessToken
+        updateAccessToken(newAccessToken)
+        processQueue(null, newAccessToken)
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+        return api(originalRequest)
+      } catch (refreshError) {
+        processQueue(refreshError, null)
+        clearAuth()
+        if (typeof window !== 'undefined') {
+          window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
+        }
+        return Promise.reject(new Error('Session expired. Please log in again.'))
+      } finally {
+        isRefreshing = false
+      }
+    }
+
+    // Unwrap backend error message for all other errors
     const message =
       error.response?.data?.error ||
       error.response?.data?.message ||
@@ -104,7 +171,10 @@ export const bookingService = {
 
   getMyBookings: async (): Promise<Booking[]> => {
     const { data } = await api.get('/bookings/my-bookings')
-    return data.data.bookings ?? []
+    // Backend getUserBookings returns: { success, data: { bookings: [...] } }
+    return Array.isArray(data.data?.bookings) ? data.data.bookings
+         : Array.isArray(data.data)           ? data.data
+         : []
   },
 
   getAll: async (params?: {
@@ -149,16 +219,21 @@ export const authService = {
     country?: string
   }): Promise<AuthResponse> => {
     const { data } = await api.post('/auth/register', input)
-    return data.data
+    return data.data  // { user, accessToken, refreshToken }
   },
 
   login: async (input: { email: string; password: string }): Promise<AuthResponse> => {
     const { data } = await api.post('/auth/login', input)
-    return data.data
+    return data.data  // { user, accessToken, refreshToken }
   },
 
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout')
+    try {
+      await api.post('/auth/logout')
+    } finally {
+      // Always clear local auth regardless of server response
+      clearAuth()
+    }
   },
 
   getProfile: async (): Promise<AuthUser> => {
@@ -184,15 +259,6 @@ export const authService = {
 
   resetPassword: async (token: string, password: string): Promise<void> => {
     await api.post('/auth/reset-password', { token, password })
-  },
-
-  refreshToken: async (refreshToken: string): Promise<{ accessToken: string }> => {
-    const { data } = await api.post(
-      '/auth/refresh',
-      {},
-      { headers: { Authorization: `Bearer ${refreshToken}` } }
-    )
-    return data.data
   },
 }
 
@@ -242,6 +308,82 @@ export const customTourService = {
   },
 }
 
+// ─── Map ──────────────────────────────────────────────────────────────────────
+// In-memory cache so navigating back to the same location costs 0 network calls.
+// TTL matches backend Redis TTL (30 minutes).
+
+const MAP_CACHE_TTL_MS = 30 * 60 * 1000
+const mapMemCache = new Map<string, { data: MapFull; expiresAt: number }>()
+
+export const mapService = {
+  /**
+   * GET /locations/map/:slug/full
+   * Returns center + location + summary + places[] + tours[].
+   * Results are cached in-memory for 30 minutes — no refetch on re-render.
+   */
+  getFull: async (slug: string): Promise<MapFull | null> => {
+    const cached = mapMemCache.get(slug)
+    if (cached && Date.now() < cached.expiresAt) return cached.data
+
+    const { data } = await api.get(`/locations/map/${slug}/full`)
+    const payload: MapFull | null = data.data ?? null
+    if (payload) {
+      mapMemCache.set(slug, { data: payload, expiresAt: Date.now() + MAP_CACHE_TTL_MS })
+    }
+    return payload
+  },
+
+  /**
+   * GET /locations/map/:slug
+   * Core only — center, location, summary. No places or tours.
+   * Use for initial render before lazy-loading the rest.
+   */
+  getCore: async (slug: string): Promise<MapCore | null> => {
+    // Check full cache first — core is a subset
+    const cached = mapMemCache.get(slug)
+    if (cached && Date.now() < cached.expiresAt) {
+      const { places: _p, tours: _t, ...core } = cached.data
+      return core
+    }
+    const { data } = await api.get(`/locations/map/${slug}`)
+    return data.data ?? null
+  },
+
+  /**
+   * GET /locations/map/:slug/places
+   * Place markers only — used to render map pins.
+   */
+  getPlaces: async (slug: string): Promise<MapPlace[]> => {
+    const cached = mapMemCache.get(slug)
+    if (cached && Date.now() < cached.expiresAt) return cached.data.places
+
+    const { data } = await api.get(`/locations/map/${slug}/places`)
+    return data.data?.places ?? []
+  },
+
+  /**
+   * GET /locations/map/:slug/tours
+   * Tour cards only — used for sidebar / overlay list.
+   */
+  getTours: async (slug: string): Promise<MapTour[]> => {
+    const cached = mapMemCache.get(slug)
+    if (cached && Date.now() < cached.expiresAt) return cached.data.tours
+
+    const { data } = await api.get(`/locations/map/${slug}/tours`)
+    return data.data?.tours ?? []
+  },
+
+  /** Manually evict a slug from the in-memory cache (e.g. after admin rebuild). */
+  invalidate: (slug: string) => {
+    mapMemCache.delete(slug)
+  },
+
+  /** Clear the entire in-memory cache. */
+  clearAll: () => {
+    mapMemCache.clear()
+  },
+}
+
 // ─── Destinations ─────────────────────────────────────────────────────────────
 
 export const destinationService = {
@@ -263,6 +405,10 @@ export const destinationService = {
   getById: async (id: number): Promise<Destination> => {
     const { data } = await api.get(`/destinations/${id}`)
     return data.data.destination
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/destinations/${id}`)
   },
 }
 

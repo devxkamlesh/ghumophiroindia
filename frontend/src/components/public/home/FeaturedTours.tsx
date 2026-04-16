@@ -2,39 +2,42 @@
 
 import { Star, Clock, Users, ArrowRight, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
+import type { Tour } from '@/types'
 
-interface Tour {
-  id: string
-  title: string
-  description: string
-  duration: string
-  price: number
-  maxGroupSize: number
-  rating: number
-  reviewCount: number
-  images: string[]
-  highlights: string[]
-  difficulty: string
+const FALLBACK_IMAGES = [
+  'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80',
+  'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80',
+  'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
+]
+
+const BADGES = [
+  { text: 'Most Popular', color: 'bg-red-500' },
+  { text: 'Best Value',   color: 'bg-green-500' },
+  { text: 'Top Rated',    color: 'bg-yellow-500' },
+  { text: 'Adventure',    color: 'bg-orange-500' },
+]
+
+function priceNum(p: string | number | null | undefined) {
+  if (!p) return 0
+  return typeof p === 'string' ? parseFloat(p) || 0 : p
 }
 
-interface FeaturedToursProps {
+interface Props {
   tours: Tour[]
 }
 
-const getBadgeInfo = (index: number, rating: number) => {
-  if (rating >= 4.9) return { text: 'Top Rated', color: 'bg-yellow-500' }
-  if (index === 0) return { text: 'Most Popular', color: 'bg-red-500' }
-  if (index === 1) return { text: 'Best Value', color: 'bg-green-500' }
-  return { text: 'Adventure', color: 'bg-orange-500' }
-}
+export default function FeaturedTours({ tours }: Props) {
+  // Don't render the section at all if there are no tours
+  if (!tours || tours.length === 0) return null
 
-export default function FeaturedTours({ tours }: FeaturedToursProps) {
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-white to-gray-50">
       <div className="container-custom">
-        {/* Section Header */}
+
+        {/* Header */}
         <div className="text-center mb-12 md:mb-16">
-          <div className="inline-flex items-center space-x-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full mb-4">
             <TrendingUp className="w-4 h-4" />
             <span className="text-sm font-semibold">Trending Now</span>
           </div>
@@ -46,19 +49,14 @@ export default function FeaturedTours({ tours }: FeaturedToursProps) {
           </p>
         </div>
 
-        {/* Tours Grid */}
+        {/* Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {tours.map((tour, index) => {
-            const badge = getBadgeInfo(index, tour.rating)
-            const fallbackImages = [
-              'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80',
-              'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&q=80',
-              'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80',
-              'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
-              'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&q=80',
-              'https://images.unsplash.com/photo-1548013146-72479768bada?w=800&q=80',
-            ]
-            const imageUrl = tour.images[0] || fallbackImages[index % fallbackImages.length]
+          {tours.slice(0, 4).map((tour, i) => {
+            const badge    = BADGES[i % BADGES.length]
+            const imageUrl = (tour.images ?? [])[0] || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]
+            const price    = priceNum(tour.price)
+            const rating   = tour.rating != null ? Number(tour.rating) : null
+            const dests    = Array.isArray(tour.destinations) ? tour.destinations : []
 
             return (
               <Link
@@ -66,7 +64,7 @@ export default function FeaturedTours({ tours }: FeaturedToursProps) {
                 href={`/tours/${tour.id}`}
                 className="group bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
               >
-                {/* Image Container */}
+                {/* Image */}
                 <div className="relative h-56 overflow-hidden">
                   <div
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
@@ -74,22 +72,23 @@ export default function FeaturedTours({ tours }: FeaturedToursProps) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
 
-                  {/* Badge */}
-                  <div className={`absolute top-4 left-4 ${badge.color} text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg`}>
+                  <span className={`absolute top-4 left-4 ${badge.color} text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg`}>
                     {badge.text}
-                  </div>
+                  </span>
 
-                  {/* Price */}
-                  <div className="absolute top-4 right-4 bg-white px-3 py-1.5 rounded-full shadow-lg">
-                    <span className="text-lg font-bold text-primary-600">₹{tour.price}</span>
-                  </div>
+                  <span className="absolute top-4 right-4 bg-white px-3 py-1.5 rounded-full shadow-lg text-sm font-bold text-primary-600">
+                    ₹{price.toLocaleString('en-IN')}
+                  </span>
 
-                  {/* Rating */}
-                  <div className="absolute bottom-4 left-4 flex items-center space-x-1 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-bold text-sm text-gray-900">{tour.rating.toFixed(1)}</span>
-                    <span className="text-xs text-gray-600">({tour.reviewCount})</span>
-                  </div>
+                  {rating != null && (
+                    <span className="absolute bottom-4 left-4 flex items-center gap-1 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-bold text-sm text-gray-900">{rating.toFixed(1)}</span>
+                      {(tour.reviewCount ?? 0) > 0 && (
+                        <span className="text-xs text-gray-600">({tour.reviewCount})</span>
+                      )}
+                    </span>
+                  )}
                 </div>
 
                 {/* Content */}
@@ -99,31 +98,28 @@ export default function FeaturedTours({ tours }: FeaturedToursProps) {
                   </h3>
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">{tour.description}</p>
 
-                  {/* Meta Info */}
                   <div className="flex items-center justify-between text-sm text-gray-500 mb-4 pb-4 border-b border-gray-100">
-                    <div className="flex items-center space-x-1">
+                    <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4 text-primary-600" />
-                      <span className="font-medium">{tour.duration}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
+                      <span className="font-medium">{tour.duration} days</span>
+                    </span>
+                    <span className="flex items-center gap-1">
                       <Users className="w-4 h-4 text-primary-600" />
-                      <span className="font-medium">{tour.maxGroupSize}</span>
+                      <span className="font-medium">Max {tour.maxGroupSize}</span>
+                    </span>
+                  </div>
+
+                  {/* Destination tags */}
+                  {dests.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {dests.slice(0, 2).map((d, j) => (
+                        <span key={j} className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full font-medium">
+                          {d}
+                        </span>
+                      ))}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Highlights */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {tour.highlights.slice(0, 2).map((highlight, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full font-medium"
-                      >
-                        {highlight}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* CTA */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-primary-600 group-hover:text-primary-700">
                       View Details
@@ -136,13 +132,13 @@ export default function FeaturedTours({ tours }: FeaturedToursProps) {
           })}
         </div>
 
-        {/* View All Button */}
+        {/* View all */}
         <div className="text-center">
           <Link
             href="/tours"
-            className="inline-flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98]"
+            className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl active:scale-[0.98]"
           >
-            <span>View All Tours</span>
+            View All Tours
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>

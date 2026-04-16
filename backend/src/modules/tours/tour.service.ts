@@ -1,8 +1,9 @@
-import { eq, and, gte, lte, ilike, or, desc, asc, sql } from 'drizzle-orm'
+import { eq, and, gte, lte, desc, asc, sql } from 'drizzle-orm'
 import db from '../../core/database'
-import { tours } from '../../core/database/schema'
+import { tours, tourDestinations, destinations } from '../../core/database/schema'
 import { NotFoundError, ConflictError } from '../../shared/errors'
 import tourCache from './tour.cache'
+import events from '../../core/events'
 import logger from '../../core/logger'
 import type { CreateTourInput, UpdateTourInput, TourQueryInput } from './tour.validator'
 import type { Tour } from './tour.model'
@@ -27,6 +28,22 @@ interface TourStatsResponse {
 }
 
 export class TourService {
+  /**
+   * Fetch location slugs for a tour (for cache invalidation events)
+   */
+  private async getLocationSlugsForTour(tourId: number): Promise<string[]> {
+    try {
+      const rows = await db
+        .select({ slug: destinations.slug })
+        .from(tourDestinations)
+        .innerJoin(destinations, eq(tourDestinations.destinationId, destinations.id))
+        .where(eq(tourDestinations.tourId, tourId))
+      return rows.map(r => r.slug)
+    } catch {
+      return []
+    }
+  }
+
   /**
    * Get all tours with filters and pagination
    */
@@ -70,11 +87,16 @@ export class TourService {
     if (featured !== undefined) conditions.push(eq(tours.isFeatured, featured))
     
     if (search) {
+      // Three-tier search (best to worst):
+      // 1. FTS via tsvector (exact semantic match, fastest with GIN index)
+      // 2. Trigram similarity (typo-tolerant, handles 'rajastan' → 'Rajasthan')
+      // 3. ILIKE fallback (substring, always works)
       conditions.push(
-        or(
-          ilike(tours.title, `%${search}%`),
-          ilike(tours.description, `%${search}%`)
-        )!
+        sql`(
+          ${tours.searchVector} @@ plainto_tsquery('english', ${search})
+          OR ${tours.title} % ${search}
+          OR ${tours.title} ILIKE ${'%' + search + '%'}
+        )`
       )
     }
 
@@ -214,8 +236,10 @@ export class TourService {
       price: data.price.toString(),
     }).returning()
 
-    // Invalidate cache
+    // Invalidate cache + emit event for map invalidation
     await tourCache.invalidateAllTours()
+    const locationSlugs = await this.getLocationSlugsForTour(newTour.id)
+    events.emitTourCreated({ tourId: newTour.id, locationSlugs })
     logger.info(`Tour ${newTour.id} created`)
 
     return newTour
@@ -256,8 +280,10 @@ export class TourService {
       .where(eq(tours.id, id))
       .returning()
 
-    // Invalidate cache
+    // Invalidate cache + emit event
     await tourCache.invalidateTourAndRelated(id, existing.slug)
+    const locationSlugs = await this.getLocationSlugsForTour(id)
+    events.emitTourUpdated({ tourId: id, locationSlugs })
     logger.info(`Tour ${id} updated`)
 
     return updatedTour
@@ -280,8 +306,10 @@ export class TourService {
       .set({ isActive: false, updatedAt: new Date() })
       .where(eq(tours.id, id))
 
-    // Invalidate cache
+    // Invalidate cache + emit event
+    const locationSlugs = await this.getLocationSlugsForTour(id)
     await tourCache.invalidateTourAndRelated(id, existing.slug)
+    events.emitTourDeleted({ tourId: id, locationSlugs })
     logger.info(`Tour ${id} deleted`)
 
     return { message: 'Tour deleted successfully' }
