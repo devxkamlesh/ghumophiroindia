@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import multer from 'multer'
 import { v2 as cloudinary } from 'cloudinary'
-import { authenticate, requireAdmin } from '../../middleware/auth.middleware'
+import { authenticate, authorize } from '../../middleware/auth.middleware'
 import config from '../../core/config'
 import logger from '../../core/logger'
 
@@ -19,7 +19,7 @@ const upload  = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10
 router.post(
   '/image',
   authenticate,
-  requireAdmin,
+  authorize('admin'),
   upload.single('image'),
   async (req: Request, res: Response) => {
     if (!req.file) {
