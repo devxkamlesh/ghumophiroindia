@@ -43,6 +43,7 @@ export interface Itinerary {
   title: string
   description: string
   activities: string[]
+  locationId?: number | null
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────

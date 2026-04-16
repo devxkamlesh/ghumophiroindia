@@ -21,10 +21,9 @@ const groups = [
   {
     label: 'Content',
     items: [
-      { name: 'Tours',        href: '/dashboard/tours',        icon: MapPin },
-      { name: 'Destinations', href: '/dashboard/destinations', icon: MapPin },
-      { name: 'Locations',    href: '/dashboard/locations',    icon: Globe },
-      { name: 'Blog',         href: '/dashboard/blog',         icon: FileText },
+      { name: 'Tours',     href: '/dashboard/tours',     icon: MapPin },
+      { name: 'Locations', href: '/dashboard/locations', icon: Globe },
+      { name: 'Blog',      href: '/dashboard/blog',      icon: FileText },
     ],
   },
   {
