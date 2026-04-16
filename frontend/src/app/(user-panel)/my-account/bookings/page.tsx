@@ -18,15 +18,15 @@ type TripPhase = 'awaiting' | 'confirmed-upcoming' | 'on-trip' | 'completed' | '
 function getTripPhase(booking: Booking): TripPhase {
   if (booking.status === 'cancelled') return 'cancelled'
   if (booking.status === 'completed') return 'completed'
+  if (booking.status === 'pending')   return 'awaiting'
 
-  const now   = new Date()
-  const start = new Date(booking.startDate)
-  const end   = new Date(booking.endDate)
-
-  if (booking.status === 'pending') return 'awaiting'
+  // confirmed — use dates only to detect "currently on trip"
   if (booking.status === 'confirmed') {
+    const now   = new Date()
+    const start = new Date(booking.startDate)
+    const end   = new Date(booking.endDate)
     if (now >= start && now <= end) return 'on-trip'
-    if (now > end)                  return 'completed'
+    // past end date but admin hasn't marked completed yet → still show confirmed
     return 'confirmed-upcoming'
   }
   return 'awaiting'
@@ -115,10 +115,10 @@ const STEPS: { key: TripPhase[]; label: string }[] = [
 function stepState(phase: TripPhase, stepKeys: TripPhase[]): 'done' | 'active' | 'upcoming' {
   if (phase === 'cancelled') return 'upcoming'
   if (stepKeys.includes(phase)) return 'active'
-  // Check if this step is already passed
-  const order: TripPhase[] = ['awaiting', 'pending-payment', 'confirmed-upcoming', 'on-trip', 'completed']
+  // Order of progression — completed only via DB status
+  const order: TripPhase[] = ['awaiting', 'confirmed-upcoming', 'on-trip', 'completed']
   const phaseIdx = order.indexOf(phase)
-  const stepIdx  = Math.min(...stepKeys.map(k => order.indexOf(k)))
+  const stepIdx  = Math.min(...stepKeys.map(k => order.indexOf(k)).filter(i => i >= 0))
   return phaseIdx > stepIdx ? 'done' : 'upcoming'
 }
 
@@ -345,7 +345,7 @@ export default function MyBookingsPage() {
 
   const stats = {
     total:     bookings.length,
-    upcoming:  bookings.filter(b => new Date(b.startDate) > new Date() && b.status !== 'cancelled').length,
+    upcoming:  bookings.filter(b => b.status === 'confirmed' || b.status === 'pending').length,
     completed: bookings.filter(b => b.status === 'completed').length,
     cancelled: bookings.filter(b => b.status === 'cancelled').length,
   }
