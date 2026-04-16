@@ -16,7 +16,7 @@ export interface AuthUser {
   id: string        // stored as string for convenience, backend sends number
   name: string
   email: string
-  role: 'admin' | 'user'
+  role: 'admin' | 'user' | 'superadmin'
   phone?: string
   country?: string
 }
@@ -90,5 +90,6 @@ export function isAuthenticated(): boolean {
  * True if the stored user has the admin role.
  */
 export function isAdmin(): boolean {
-  return getUser()?.role === 'admin'
+  const role = getUser()?.role
+  return role === 'admin' || role === 'superadmin'
 }

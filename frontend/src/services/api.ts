@@ -434,4 +434,20 @@ export const uploadService = {
   },
 }
 
+// ─── Admin Management (superadmin only) ──────────────────────────────────────
+
+export const adminService = {
+  getUsers: async () => {
+    const { data } = await api.get('/admin/users')
+    return data.data.users as Array<{ id: number; name: string; email: string; role: string; isActive: boolean; createdAt: string }>
+  },
+  setRole: async (userId: number, role: 'admin' | 'user') => {
+    const { data } = await api.patch(`/admin/users/${userId}/role`, { role })
+    return data.data.user
+  },
+  deactivate: async (userId: number) => {
+    await api.delete(`/admin/users/${userId}`)
+  },
+}
+
 export default api

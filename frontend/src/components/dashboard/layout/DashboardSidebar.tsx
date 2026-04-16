@@ -5,9 +5,9 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, MapPin, Calendar, MessageSquare,
   Wand2, Star, FileText, BarChart3, Settings,
-  LogOut, ExternalLink, UserCircle, Globe,
+  LogOut, ExternalLink, UserCircle, Globe, Crown,
 } from 'lucide-react'
-import { clearAuth } from '@/lib/auth'
+import { clearAuth, getUser } from '@/lib/auth'
 import { cn } from '@/lib/utils'
 
 const groups = [
@@ -38,7 +38,8 @@ const groups = [
   {
     label: 'System',
     items: [
-      { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+      { name: 'Admin Users', href: '/dashboard/admins',   icon: Crown,     role: 'superadmin' },
+      { name: 'Settings',    href: '/dashboard/settings', icon: Settings },
     ],
   },
 ]
@@ -46,6 +47,8 @@ const groups = [
 export default function DashboardSidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const me = getUser()
+  const isSuperAdmin = me?.role === 'superadmin'
 
   const handleLogout = () => {
     clearAuth()
@@ -57,22 +60,27 @@ export default function DashboardSidebar() {
 
       {/* Admin badge */}
       <div className="px-4 py-3 border-b border-gray-100">
-        <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg border border-orange-100">
-          <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-          <span className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Admin Panel</span>
+        <div className={cn('flex items-center gap-2 px-3 py-2 rounded-lg border', isSuperAdmin ? 'bg-purple-50 border-purple-100' : 'bg-orange-50 border-orange-100')}>
+          <div className={cn('w-2 h-2 rounded-full animate-pulse', isSuperAdmin ? 'bg-purple-500' : 'bg-orange-500')} />
+          <span className={cn('text-xs font-semibold uppercase tracking-wide', isSuperAdmin ? 'text-purple-700' : 'text-orange-700')}>
+            {isSuperAdmin ? '👑 Superadmin' : 'Admin Panel'}
+          </span>
         </div>
       </div>
 
       {/* Nav groups */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
-        {groups.map(({ label, items }) => (
+        {groups.map(({ label, items }) => {
+          // Filter items by role requirement
+          const visible = items.filter((item: any) => !item.role || item.role === me?.role)
+          if (visible.length === 0) return null
+          return (
           <div key={label}>
             <p className="px-3 mb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
               {label}
             </p>
             <div className="space-y-0.5">
-              {items.map(({ name, href, icon: Icon }) => {
-                // Exact match for /dashboard, prefix match for sub-routes
+              {visible.map(({ name, href, icon: Icon }: any) => {
                 const active = href === '/dashboard'
                   ? pathname === '/dashboard'
                   : pathname === href || pathname?.startsWith(href + '/')
@@ -95,7 +103,8 @@ export default function DashboardSidebar() {
               })}
             </div>
           </div>
-        ))}
+          )
+        })}
       </nav>
 
       {/* Bottom */}
