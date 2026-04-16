@@ -290,12 +290,12 @@ function BookingCard({ booking }: { booking: Booking }) {
           </p>
           <div className="flex items-center gap-2">
             <DownloadInvoiceButton booking={booking} />
-            {booking.tourId && phase !== 'cancelled' && (
+            {phase !== 'cancelled' && (
               <Link
-                href={`/tours/${booking.tourId}`}
+                href={`/my-account/bookings/${booking.id}`}
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-medium transition-colors"
               >
-                View Tour <ArrowRight className="w-3.5 h-3.5" />
+                View Order <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             )}
           </div>
