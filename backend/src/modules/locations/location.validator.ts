@@ -6,7 +6,7 @@ export const createLocationSchema = z.object({
   name:        z.string().min(2).max(100),
   slug:        z.string().min(2).max(100).regex(/^[a-z0-9-]+$/, 'Lowercase alphanumeric with hyphens'),
   type:        z.enum(LOCATION_TYPES),
-  parentId:    z.number().int().positive().optional(),
+  parentId:    z.number().int().positive().nullable().optional(),
   subtitle:    z.string().max(200).optional(),
   description: z.string().max(5000).nullable().optional(),
   image:       z.string().url().optional(),
