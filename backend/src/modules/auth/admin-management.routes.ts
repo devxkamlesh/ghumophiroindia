@@ -41,7 +41,7 @@ router.patch('/users/:id/role', async (req, res, next) => {
     const { role } = req.body
 
     // Cannot change own role
-    if (targetId === req.user!.id) {
+    if (targetId === req.user!.userId) {
       throw new ForbiddenError('Cannot change your own role')
     }
 
@@ -71,7 +71,7 @@ router.delete('/users/:id', async (req, res, next) => {
   try {
     const targetId = Number(req.params.id)
 
-    if (targetId === req.user!.id) throw new ForbiddenError('Cannot deactivate yourself')
+    if (targetId === req.user!.userId) throw new ForbiddenError('Cannot deactivate yourself')
 
     const [target] = await db.select({ id: users.id, role: users.role })
       .from(users).where(eq(users.id, targetId)).limit(1)
