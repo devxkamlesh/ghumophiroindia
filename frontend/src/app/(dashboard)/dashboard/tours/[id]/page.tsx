@@ -156,15 +156,6 @@ export default function EditTourPage() {
   const removeDay = (i: number) =>
     setForm(p => p ? { ...p, itinerary: p.itinerary.filter((_, idx) => idx !== i).map((d, idx) => ({ ...d, day: idx + 1 })) } : p)
 
-  const updateActivity = (di: number, ai: number, val: string) =>
-    setForm(p => p ? { ...p, itinerary: p.itinerary.map((d, i) => i === di ? { ...d, activities: d.activities.map((a, j) => j === ai ? val : a) } : d) } : p)
-
-  const addActivity    = (di: number) =>
-    setForm(p => p ? { ...p, itinerary: p.itinerary.map((d, i) => i === di ? { ...d, activities: [...d.activities, ''] } : d) } : p)
-
-  const removeActivity = (di: number, ai: number) =>
-    setForm(p => p ? { ...p, itinerary: p.itinerary.map((d, i) => i === di ? { ...d, activities: d.activities.filter((_, j) => j !== ai) } : d) } : p)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -379,23 +370,6 @@ export default function EditTourPage() {
                     selectedIds={day.activityLocationIds}
                     onChange={ids => updateDay(i, 'activityLocationIds', ids)}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-500">Activities</p>
-                  {day.activities.map((act, j) => (
-                    <div key={j} className="flex gap-2">
-                      <input type="text" value={act} onChange={e => updateActivity(i, j, e.target.value)} className={cls} placeholder="Activity" />
-                      {day.activities.length > 1 && (
-                        <button type="button" onClick={() => removeActivity(i, j)} className="p-2.5 hover:bg-red-50 rounded-xl transition-colors flex-shrink-0">
-                          <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <button type="button" onClick={() => addActivity(i)} className="text-xs text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1">
-                    <Plus className="w-3.5 h-3.5" /> Add activity
-                  </button>
                 </div>
               </div>
             ))}

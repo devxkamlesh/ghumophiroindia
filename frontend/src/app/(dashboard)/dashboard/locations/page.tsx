@@ -424,7 +424,7 @@ export default function LocationsPage() {
     if (modal.mode === 'edit') return modal.node
     if (modal.mode === 'add' && modal.parent) {
       const childType = TYPE_ORDER[TYPE_ORDER.indexOf(modal.parent.type as LocationType) + 1] as LocationType
-      return { id: 0, name: '', slug: '', type: childType, parentId: modal.parent.id, path: '', lat: null, lng: null, description: null, image: null, isActive: true, createdAt: '' }
+      return { id: 0, name: '', slug: '', type: childType, parentId: modal.parent.id, path: '', lat: null, lng: null, description: null, image: null, isActive: true, isPopular: false, createdAt: '' }
     }
     return null
   }
