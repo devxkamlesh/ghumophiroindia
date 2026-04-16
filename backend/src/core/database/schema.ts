@@ -1,13 +1,8 @@
 import {
   pgTable, serial, text, integer, timestamp, boolean,
-  jsonb, decimal, primaryKey, index, doublePrecision, customType,
+  jsonb, decimal, primaryKey, index, doublePrecision,
 } from 'drizzle-orm/pg-core'
-import { relations, sql } from 'drizzle-orm'
-
-// tsvector custom type for PostgreSQL full-text search
-const tsvector = customType<{ data: string }>({
-  dataType() { return 'tsvector' },
-})
+import { relations } from 'drizzle-orm'
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
@@ -121,9 +116,6 @@ export const tours = pgTable('tours', {
   reviewCount:     integer('review_count').default(0),
   isActive:        boolean('is_active').default(true),
   isFeatured:      boolean('is_featured').default(false),
-  // Full-text search vector — updated by trigger or worker
-  // Generated from: title || description || category
-  searchVector:    tsvector('search_vector'),
   createdAt:       timestamp('created_at').defaultNow(),
   updatedAt:       timestamp('updated_at').defaultNow(),
 }, (t) => ({
@@ -135,8 +127,6 @@ export const tours = pgTable('tours', {
   ratingIdx:         index('idx_tours_rating').on(t.rating),
   activeFeaturedIdx: index('idx_tours_active_featured').on(t.isActive, t.isFeatured),
   activeCategoryIdx: index('idx_tours_active_category').on(t.isActive, t.category),
-  // GIN index for full-text search — orders of magnitude faster than LIKE
-  searchVectorIdx:   index('idx_tours_search_vector').using('gin', t.searchVector),
 }))
 
 // ─── Tour ↔ Destination junction ─────────────────────────────────────────────

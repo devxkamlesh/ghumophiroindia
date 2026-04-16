@@ -87,15 +87,10 @@ export class TourService {
     if (featured !== undefined) conditions.push(eq(tours.isFeatured, featured))
     
     if (search) {
-      // Three-tier search (best to worst):
-      // 1. FTS via tsvector (exact semantic match, fastest with GIN index)
-      // 2. Trigram similarity (typo-tolerant, handles 'rajastan' → 'Rajasthan')
-      // 3. ILIKE fallback (substring, always works)
       conditions.push(
         sql`(
-          ${tours.searchVector} @@ plainto_tsquery('english', ${search})
-          OR ${tours.title} % ${search}
-          OR ${tours.title} ILIKE ${'%' + search + '%'}
+          ${tours.title} ILIKE ${'%' + search + '%'}
+          OR ${tours.description} ILIKE ${'%' + search + '%'}
         )`
       )
     }
