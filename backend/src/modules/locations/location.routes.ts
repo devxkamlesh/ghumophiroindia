@@ -118,7 +118,12 @@ router.patch('/:id', validateParams(idParam), validateBody(updateLocationSchema)
   } catch (e) { next(e) }
 })
 
-// Upsert precomputed distance
+router.delete('/:id', validateParams(idParam), async (req, res, next) => {
+  try {
+    await locationService.delete(Number(req.params.id))
+    sendSuccess(res, null, 'Location deleted')
+  } catch (e) { next(e) }
+})
 router.put('/:fromId/distance/:toId', async (req, res, next) => {
   try {
     const { distanceKm, durationMinutes } = req.body
