@@ -227,7 +227,7 @@ export default function ModernHeader() {
 
             {user ? (
               <div className="flex items-center gap-2">
-                <Link href={user.role === 'admin' ? '/dashboard' : '/my-account'}>
+                <Link href={(user.role === 'admin' || user.role === 'superadmin') ? '/dashboard' : '/my-account'}>
                   <Button variant="outline" size="sm" className="gap-1.5">
                     <UserCircle className="w-4 h-4" />
                     {user.name.split(' ')[0]}
@@ -345,7 +345,7 @@ export default function ModernHeader() {
 
                   {user ? (
                     <div className="flex flex-col gap-2">
-                      <Link href={user.role === 'admin' ? '/dashboard' : '/my-account'}>
+                      <Link href={(user.role === 'admin' || user.role === 'superadmin') ? '/dashboard' : '/my-account'}>
                         <Button variant="outline" className="w-full gap-2">
                           <UserCircle className="w-4 h-4" />
                           My Account
