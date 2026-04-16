@@ -1,6 +1,6 @@
 import { eq, and, gte, lte, desc, asc, sql } from 'drizzle-orm'
 import db from '../../core/database'
-import { tours, tourDestinations, destinations } from '../../core/database/schema'
+import { tours } from '../../core/database/schema'
 import { NotFoundError, ConflictError } from '../../shared/errors'
 import tourCache from './tour.cache'
 import events from '../../core/events'
@@ -29,19 +29,11 @@ interface TourStatsResponse {
 
 export class TourService {
   /**
-   * Fetch location slugs for a tour (for cache invalidation events)
+   * Fetch destination slugs for a tour (for cache invalidation events)
+   * Returns empty array — junction table not yet in DB
    */
-  private async getLocationSlugsForTour(tourId: number): Promise<string[]> {
-    try {
-      const rows = await db
-        .select({ slug: destinations.slug })
-        .from(tourDestinations)
-        .innerJoin(destinations, eq(tourDestinations.destinationId, destinations.id))
-        .where(eq(tourDestinations.tourId, tourId))
-      return rows.map(r => r.slug)
-    } catch {
-      return []
-    }
+  private async getLocationSlugsForTour(_tourId: number): Promise<string[]> {
+    return []
   }
 
   /**
