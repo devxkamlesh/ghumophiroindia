@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Search, Loader2, AlertCircle, ArrowRight, Compass, Globe, Building2, Map } from 'lucide-react'
+import { MapPin, Search, Loader2, AlertCircle, ArrowRight, Compass, Globe, Building2, Map as MapIcon } from 'lucide-react'
 import { destinationService } from '@/services/api'
 import { cn } from '@/lib/utils'
 import type { LocationNode } from '@/types'
@@ -95,7 +95,7 @@ export default function DestinationsPage() {
         {states.length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-5">
-              <Map className="w-5 h-5 text-purple-600" />
+              <MapIcon className="w-5 h-5 text-purple-600" />
               <h2 className="text-xl font-bold text-gray-900">States & Regions</h2>
               <span className="text-sm text-gray-400">({states.length})</span>
             </div>

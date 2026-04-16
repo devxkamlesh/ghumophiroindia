@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   ArrowLeft, MapPin, Star, Clock, Users, Search,
-  Loader2, AlertCircle, ArrowRight, Globe, Building2, Map, Landmark,
+  Loader2, AlertCircle, ArrowRight, Globe, Building2, Map as MapIcon, Landmark,
 } from 'lucide-react'
 import { destinationService } from '@/services/api'
 import { cn } from '@/lib/utils'
@@ -15,7 +15,7 @@ import type { LocationNode, Tour } from '@/types'
 const FALLBACK = 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&q=80'
 const FALLBACK_TOUR = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80'
 
-const TYPE_ICON: Record<string, React.ElementType> = { country: Globe, state: Map, city: Building2, place: Landmark }
+const TYPE_ICON: Record<string, React.ElementType> = { country: Globe, state: MapIcon, city: Building2, place: Landmark }
 const TYPE_COLOR: Record<string, string> = {
   country: 'text-blue-700 bg-blue-50 border-blue-200',
   state:   'text-purple-700 bg-purple-50 border-purple-200',

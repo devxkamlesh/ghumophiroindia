@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Search, X, MapPin, Globe, Map, Building2, Landmark, ChevronRight } from 'lucide-react'
+import { Search, X, MapPin, Globe, Map as MapIcon, Building2, Landmark, ChevronRight } from 'lucide-react'
 import { locationAdminService } from '@/services/api'
 import { cn } from '@/lib/utils'
 import type { LocationNode, LocationType } from '@/types'
 
 const TYPE_ICON: Record<LocationType, React.ElementType> = {
-  country: Globe, state: Map, city: Building2, place: Landmark,
+  country: Globe, state: MapIcon, city: Building2, place: Landmark,
 }
 const TYPE_COLOR: Record<LocationType, string> = {
   country: 'text-blue-600 bg-blue-50',
