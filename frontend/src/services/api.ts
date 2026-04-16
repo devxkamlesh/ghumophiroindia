@@ -6,7 +6,6 @@ import type {
   CreateBookingInput,
   Inquiry,
   CustomTourRequest,
-  Destination,
   AuthResponse,
   AuthUser,
   PaginationMeta,
@@ -419,39 +418,6 @@ export const uploadService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     return data.data.url as string
-  },
-}
-
-// ─── Destinations (now served from Locations — cities & states) ───────────────
-
-export const destinationService = {
-  // Returns cities + states from locations table — replaces old destinations table
-  getAll: async (): Promise<LocationNode[]> => {
-    const { data } = await api.get('/locations')
-    const all: LocationNode[] = data.data?.locations ?? []
-    return all.filter(l => l.type === 'city' || l.type === 'state')
-  },
-
-  getPopular: async (): Promise<LocationNode[]> => {
-    const { data } = await api.get('/locations')
-    const all: LocationNode[] = data.data?.locations ?? []
-    return all.filter(l => (l.type === 'city' || l.type === 'state') && l.isActive).slice(0, 6)
-  },
-
-  getBySlug: async (slug: string): Promise<LocationNode> => {
-    const { data } = await api.get(`/locations/slug/${slug}`)
-    return data.data.location
-  },
-
-  getById: async (id: number): Promise<LocationNode> => {
-    const { data } = await api.get(`/locations/${id}`)
-    return data.data.location
-  },
-
-  // Get tours for a location
-  getTours: async (locationId: number) => {
-    const { data } = await api.get(`/locations/${locationId}/tours`)
-    return data.data.tours ?? []
   },
 }
 

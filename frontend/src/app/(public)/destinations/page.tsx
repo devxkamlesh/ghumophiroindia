@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { MapPin, Search, Loader2, AlertCircle, ArrowRight, Compass, Globe, Building2, Map as MapIcon } from 'lucide-react'
-import { destinationService } from '@/services/api'
+import Link from 'next/link'
+import { locationAdminService } from '@/services/api'
 import { cn } from '@/lib/utils'
 import type { LocationNode } from '@/types'
 
@@ -23,8 +24,8 @@ export default function DestinationsPage() {
   const [search,    setSearch]    = useState('')
 
   useEffect(() => {
-    destinationService.getAll()
-      .then(setLocations)
+    locationAdminService.getAll()
+      .then(all => setLocations(all.filter(l => l.type === 'city' || l.type === 'state')))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
@@ -60,6 +61,12 @@ export default function DestinationsPage() {
             <input type="text" value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search destinations…"
               className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg" />
+          </div>
+          <div className="mt-4">
+            <Link href="/destinations/map"
+              className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors border border-white/30">
+              <MapPin className="w-4 h-4" /> View on Map
+            </Link>
           </div>
         </div>
       </div>

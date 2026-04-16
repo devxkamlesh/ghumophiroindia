@@ -140,21 +140,6 @@ export interface CustomTourRequest {
   additionalInfo?: string
 }
 
-// ─── Destinations ─────────────────────────────────────────────────────────────
-
-export interface Destination {
-  id: number
-  name: string
-  slug: string
-  subtitle: string
-  description: string
-  image: string
-  tourCount: number
-  isPopular: boolean
-  createdAt: string
-  updatedAt?: string
-}
-
 // ─── Locations ────────────────────────────────────────────────────────────────
 
 export type LocationType = 'country' | 'state' | 'city' | 'place'

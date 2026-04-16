@@ -8,7 +8,7 @@ import {
   ArrowLeft, MapPin, Star, Clock, Users, Search,
   Loader2, AlertCircle, ArrowRight, Globe, Building2, Map as MapIcon, Landmark,
 } from 'lucide-react'
-import { destinationService } from '@/services/api'
+import { locationAdminService } from '@/services/api'
 import { cn } from '@/lib/utils'
 import type { LocationNode, Tour } from '@/types'
 
@@ -48,10 +48,11 @@ export default function DestinationDetailPage() {
   const load = useCallback(async () => {
     setLoading(true); setError('')
     try {
-      const loc = await destinationService.getBySlug(slug)
+      const loc = await locationAdminService.getBySlug(slug)
       setLocation(loc)
-      const tourList = await destinationService.getTours(loc.id)
-      setTours(tourList)
+      // Get tours for this location
+      const { data } = await (await import('@/services/api')).default.get(`/locations/${loc.id}/tours`)
+      setTours(data.data?.tours ?? [])
     } catch (err: any) {
       setError(err.message || 'Destination not found')
     } finally { setLoading(false) }
