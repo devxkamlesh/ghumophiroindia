@@ -1,8 +1,12 @@
 import { Router } from 'express'
-import customTourService, { createCustomTourSchema } from './customTour.service'
+import customTourService from './customTour.service'
+import { createCustomTourSchema, updateCustomTourStatusSchema, customTourQuerySchema } from './customTour.validator'
 import { sendSuccess } from '../../shared/response'
 import { authenticate, authorize } from '../../middleware/auth.middleware'
-import { validateBody } from '../../middleware/validate.middleware'
+import { validateBody, validateQuery, validateParams } from '../../middleware/validate.middleware'
+import { z } from 'zod'
+
+const idParamSchema = z.object({ id: z.coerce.number().int().positive() })
 
 const router = Router()
 
@@ -19,28 +23,28 @@ router.post('/', validateBody(createCustomTourSchema), async (req, res, next) =>
 // Admin routes
 router.use(authenticate, authorize('admin'))
 
-router.get('/', async (req, res, next) => {
+router.get('/', validateQuery(customTourQuerySchema), async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page as string) || 1
-    const result = await customTourService.getAll(page)
+    const { page, limit } = req.query as unknown as { page: number; limit: number }
+    const result = await customTourService.getAll(page, limit)
     sendSuccess(res, result)
   } catch (error) {
     next(error)
   }
 })
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', validateParams(idParamSchema), async (req, res, next) => {
   try {
-    const request = await customTourService.getById(parseInt(req.params.id, 10))
+    const request = await customTourService.getById(Number(req.params.id))
     sendSuccess(res, { request })
   } catch (error) {
     next(error)
   }
 })
 
-router.patch('/:id/status', async (req, res, next) => {
+router.patch('/:id/status', validateParams(idParamSchema), validateBody(updateCustomTourStatusSchema), async (req, res, next) => {
   try {
-    const request = await customTourService.updateStatus(parseInt(req.params.id, 10), req.body.status)
+    const request = await customTourService.updateStatus(Number(req.params.id), req.body.status)
     sendSuccess(res, { request })
   } catch (error) {
     next(error)

@@ -1,234 +1,153 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Package, Calendar, MessageSquare, FileText, Users, DollarSign } from 'lucide-react';
+import { useEffect, useState } from 'react'
+import { TrendingUp, DollarSign, Users, Calendar, MapPin, MessageSquare, Wand2, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { bookingService, tourService, inquiryService, customTourService } from '@/services/api'
+
+interface BookingStats {
+  total: number
+  pending: number
+  confirmed: number
+  completed: number
+  cancelled: number
+  totalRevenue: number
+}
+
+interface TourStats {
+  total: number
+  active: number
+  featured: number
+  avgPrice: number
+  avgRating: number
+}
+
+function StatCard({ title, value, sub, icon: Icon, color }: {
+  title: string; value: string; sub?: string; icon: React.ElementType; color: string
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="flex items-start justify-between mb-3">
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
+          <Icon className="w-5 h-5" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-gray-900">{value}</p>
+      <p className="text-sm text-gray-500 mt-0.5">{title}</p>
+      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+    </div>
+  )
+}
+
+function Skeleton() {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 animate-pulse">
+      <div className="w-10 h-10 bg-gray-200 rounded-lg mb-3" />
+      <div className="h-7 bg-gray-200 rounded w-1/2 mb-1" />
+      <div className="h-4 bg-gray-200 rounded w-3/4" />
+    </div>
+  )
+}
 
 export default function AnalyticsPage() {
-  const [stats, setStats] = useState({
-    totalRevenue: 1250000,
-    revenueGrowth: 12.5,
-    totalBookings: 156,
-    bookingsGrowth: 8.3,
-    totalInquiries: 43,
-    inquiriesGrowth: -5.2,
-    totalCustomRequests: 18,
-    customRequestsGrowth: 15.7,
-    conversionRate: 32.5,
-    averageBookingValue: 8012,
-    popularTours: [
-      { name: 'Royal Rajasthan Heritage Tour', bookings: 45, revenue: 450000 },
-      { name: 'Desert Safari Adventure', bookings: 38, revenue: 380000 },
-      { name: 'Jaipur City Tour', bookings: 32, revenue: 192000 },
-      { name: 'Udaipur Lake Palace Tour', bookings: 25, revenue: 175000 },
-      { name: 'Jaisalmer Fort Experience', bookings: 16, revenue: 128000 },
-    ],
-    monthlyRevenue: [
-      { month: 'Jan', revenue: 95000 },
-      { month: 'Feb', revenue: 105000 },
-      { month: 'Mar', revenue: 125000 },
-      { month: 'Apr', revenue: 115000 },
-    ],
-  });
+  const [bookingStats, setBookingStats] = useState<BookingStats | null>(null)
+  const [tourStats,    setTourStats]    = useState<TourStats | null>(null)
+  const [inquiryCount, setInquiryCount] = useState<number | null>(null)
+  const [customCount,  setCustomCount]  = useState<number | null>(null)
+  const [loading,      setLoading]      = useState(true)
+
+  useEffect(() => {
+    Promise.allSettled([
+      bookingService.getStats(),
+      tourService.getStats(),
+      inquiryService.getAll({ page: 1, limit: 1 }),
+      customTourService.getAll({ page: 1, limit: 1 }),
+    ]).then(([b, t, i, c]) => {
+      if (b.status === 'fulfilled') setBookingStats(b.value)
+      if (t.status === 'fulfilled') setTourStats(t.value)
+      if (i.status === 'fulfilled') setInquiryCount(i.value?.pagination?.total ?? 0)
+      if (c.status === 'fulfilled') setCustomCount(c.value?.pagination?.total ?? 0)
+    }).finally(() => setLoading(false))
+  }, [])
+
+  const fmt  = (n: number | null | undefined) => n == null ? '—' : String(n)
+  const fmtM = (n: number | null | undefined) => n == null ? '—' : `₹${Number(n).toLocaleString('en-IN')}`
+  const fmtP = (n: number | null | undefined) => n == null ? '—' : `₹${Math.round(Number(n)).toLocaleString('en-IN')}`
+
+  const bookingCards = [
+    { title: 'Total Revenue',    value: fmtM(bookingStats?.totalRevenue), icon: DollarSign, color: 'bg-green-50 text-green-600',   sub: 'From paid bookings' },
+    { title: 'Total Bookings',   value: fmt(bookingStats?.total),         icon: Calendar,   color: 'bg-blue-50 text-blue-600',     sub: 'All time' },
+    { title: 'Pending',          value: fmt(bookingStats?.pending),       icon: Calendar,   color: 'bg-yellow-50 text-yellow-600', sub: 'Awaiting confirmation' },
+    { title: 'Confirmed',        value: fmt(bookingStats?.confirmed),     icon: TrendingUp, color: 'bg-primary-50 text-primary-600', sub: 'Ready to go' },
+    { title: 'Completed',        value: fmt(bookingStats?.completed),     icon: Users,      color: 'bg-purple-50 text-purple-600', sub: 'Successfully done' },
+    { title: 'Cancelled',        value: fmt(bookingStats?.cancelled),     icon: Calendar,   color: 'bg-red-50 text-red-600',       sub: 'Cancelled bookings' },
+  ]
+
+  const tourCards = [
+    { title: 'Total Tours',   value: fmt(tourStats?.total),    icon: MapPin,      color: 'bg-gray-50 text-gray-600',     sub: 'In database' },
+    { title: 'Active Tours',  value: fmt(tourStats?.active),   icon: TrendingUp,  color: 'bg-green-50 text-green-600',   sub: 'Visible to users' },
+    { title: 'Featured',      value: fmt(tourStats?.featured), icon: TrendingUp,  color: 'bg-primary-50 text-primary-600', sub: 'On homepage' },
+    { title: 'Avg. Price',    value: fmtP(tourStats?.avgPrice), icon: DollarSign, color: 'bg-blue-50 text-blue-600',     sub: 'Per person' },
+  ]
 
   return (
-    <DashboardLayout>
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Analytics Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-400">Track your business performance and metrics</p>
-        </div>
-
-        {/* Key Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Total Revenue</span>
-                <DollarSign className="text-green-500" size={20} />
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-2xl font-bold">₹{(stats.totalRevenue / 1000).toFixed(0)}K</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {stats.revenueGrowth > 0 ? (
-                      <TrendingUp className="text-green-500" size={14} />
-                    ) : (
-                      <TrendingDown className="text-red-500" size={14} />
-                    )}
-                    <span className={`text-xs ${stats.revenueGrowth > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {Math.abs(stats.revenueGrowth)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Total Bookings</span>
-                <Calendar className="text-blue-500" size={20} />
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-2xl font-bold">{stats.totalBookings}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {stats.bookingsGrowth > 0 ? (
-                      <TrendingUp className="text-green-500" size={14} />
-                    ) : (
-                      <TrendingDown className="text-red-500" size={14} />
-                    )}
-                    <span className={`text-xs ${stats.bookingsGrowth > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {Math.abs(stats.bookingsGrowth)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Inquiries</span>
-                <MessageSquare className="text-purple-500" size={20} />
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-2xl font-bold">{stats.totalInquiries}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {stats.inquiriesGrowth > 0 ? (
-                      <TrendingUp className="text-green-500" size={14} />
-                    ) : (
-                      <TrendingDown className="text-red-500" size={14} />
-                    )}
-                    <span className={`text-xs ${stats.inquiriesGrowth > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {Math.abs(stats.inquiriesGrowth)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Custom Requests</span>
-                <FileText className="text-orange-500" size={20} />
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <p className="text-2xl font-bold">{stats.totalCustomRequests}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {stats.customRequestsGrowth > 0 ? (
-                      <TrendingUp className="text-green-500" size={14} />
-                    ) : (
-                      <TrendingDown className="text-red-500" size={14} />
-                    )}
-                    <span className={`text-xs ${stats.customRequestsGrowth > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                      {Math.abs(stats.customRequestsGrowth)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Additional Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-bold mb-4">Conversion Metrics</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</span>
-                    <span className="text-lg font-bold text-green-600">{stats.conversionRate}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full"
-                      style={{ width: `${stats.conversionRate}%` }}
-                    ></div>
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Avg. Booking Value</span>
-                    <span className="text-lg font-bold">₹{stats.averageBookingValue.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-lg">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-bold mb-4">Monthly Revenue Trend</h3>
-              <div className="space-y-3">
-                {stats.monthlyRevenue.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">{item.month}</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-orange-500 to-pink-500 h-2 rounded-full"
-                          style={{ width: `${(item.revenue / 150000) * 100}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm font-semibold w-16 text-right">
-                        ₹{(item.revenue / 1000).toFixed(0)}K
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Popular Tours */}
-        <Card className="border-0 shadow-lg">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-bold mb-4">Top Performing Tours</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Tour Name</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Bookings</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.popularTours.map((tour, idx) => (
-                    <tr key={idx} className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{tour.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <span className="text-sm font-semibold">{tour.bookings}</span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <span className="text-sm font-semibold text-green-600">
-                          ₹{(tour.revenue / 1000).toFixed(0)}K
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
+        <p className="text-gray-500 mt-1 text-sm">Live overview of your business performance</p>
       </div>
-    </DashboardLayout>
-  );
+
+      {/* Booking stats */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Bookings</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {loading ? Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} />) :
+            bookingCards.map(c => <StatCard key={c.title} {...c} />)}
+        </div>
+      </div>
+
+      {/* Tour stats */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Tours</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {loading ? Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} />) :
+            tourCards.map(c => <StatCard key={c.title} {...c} />)}
+        </div>
+      </div>
+
+      {/* Leads */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Leads</h2>
+        <div className="grid grid-cols-2 gap-4">
+          {loading ? (
+            <><Skeleton /><Skeleton /></>
+          ) : (
+            <>
+              <StatCard title="Total Inquiries"       value={fmt(inquiryCount)} icon={MessageSquare} color="bg-blue-50 text-blue-600"   sub="Contact form submissions" />
+              <StatCard title="Custom Tour Requests"  value={fmt(customCount)}  icon={Wand2}         color="bg-purple-50 text-purple-600" sub="Personalised tour requests" />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Quick links */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 className="text-sm font-semibold text-gray-700 mb-4">Quick Navigation</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { href: '/dashboard/bookings',        label: 'Manage Bookings',  icon: Calendar },
+            { href: '/dashboard/tours',           label: 'Manage Tours',     icon: MapPin },
+            { href: '/dashboard/inquiries',       label: 'View Inquiries',   icon: MessageSquare },
+            { href: '/dashboard/custom-requests', label: 'Custom Requests',  icon: Wand2 },
+          ].map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href}
+              className="flex items-center gap-2.5 p-3 border border-gray-100 rounded-xl hover:border-primary-200 hover:bg-primary-50 transition-all text-sm font-medium text-gray-700 hover:text-primary-700">
+              <Icon className="w-4 h-4 text-gray-400" />
+              {label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }

@@ -1,207 +1,274 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { UserPanelLayout } from '@/components/user-panel/UserPanelLayout';
-import { bookingService } from '@/services/api';
-import { formatCurrency } from '@/lib/utils';
-import { Calendar, MapPin, Users, Clock } from 'lucide-react';
+import { Calendar, Users, MapPin, Loader2, AlertCircle, Clock, CheckCircle, XCircle, ArrowRight, RefreshCw } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { bookingService } from '@/services/api'
+import { cn } from '@/lib/utils'
+import type { Booking, BookingStatus } from '@/types'
 
-interface Booking {
-  id: number;
-  tourId: number;
-  userId: number;
-  numberOfPeople: number;
-  totalPrice: string;
-  bookingDate: string;
-  status: string;
-  paymentStatus: string;
-  specialRequests?: string;
-  createdAt: string;
-  tour?: {
-    id: number;
-    title: string;
-    destination: string;
-    duration: number;
-  };
+// ── Status config ─────────────────────────────────────────────────────────────
+const STATUS: Record<BookingStatus, { label: string; badge: string; icon: React.ElementType; bar: string }> = {
+  confirmed: { label: 'Confirmed',  badge: 'bg-green-100 text-green-700 border-green-200',  icon: CheckCircle, bar: 'bg-green-500' },
+  pending:   { label: 'Pending',    badge: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: Clock,        bar: 'bg-yellow-400' },
+  completed: { label: 'Completed',  badge: 'bg-blue-100 text-blue-700 border-blue-200',    icon: CheckCircle, bar: 'bg-blue-500' },
+  cancelled: { label: 'Cancelled',  badge: 'bg-red-100 text-red-700 border-red-200',       icon: XCircle,     bar: 'bg-red-400' },
 }
 
-export default function MyBookingsPage() {
-  const router = useRouter();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+const PAYMENT: Record<string, string> = {
+  paid:     'bg-emerald-100 text-emerald-700 border-emerald-200',
+  refunded: 'bg-purple-100 text-purple-700 border-purple-200',
+  pending:  'bg-orange-100 text-orange-700 border-orange-200',
+}
 
-  useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          router.push('/login');
-          return;
-        }
+// ── Stat pill ─────────────────────────────────────────────────────────────────
+function StatPill({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 flex items-center gap-3">
+      <span className={`text-2xl font-bold ${color}`}>{value}</span>
+      <span className="text-sm text-gray-500">{label}</span>
+    </div>
+  )
+}
 
-        const data = await bookingService.getMyBookings();
-        setBookings(data);
-      } catch (err: any) {
-        console.error('Failed to fetch bookings:', err);
-        if (err.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          router.push('/login');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+// ── Booking card ──────────────────────────────────────────────────────────────
+function BookingCard({ booking }: { booking: Booking }) {
+  const status = STATUS[booking.status] ?? STATUS.pending
+  const StatusIcon = status.icon
 
-    fetchBookings();
-  }, [router]);
+  const start = new Date(booking.startDate)
+  const end   = new Date(booking.endDate)
+  const now   = new Date()
+  const isUpcoming  = start > now && booking.status !== 'cancelled'
+  const isPast      = end < now
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-    }
-  };
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
-  const getPaymentStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'paid':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
-      case 'failed':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
-    }
-  };
-
-  if (loading) {
-    return (
-      <UserPanelLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-primary"></div>
-        </div>
-      </UserPanelLayout>
-    );
-  }
+  const duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
 
   return (
-    <UserPanelLayout>
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">My Bookings</h1>
-          <p className="text-sm text-muted-foreground">View and manage your tour bookings</p>
+    <div className={cn(
+      'bg-white rounded-xl border overflow-hidden transition-all hover:shadow-md group',
+      booking.status === 'cancelled' ? 'border-gray-200 opacity-75' : 'border-gray-200 hover:border-primary-200'
+    )}>
+      {/* Coloured top bar */}
+      <div className={cn('h-1 w-full', status.bar)} />
+
+      <div className="p-5">
+        {/* Top row: title + price */}
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="min-w-0">
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+              <span className="text-xs font-mono text-gray-400">#{booking.id}</span>
+              <span className={cn('inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border', status.badge)}>
+                <StatusIcon className="w-3 h-3" />
+                {status.label}
+              </span>
+              <span className={cn('px-2 py-0.5 text-xs font-medium rounded-full border', PAYMENT[booking.paymentStatus] ?? 'bg-gray-100 text-gray-600 border-gray-200')}>
+                {booking.paymentStatus}
+              </span>
+              {isUpcoming && (
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-primary-50 text-primary-700 border border-primary-200">
+                  Upcoming
+                </span>
+              )}
+            </div>
+
+            <h3 className="text-base font-bold text-gray-900 truncate">
+              {booking.tour?.title ?? `Tour Booking #${booking.id}`}
+            </h3>
+
+            {booking.tour?.destination && (
+              <p className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+                <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                {booking.tour.destination}
+              </p>
+            )}
+          </div>
+
+          {/* Price */}
+          <div className="text-right flex-shrink-0">
+            <p className="text-xl font-bold text-gray-900">
+              ₹{Number(booking.totalPrice).toLocaleString('en-IN')}
+            </p>
+            <p className="text-xs text-gray-400">Total paid</p>
+          </div>
         </div>
 
-        {bookings.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <Calendar className="mx-auto mb-3 text-muted-foreground" size={40} />
-              <h3 className="text-lg font-semibold mb-2">No Bookings Yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                You haven't made any tour bookings yet. Explore our tours!
-              </p>
-              <Link href="/tours">
-                <Button size="sm">Browse Tours</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {bookings.map((booking) => (
-              <Card key={booking.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold truncate">
-                        {booking.tour?.title || 'Tour Details'}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">Booking #{booking.id}</p>
-                    </div>
-                    <div className="flex gap-1.5 ml-2">
-                      <Badge className={`${getStatusColor(booking.status)} text-xs px-2 py-0.5`}>
-                        {booking.status}
-                      </Badge>
-                      <Badge className={`${getPaymentStatusColor(booking.paymentStatus)} text-xs px-2 py-0.5`}>
-                        {booking.paymentStatus}
-                      </Badge>
-                    </div>
-                  </div>
+        {/* Info grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <InfoCell icon={Calendar} label="Check-in"  value={formatDate(start)} />
+          <InfoCell icon={Calendar} label="Check-out" value={formatDate(end)} />
+          <InfoCell icon={Clock}    label="Duration"  value={`${duration} day${duration !== 1 ? 's' : ''}`} />
+          <InfoCell icon={Users}    label="Travelers" value={`${booking.numberOfTravelers} ${booking.numberOfTravelers === 1 ? 'person' : 'people'}`} />
+        </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <MapPin size={14} className="text-muted-foreground flex-shrink-0" />
-                      <span className="truncate">{booking.tour?.destination || 'N/A'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <Clock size={14} className="text-muted-foreground flex-shrink-0" />
-                      <span>{booking.tour?.duration || 0}D</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <Users size={14} className="text-muted-foreground flex-shrink-0" />
-                      <span>{booking.numberOfPeople} {booking.numberOfPeople === 1 ? 'person' : 'people'}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <Calendar size={14} className="text-muted-foreground flex-shrink-0" />
-                      <span className="truncate">
-                        {new Date(booking.bookingDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                        })}
-                      </span>
-                    </div>
-                  </div>
-
-                  {booking.specialRequests && (
-                    <div className="p-2 bg-muted/50 rounded-lg mb-3">
-                      <p className="text-xs font-medium mb-0.5">Special Requests:</p>
-                      <p className="text-xs text-muted-foreground">{booking.specialRequests}</p>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between pt-3 border-t">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Total Amount</p>
-                      <p className="text-lg font-bold text-primary">
-                        {formatCurrency(parseFloat(booking.totalPrice))}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      {booking.tour && (
-                        <Link href={`/tours/${booking.tourId}`}>
-                          <Button variant="outline" size="sm" className="h-8 text-xs">
-                            View Tour
-                          </Button>
-                        </Link>
-                      )}
-                      {booking.status.toLowerCase() === 'pending' && (
-                        <Button size="sm" variant="destructive" className="h-8 text-xs">
-                          Cancel
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        {/* Special requests */}
+        {booking.specialRequests && (
+          <div className="mb-4 px-3 py-2.5 bg-gray-50 rounded-lg border border-gray-100 text-xs text-gray-600">
+            <span className="font-medium text-gray-700">Special request: </span>
+            {booking.specialRequests}
           </div>
         )}
+
+        {/* Footer: divider + actions */}
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-400">
+            Booked {new Date(booking.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </p>
+          <div className="flex items-center gap-2">
+            {booking.tourId && booking.status !== 'cancelled' && (
+              <Link
+                href={`/tours/${booking.tourId}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-medium transition-colors"
+              >
+                View Tour
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
-    </UserPanelLayout>
-  );
+    </div>
+  )
+}
+
+function InfoCell({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-2">
+      <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <Icon className="w-3.5 h-3.5 text-gray-400" />
+      </div>
+      <div>
+        <p className="text-xs text-gray-400">{label}</p>
+        <p className="text-sm font-medium text-gray-800">{value}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+export default function MyBookingsPage() {
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [filter, setFilter] = useState<BookingStatus | 'all'>('all')
+
+  useEffect(() => {
+    bookingService.getMyBookings()
+      .then(setBookings)
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = filter === 'all' ? bookings : bookings.filter(b => b.status === filter)
+
+  const stats = {
+    total:     bookings.length,
+    upcoming:  bookings.filter(b => new Date(b.startDate) > new Date() && b.status !== 'cancelled').length,
+    completed: bookings.filter(b => b.status === 'completed').length,
+    cancelled: bookings.filter(b => b.status === 'cancelled').length,
+  }
+
+  if (loading) return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+    </div>
+  )
+
+  return (
+    <div className="space-y-6">
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">My Bookings</h1>
+          <p className="text-gray-500 mt-1 text-sm">Track and manage all your tour bookings</p>
+        </div>
+        <Link href="/tours"
+          className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors flex-shrink-0">
+          Browse Tours
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          {error}
+          <button onClick={() => { setError(''); setLoading(true); bookingService.getMyBookings().then(setBookings).catch(e => setError(e.message)).finally(() => setLoading(false)) }}
+            className="ml-auto flex items-center gap-1 text-xs hover:underline">
+            <RefreshCw className="w-3.5 h-3.5" /> Retry
+          </button>
+        </div>
+      )}
+
+      {bookings.length > 0 && (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatPill label="Total"     value={stats.total}     color="text-gray-900" />
+            <StatPill label="Upcoming"  value={stats.upcoming}  color="text-primary-600" />
+            <StatPill label="Completed" value={stats.completed} color="text-blue-600" />
+            <StatPill label="Cancelled" value={stats.cancelled} color="text-red-500" />
+          </div>
+
+          {/* Filter tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {(['all', 'pending', 'confirmed', 'completed', 'cancelled'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setFilter(tab)}
+                className={cn(
+                  'px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors border',
+                  filter === tab
+                    ? 'bg-primary-600 text-white border-primary-600'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300 hover:text-primary-600'
+                )}
+              >
+                {tab === 'all' ? 'All' : STATUS[tab as BookingStatus]?.label ?? tab}
+                {tab !== 'all' && (
+                  <span className={cn('ml-1.5 text-xs', filter === tab ? 'text-primary-200' : 'text-gray-400')}>
+                    {bookings.filter(b => b.status === tab).length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Cards */}
+          {filtered.length > 0 ? (
+            <div className="space-y-4">
+              {filtered.map(b => <BookingCard key={b.id} booking={b} />)}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl border border-gray-200 py-12 text-center">
+              <p className="text-gray-500 text-sm">No {filter} bookings</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Empty state */}
+      {!loading && !error && bookings.length === 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 py-16 text-center">
+          <div className="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Calendar className="w-8 h-8 text-primary-400" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">No bookings yet</h3>
+          <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
+            Your booked tours will appear here. Start exploring and book your first adventure.
+          </p>
+          <Link href="/tours"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium text-sm transition-colors">
+            Browse Tours
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+      )}
+    </div>
+  )
 }

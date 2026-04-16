@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import authService from './auth.service'
 import { sendSuccess } from '../../shared/response'
-import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from './auth.validator'
+import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput, ForgotPasswordInput, ResetPasswordInput } from './auth.validator'
 
 export class AuthController {
   /**
@@ -116,6 +116,34 @@ export class AuthController {
     try {
       const result = await authService.refreshToken(req.user!.userId)
       sendSuccess(res, result, 'Token refreshed successfully')
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  /**
+   * Forgot password — request a reset link
+   * POST /api/v1/auth/forgot-password
+   */
+  async forgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data: ForgotPasswordInput = req.body
+      const result = await authService.forgotPassword(data)
+      sendSuccess(res, result)
+    } catch (error) {
+      next(error)
+    }
+  }
+
+  /**
+   * Reset password using token
+   * POST /api/v1/auth/reset-password
+   */
+  async resetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data: ResetPasswordInput = req.body
+      const result = await authService.resetPassword(data)
+      sendSuccess(res, result)
     } catch (error) {
       next(error)
     }
