@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { tourService } from '@/services/api'
+import { ImageField } from '@/components/dashboard/shared/ImageField'
 
 // ── Shared input style ────────────────────────────────────────────────────────
 const cls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all'
@@ -277,8 +278,7 @@ export default function NewTourPage() {
         {/* Images & Destinations */}
         <Section title="Images & Destinations">
           <div className="space-y-5">
-            <ListField label="Image URLs *" items={form.images} onChange={set('images')}
-              placeholder="https://images.unsplash.com/…" />
+            <ImageField images={form.images} onChange={set('images')} />
             <ListField label="Destinations *" items={form.destinations} onChange={set('destinations')}
               placeholder="Jaipur" />
           </div>
