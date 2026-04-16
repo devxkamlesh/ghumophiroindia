@@ -200,8 +200,9 @@ export const usersRelations = relations(users, ({ many }) => ({
 }))
 
 export const toursRelations = relations(tours, ({ many }) => ({
-  bookings: many(bookings),
-  reviews:  many(reviews),
+  bookings:      many(bookings),
+  reviews:       many(reviews),
+  tourLocations: many(tourLocations),
 }))
 
 export const bookingsRelations = relations(bookings, ({ one }) => ({
@@ -212,4 +213,21 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
 export const reviewsRelations = relations(reviews, ({ one }) => ({
   tour:    one(tours,    { fields: [reviews.tourId],    references: [tours.id] }),
   booking: one(bookings, { fields: [reviews.bookingId], references: [bookings.id] }),
+}))
+
+// ─── Tour ↔ Location join table ───────────────────────────────────────────────
+
+export const tourLocations = pgTable('tour_locations', {
+  id:         serial('id').primaryKey(),
+  tourId:     integer('tour_id').notNull().references(() => tours.id, { onDelete: 'cascade' }),
+  locationId: integer('location_id').notNull().references(() => locations.id, { onDelete: 'cascade' }),
+  sortOrder:  integer('sort_order').default(0),
+}, (t) => ({
+  tourIdx:     index('idx_tl_tour_id').on(t.tourId),
+  locationIdx: index('idx_tl_location_id').on(t.locationId),
+}))
+
+export const tourLocationsRelations = relations(tourLocations, ({ one }) => ({
+  tour:     one(tours,     { fields: [tourLocations.tourId],     references: [tours.id] }),
+  location: one(locations, { fields: [tourLocations.locationId], references: [locations.id] }),
 }))

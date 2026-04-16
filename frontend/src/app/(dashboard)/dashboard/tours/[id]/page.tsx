@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { tourService } from '@/services/api'
 import type { Tour } from '@/types'
 import { ImageField } from '@/components/dashboard/shared/ImageField'
+import { LocationPicker } from '@/components/dashboard/shared/LocationPicker'
 
 const cls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all'
 
@@ -52,6 +53,7 @@ type FormState = {
   category: 'city' | 'heritage' | 'desert' | 'custom'
   images: string[]; highlights: string[]; included: string[]; excluded: string[]
   destinations: string[]
+  locationIds: number[]
   itinerary: Array<{ day: number; title: string; description: string; activities: string[] }>
   isFeatured: boolean; isActive: boolean
 }
@@ -72,6 +74,7 @@ function tourToForm(t: Tour): FormState {
     included:        (t.included ?? []).length > 0 ? t.included : [''],
     excluded:        (t.excluded ?? []).length > 0 ? t.excluded : [''],
     destinations:    (t.destinations ?? []).length > 0 ? t.destinations : [''],
+    locationIds:     t.locationIds ?? [],
     itinerary:       (t.itinerary ?? []).length > 0
       ? t.itinerary.map(d => ({ ...d, activities: d.activities?.length > 0 ? d.activities : [''] }))
       : [{ day: 1, title: '', description: '', activities: [''] }],
@@ -185,6 +188,7 @@ export default function EditTourPage() {
         included:        clean(form.included),
         excluded:        clean(form.excluded),
         destinations:    clean(form.destinations),
+        locationIds:     form.locationIds,
         itinerary:       form.itinerary
           .map(d => ({ ...d, activities: d.activities.filter(a => a.trim()) }))
           .filter(d => d.title.trim()),
@@ -296,7 +300,8 @@ export default function EditTourPage() {
         <Section title="Images & Destinations">
           <div className="space-y-5">
             <ImageField images={form.images} onChange={set('images')} />
-            <ListField label="Destinations *" items={form.destinations} onChange={set('destinations')} placeholder="Jaipur" />
+            <LocationPicker selectedIds={form.locationIds} onChange={set('locationIds')} />
+            <ListField label="Destinations (text fallback)" items={form.destinations} onChange={set('destinations')} placeholder="Jaipur" />
           </div>
         </Section>
 

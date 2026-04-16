@@ -1,6 +1,6 @@
-import { eq, and, gte, lte, desc, asc, sql } from 'drizzle-orm'
+import { eq, and, gte, lte, desc, asc, sql, inArray } from 'drizzle-orm'
 import db from '../../core/database'
-import { tours } from '../../core/database/schema'
+import { tours, tourLocations, locations } from '../../core/database/schema'
 import { NotFoundError, ConflictError } from '../../shared/errors'
 import tourCache from './tour.cache'
 import events from '../../core/events'
@@ -29,11 +29,60 @@ interface TourStatsResponse {
 
 export class TourService {
   /**
-   * Fetch destination slugs for a tour (for cache invalidation events)
-   * Returns empty array — junction table not yet in DB
+   * Fetch location slugs for a tour (for cache invalidation events)
    */
-  private async getLocationSlugsForTour(_tourId: number): Promise<string[]> {
-    return []
+  private async getLocationSlugsForTour(tourId: number): Promise<string[]> {
+    try {
+      const rows = await db
+        .select({ slug: locations.slug })
+        .from(tourLocations)
+        .innerJoin(locations, eq(tourLocations.locationId, locations.id))
+        .where(eq(tourLocations.tourId, tourId))
+      return rows.map(r => r.slug)
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Get location objects for a tour
+   */
+  async getTourLocations(tourId: number) {
+    try {
+      return db
+        .select({
+          id:       locations.id,
+          name:     locations.name,
+          slug:     locations.slug,
+          type:     locations.type,
+          path:     locations.path,
+          lat:      locations.lat,
+          lng:      locations.lng,
+          parentId: locations.parentId,
+        })
+        .from(tourLocations)
+        .innerJoin(locations, eq(tourLocations.locationId, locations.id))
+        .where(eq(tourLocations.tourId, tourId))
+        .orderBy(tourLocations.sortOrder)
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Sync tour_locations rows for a tour
+   */
+  private async syncTourLocations(tourId: number, locationIds: number[]) {
+    try {
+      await db.delete(tourLocations).where(eq(tourLocations.tourId, tourId))
+      if (locationIds.length > 0) {
+        await db.insert(tourLocations).values(
+          locationIds.map((locationId, i) => ({ tourId, locationId, sortOrder: i }))
+        )
+      }
+    } catch (err) {
+      logger.warn(`Could not sync tour_locations for tour ${tourId}: ${err}`)
+    }
   }
 
   /**
@@ -223,6 +272,9 @@ export class TourService {
       price: data.price.toString(),
     }).returning()
 
+    // Sync tour_locations join table
+    await this.syncTourLocations(newTour.id, data.locationIds ?? [])
+
     // Invalidate cache + emit event for map invalidation
     await tourCache.invalidateAllTours()
     const locationSlugs = await this.getLocationSlugsForTour(newTour.id)
@@ -266,6 +318,11 @@ export class TourService {
       .set(updateData)
       .where(eq(tours.id, id))
       .returning()
+
+    // Sync tour_locations if locationIds provided
+    if (data.locationIds !== undefined) {
+      await this.syncTourLocations(id, data.locationIds)
+    }
 
     // Invalidate cache + emit event
     await tourCache.invalidateTourAndRelated(id, existing.slug)

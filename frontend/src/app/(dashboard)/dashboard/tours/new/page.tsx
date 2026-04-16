@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Trash2, Loader2, AlertCircle, CheckCircle } from 'luci
 import Link from 'next/link'
 import { tourService } from '@/services/api'
 import { ImageField } from '@/components/dashboard/shared/ImageField'
+import { LocationPicker } from '@/components/dashboard/shared/LocationPicker'
 
 // ── Shared input style ────────────────────────────────────────────────────────
 const cls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all'
@@ -77,6 +78,7 @@ export default function NewTourPage() {
     included:        [''] as string[],
     excluded:        [''] as string[],
     destinations:    [''] as string[],
+    locationIds:     [] as number[],
     itinerary:       [{ day: 1, title: '', description: '', activities: [''] }] as Array<{
       day: number; title: string; description: string; activities: string[]
     }>,
@@ -148,6 +150,7 @@ export default function NewTourPage() {
         included:        clean(form.included),
         excluded:        clean(form.excluded),
         destinations:    clean(form.destinations),
+        locationIds:     form.locationIds,
         itinerary:       form.itinerary.map(d => ({
           ...d,
           activities: d.activities.filter(a => a.trim()),
@@ -279,7 +282,8 @@ export default function NewTourPage() {
         <Section title="Images & Destinations">
           <div className="space-y-5">
             <ImageField images={form.images} onChange={set('images')} />
-            <ListField label="Destinations *" items={form.destinations} onChange={set('destinations')}
+            <LocationPicker selectedIds={form.locationIds} onChange={set('locationIds')} />
+            <ListField label="Destinations (text fallback)" items={form.destinations} onChange={set('destinations')}
               placeholder="Jaipur" />
           </div>
         </Section>

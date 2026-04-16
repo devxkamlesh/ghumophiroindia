@@ -159,6 +159,11 @@ export const tourService = {
     const { data } = await api.get('/tours/stats')
     return data.data.stats
   },
+
+  getTourLocations: async (tourId: number) => {
+    const { data } = await api.get(`/tours/${tourId}/locations`)
+    return data.data.locations ?? []
+  },
 }
 
 // ─── Bookings ─────────────────────────────────────────────────────────────────
@@ -417,41 +422,36 @@ export const uploadService = {
   },
 }
 
-// ─── Destinations ─────────────────────────────────────────────────────────────
+// ─── Destinations (now served from Locations — cities & states) ───────────────
 
 export const destinationService = {
-  getAll: async (): Promise<Destination[]> => {
-    const { data } = await api.get('/destinations')
-    return data.data.destinations ?? []
+  // Returns cities + states from locations table — replaces old destinations table
+  getAll: async (): Promise<LocationNode[]> => {
+    const { data } = await api.get('/locations')
+    const all: LocationNode[] = data.data?.locations ?? []
+    return all.filter(l => l.type === 'city' || l.type === 'state')
   },
 
-  getPopular: async (): Promise<Destination[]> => {
-    const { data } = await api.get('/destinations/popular')
-    return data.data.destinations ?? []
+  getPopular: async (): Promise<LocationNode[]> => {
+    const { data } = await api.get('/locations')
+    const all: LocationNode[] = data.data?.locations ?? []
+    return all.filter(l => (l.type === 'city' || l.type === 'state') && l.isActive).slice(0, 6)
   },
 
-  getBySlug: async (slug: string): Promise<Destination> => {
-    const { data } = await api.get(`/destinations/slug/${slug}`)
-    return data.data.destination
+  getBySlug: async (slug: string): Promise<LocationNode> => {
+    const { data } = await api.get(`/locations/slug/${slug}`)
+    return data.data.location
   },
 
-  getById: async (id: number): Promise<Destination> => {
-    const { data } = await api.get(`/destinations/${id}`)
-    return data.data.destination
+  getById: async (id: number): Promise<LocationNode> => {
+    const { data } = await api.get(`/locations/${id}`)
+    return data.data.location
   },
 
-  create: async (input: Partial<Destination>): Promise<Destination> => {
-    const { data } = await api.post('/destinations', input)
-    return data.data.destination
-  },
-
-  update: async (id: number, input: Partial<Destination>): Promise<Destination> => {
-    const { data } = await api.patch(`/destinations/${id}`, input)
-    return data.data.destination
-  },
-
-  delete: async (id: number): Promise<void> => {
-    await api.delete(`/destinations/${id}`)
+  // Get tours for a location
+  getTours: async (locationId: number) => {
+    const { data } = await api.get(`/locations/${locationId}/tours`)
+    return data.data.tours ?? []
   },
 }
 
