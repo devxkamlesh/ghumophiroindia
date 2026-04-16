@@ -76,7 +76,12 @@ export default function TourDetailPage() {
   const fetchTour = useCallback(async () => {
     setLoading(true); setError('')
     try {
-      setTour(await tourService.getById(Number(id)))
+      // id param can be a numeric ID or a slug — handle both
+      const numId = Number(id)
+      const data = isNaN(numId)
+        ? await tourService.getBySlug(id)   // slug e.g. "pushkar-spiritual-journey"
+        : await tourService.getById(numId)  // numeric id e.g. 42
+      setTour(data)
     } catch (e: any) {
       setError(e.message || 'Tour not found')
     } finally { setLoading(false) }
