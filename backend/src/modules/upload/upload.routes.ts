@@ -30,7 +30,15 @@ router.post(
     try {
       const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
-          { folder: 'ghumo-phiro/tours', resource_type: 'image' },
+          {
+            folder:        'ghumo-phiro/tours',
+            resource_type: 'image',
+            format:        'webp',          // always convert to WebP
+            transformation: [
+              { quality: 'auto:good' },     // smart compression
+              { fetch_format: 'webp' },
+            ],
+          },
           (err, result) => {
             if (err || !result) reject(err ?? new Error('Upload failed'))
             else resolve(result as { secure_url: string })

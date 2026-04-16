@@ -12,6 +12,7 @@ import {
 import { tourService } from '@/services/api'
 import BookingModal from '@/components/public/shared/BookingModal'
 import type { Tour } from '@/types'
+import { toWebP, cloudinarySrcSet } from '@/lib/image'
 
 function priceNum(p: string | number | null | undefined) {
   if (!p) return 0
@@ -116,7 +117,7 @@ export default function TourDetailPage() {
   const p      = priceNum(tour.price)
   const rating = tour.rating ? Number(tour.rating) : null
   const images = (tour.images?.length ? tour.images : [FALLBACK])
-  const main   = images[selectedImage] ?? FALLBACK
+  const main   = toWebP(images[selectedImage] ?? FALLBACK, 1200)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -136,7 +137,7 @@ export default function TourDetailPage() {
             {images.slice(0, 5).map((img, i) => (
               <button key={i} onClick={() => setSelectedImage(i)}
                 className={`relative w-12 h-9 rounded-lg overflow-hidden border-2 transition-all ${i === selectedImage ? 'border-white scale-110' : 'border-white/40 hover:border-white/70'}`}>
-                <Image src={img} alt="" fill className="object-cover" sizes="48px" />
+                <Image src={toWebP(img, 100)} alt="" fill className="object-cover" sizes="48px" />
               </button>
             ))}
           </div>

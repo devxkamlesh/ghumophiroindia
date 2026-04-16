@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { Link2, Upload, Trash2, Plus, Loader2, X, ImageIcon } from 'lucide-react'
 import { uploadService } from '@/services/api'
 import { cn } from '@/lib/utils'
+import { toWebP } from '@/lib/image'
 
 const cls = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all'
 
@@ -148,7 +149,7 @@ export function ImageField({ images, onChange }: Props) {
               {images.filter(u => u.trim()).map((url, i) => (
                 <div key={i} className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-video bg-gray-50">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <img src={toWebP(url, 400)} alt="" className="w-full h-full object-cover" />
                   <button
                     type="button"
                     onClick={() => removeUrl(images.indexOf(url))}

@@ -3,6 +3,7 @@
 import { Star, Clock, Users, ArrowRight, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 import type { Tour } from '@/types'
+import { toWebP } from '@/lib/image'
 
 const FALLBACK_IMAGES = [
   'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800&q=80',
@@ -53,7 +54,7 @@ export default function FeaturedTours({ tours }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {tours.slice(0, 4).map((tour, i) => {
             const badge    = BADGES[i % BADGES.length]
-            const imageUrl = (tour.images ?? [])[0] || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]
+            const imageUrl = toWebP((tour.images ?? [])[0] || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length], 800)
             const price    = priceNum(tour.price)
             const rating   = tour.rating != null ? Number(tour.rating) : null
             const dests    = Array.isArray(tour.destinations) ? tour.destinations : []
