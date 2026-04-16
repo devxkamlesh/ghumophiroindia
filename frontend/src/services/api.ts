@@ -395,6 +395,18 @@ export const locationAdminService = {
     const { data } = await api.get('/locations')
     return data.data?.locations ?? []
   },
+  getBySlug: async (slug: string): Promise<LocationNode> => {
+    const { data } = await api.get(`/locations/slug/${slug}`)
+    return data.data.location
+  },
+  getById: async (id: number): Promise<LocationNode> => {
+    const { data } = await api.get(`/locations/${id}`)
+    return data.data.location
+  },
+  getTours: async (locationId: number): Promise<Tour[]> => {
+    const { data } = await api.get(`/locations/${locationId}/tours`)
+    return data.data?.tours ?? []
+  },
   create: async (input: Partial<LocationNode>): Promise<LocationNode> => {
     const { data } = await api.post('/locations', input)
     return data.data.location
