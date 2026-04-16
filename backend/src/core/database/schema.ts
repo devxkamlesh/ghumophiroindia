@@ -38,7 +38,6 @@ export const destinations = pgTable('destinations', {
   tourCount:   integer('tour_count').default(0),
   isPopular:   boolean('is_popular').default(false),
   createdAt:   timestamp('created_at').defaultNow(),
-  updatedAt:   timestamp('updated_at').defaultNow(),
 }, (t) => ({
   slugIdx:    index('idx_destinations_slug').on(t.slug),
   popularIdx: index('idx_destinations_popular').on(t.isPopular),
