@@ -6,56 +6,42 @@ import WhyChooseUs from '@/components/public/home/WhyChooseUs'
 import Testimonials from '@/components/public/home/Testimonials'
 import FAQ from '@/components/public/home/FAQ'
 import CTABand from '@/components/public/home/CTABand'
-import type { Tour, Destination } from '@/types'
+import type { Tour, LocationNode } from '@/types'
 
 export const dynamic = 'force-dynamic'
-
-// ── Server-side data fetching ─────────────────────────────────────────────────
-// Runs on the server — no loading spinners, no client-side fetch, no hydration cost.
-// Falls back to empty arrays silently so the page always renders.
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
 
 async function getFeaturedTours(): Promise<Tour[]> {
   try {
-    const res = await fetch(`${API}/tours/featured`, {
-      next: { revalidate: 3600 }, // cache 1 hour — matches backend HOT TTL
-    })
+    const res = await fetch(`${API}/tours/featured`, { next: { revalidate: 3600 } })
     if (!res.ok) return []
     const json = await res.json()
     return Array.isArray(json.data?.tours) ? json.data.tours : []
-  } catch {
-    return []
-  }
+  } catch { return [] }
 }
 
-async function getPopularDestinations(): Promise<Destination[]> {
+async function getPopularLocations(): Promise<LocationNode[]> {
   try {
-    const res = await fetch(`${API}/destinations/popular`, {
-      next: { revalidate: 3600 },
-    })
+    const res = await fetch(`${API}/locations`, { next: { revalidate: 3600 } })
     if (!res.ok) return []
     const json = await res.json()
-    return Array.isArray(json.data?.destinations) ? json.data.destinations : []
-  } catch {
-    return []
-  }
+    const all: LocationNode[] = json.data?.locations ?? []
+    return all.filter(l => l.isPopular).slice(0, 6)
+  } catch { return [] }
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export default async function Home() {
-  // Fetch in parallel — if one fails the other still works
-  const [featuredTours, popularDestinations] = await Promise.all([
+  const [featuredTours, popularLocations] = await Promise.all([
     getFeaturedTours(),
-    getPopularDestinations(),
+    getPopularLocations(),
   ])
 
   return (
     <>
       <Hero />
       <FeaturedTours tours={featuredTours} />
-      <PopularDestinations destinations={popularDestinations} />
+      <PopularDestinations locations={popularLocations} />
       <HowItWorks />
       <WhyChooseUs />
       <Testimonials />

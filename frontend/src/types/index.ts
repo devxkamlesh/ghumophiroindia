@@ -169,6 +169,7 @@ export interface LocationNode {
   description: string | null
   image:       string | null
   isActive:    boolean
+  isPopular:   boolean
   createdAt:   string
   // client-only — built from flat list
   children?:   LocationNode[]
