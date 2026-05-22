@@ -413,7 +413,10 @@ export const locationAdminService = {
     return data.data.location
   },
   update: async (id: number, input: Partial<LocationNode>): Promise<LocationNode> => {
+    console.log('🌐 API Service - Updating location:', id, 'with data:', input)
+    console.log('🌐 isPopular in API call:', input.isPopular)
     const { data } = await api.patch(`/locations/${id}`, input)
+    console.log('🌐 API Response:', data)
     return data.data.location
   },
   delete: async (id: number): Promise<void> => {

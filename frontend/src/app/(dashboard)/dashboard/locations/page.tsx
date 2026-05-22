@@ -69,6 +69,10 @@ function LocationModal({
     if (!form.slug?.trim()) { setError('Slug is required'); return }
     if (!form.type)         { setError('Type is required'); return }
     if (form.type !== 'country' && !form.parentId) { setError('Parent is required for non-country locations'); return }
+    
+    console.log('📝 LocationModal - Form data before save:', form)
+    console.log('📝 isPopular in form:', form.isPopular)
+    
     setSaving(true); setError('')
     try { await onSave(form) }
     catch (err: any) { setError(err.message || 'Failed to save'); setSaving(false) }
@@ -393,10 +397,15 @@ export default function LocationsPage() {
   useEffect(() => { load() }, [load])
 
   const handleSave = async (data: Partial<LocationNode>) => {
+    console.log('🔍 Frontend handleSave - Data being sent:', data)
+    console.log('🔍 isPopular value:', data.isPopular)
+    
     if (modal?.mode === 'edit') {
+      console.log('🔍 Updating location ID:', modal.node.id)
       await locationAdminService.update(modal.node.id, data)
       showToast(`"${data.name}" updated`)
     } else {
+      console.log('🔍 Creating new location')
       await locationAdminService.create(data)
       showToast(`"${data.name}" added`)
     }
