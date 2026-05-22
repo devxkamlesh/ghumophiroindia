@@ -36,30 +36,59 @@ export default function DestinationsPage() {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
 
       {/* Hero */}
-      <div className="relative bg-gradient-to-br from-primary-700 via-primary-600 to-green-600 py-20 px-4 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-white blur-3xl" />
-          <div className="absolute bottom-0 right-20 w-96 h-96 rounded-full bg-white blur-3xl" />
+      <div className="relative min-h-[500px] flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-20 px-4 overflow-hidden">
+        {/* Background image with overlay */}
+        <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1920&q=80')] bg-cover bg-center" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/20" />
         </div>
-        <div className="container-custom relative text-center">
-          <div className="inline-flex items-center gap-2 bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full mb-4 backdrop-blur-sm">
-            <TrendingUp className="w-3.5 h-3.5" /> Popular Destinations
+
+        {/* Accent orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-orange-400/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="container-custom relative z-10 text-center">
+          {/* Eyebrow */}
+          <div className="flex justify-center mb-6">
+            <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-sm font-medium px-5 py-2 rounded-full">
+              <TrendingUp className="w-3.5 h-3.5" />
+              Popular Destinations
+            </span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
-            Discover Your Next<br />Adventure
+
+          {/* Headline */}
+          <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white leading-[1.05] tracking-tight mb-4">
+            Discover Your
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-300 via-orange-300 to-yellow-300">
+              Next Adventure
+            </span>
           </h1>
-          <p className="text-primary-100 text-base md:text-lg mb-8 max-w-2xl mx-auto">
-            From the deserts of Rajasthan to the backwaters of Kerala — explore India's most iconic destinations
+
+          {/* Subheadline */}
+          <p className="text-white/70 text-lg md:text-xl max-w-2xl mx-auto mb-10 tracking-wide">
+            From the deserts of Rajasthan to the backwaters of Kerala — explore India&apos;s most iconic destinations
           </p>
-          <div className="max-w-md mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-              placeholder="Search destinations…"
-              className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg" />
+
+          {/* Search */}
+          <div className="max-w-md mx-auto mb-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input 
+                type="text" 
+                value={search} 
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search destinations…"
+                className="w-full pl-11 pr-4 py-3.5 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-400/50 shadow-xl bg-white/95 backdrop-blur-sm" 
+              />
+            </div>
           </div>
-          <div className="mt-4">
+
+          {/* Map link */}
+          <div>
             <Link href="/destinations/map"
-              className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors border border-white/30 backdrop-blur-sm">
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
               <MapPin className="w-4 h-4" /> View on Map
             </Link>
           </div>
