@@ -150,7 +150,7 @@ export default function LocationMap({
       el.style.height = `${cfg.size}px`
 
       el.innerHTML = `
-        <svg width="${cfg.size}" height="${cfg.size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="${cfg.size}" height="${cfg.size}" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <filter id="glow-${location.id}" x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
@@ -165,8 +165,9 @@ export default function LocationMap({
                 fill="${cfg.color}" 
                 stroke="white" 
                 stroke-width="2"
-                filter="url(#glow-${location.id})"/>
-          <circle cx="12" cy="9" r="2.5" fill="white"/>
+                filter="url(#glow-${location.id})"
+                transform="translate(0, 2)"/>
+          <circle cx="12" cy="11" r="2.5" fill="white"/>
         </svg>
       `
 
@@ -218,8 +219,12 @@ export default function LocationMap({
         </div>
       `)
 
-      // Create marker
-      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      // Create marker with correct anchor point
+      const marker = new maplibregl.Marker({ 
+        element: el, 
+        anchor: 'bottom',  // Anchor at the bottom point of the pin
+        offset: [0, 0]     // No offset needed
+      })
         .setLngLat([lng, lat])
         .setPopup(popup)
         .addTo(map.current!)
@@ -234,24 +239,36 @@ export default function LocationMap({
       markers.current.set(location.id, marker)
     })
 
-    // Fit bounds to show all markers with animation
+    // Fit bounds to show all markers with animation and proper zoom
     if (validLocations.length > 0) {
       const bounds = new maplibregl.LngLatBounds()
       validLocations.forEach(loc => {
         bounds.extend([Number(loc.lng), Number(loc.lat)])
       })
       
+      // Determine max zoom based on location types
+      const hasCountries = validLocations.some(l => l.type === 'country')
+      const hasStates = validLocations.some(l => l.type === 'state')
+      const hasCities = validLocations.some(l => l.type === 'city')
+      const hasPlaces = validLocations.some(l => l.type === 'place')
+      
+      let maxZoom = 12
+      if (hasPlaces && validLocations.length <= 5) maxZoom = 14
+      else if (hasCities && !hasStates && !hasCountries) maxZoom = 11
+      else if (hasStates && !hasCountries) maxZoom = 8
+      else if (hasCountries) maxZoom = 6
+      
       setTimeout(() => {
         map.current?.fitBounds(bounds, {
           padding: { top: 80, bottom: 80, left: 80, right: 80 },
-          maxZoom: 12,
+          maxZoom: maxZoom,
           duration: 1500,
         })
       }, 300)
     }
   }, [locations, loading, onLocationClick])
 
-  // Highlight selected marker with animation
+  // Highlight selected marker with animation and proper zoom
   useEffect(() => {
     if (!map.current || !selectedId) return
 
@@ -259,9 +276,19 @@ export default function LocationMap({
     if (marker) {
       const location = locations.find(l => l.id === selectedId)
       if (location && location.lat && location.lng) {
+        // Zoom levels based on location type
+        const zoomLevels = {
+          country: 5,
+          state: 7,
+          city: 11,
+          place: 14,
+        }
+        
+        const zoom = zoomLevels[location.type as keyof typeof zoomLevels] || 12
+
         map.current.flyTo({
           center: [Number(location.lng), Number(location.lat)],
-          zoom: 13,
+          zoom: zoom,
           duration: 1500,
           essential: true,
         })
@@ -335,13 +362,12 @@ export default function LocationMap({
         </div>
       </div>
 
-      {/* Floating info badge */}
-      <div className="absolute top-6 left-6 bg-gradient-to-r from-primary-600 to-primary-700 text-white px-4 py-2 rounded-full shadow-lg text-xs font-semibold flex items-center gap-2 backdrop-blur-sm">
-        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-        Live Map
-      </div>
-
-      {/* Custom styles */}
+      {/* Enhanced legend with glassmorphism */}
+      <div className="absolute bottom-6 left-6 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl p-4 border border-white/50">
+        <div className="flex items-center gap-2 mb-3">
+          <Layers className="w-4 h-4 text-primary-600" />
+          <p className="font-bold text-sm text-gray-900">Map Legend</p>
+        </div>
       <style jsx global>{`
         @keyframes markerDrop {
           0% {
