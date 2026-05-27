@@ -4,7 +4,35 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'motion/react'
-import { MapPin, Calendar, Users, Search, Star, ChevronDown, Loader2, Check } from 'lucide-react'
+import { MapPin, Calendar, Users, Search, ChevronDown, Loader2, Check, ChevronLeft, ChevronRight } from 'lucide-react'
+
+/* ─── Demo Featured Tours ───────────────────────────────────────────────── */
+const DEMO_TOURS = [
+  {
+    id: 1,
+    title: 'Golden Triangle Tour',
+    subtitle: 'Delhi · Agra · Jaipur',
+    duration: '6 Days, 5 Nights',
+    price: '₹ 24,999',
+    image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=1920&q=80',
+  },
+  {
+    id: 2,
+    title: 'Magical Rajasthan Tour',
+    subtitle: 'Jaipur · Udaipur · Jodhpur · Jaisalmer',
+    duration: '8 Days, 7 Nights',
+    price: '₹ 34,999',
+    image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=1920&q=80',
+  },
+  {
+    id: 3,
+    title: 'Desert Safari Experience',
+    subtitle: 'Jaisalmer · Bikaner',
+    duration: '4 Days, 3 Nights',
+    price: '₹ 18,999',
+    image: 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?w=1920&q=80',
+  },
+]
 
 /* ─── Data ─────────────────────────────────────────────────────────────── */
 const DESTINATIONS = [
@@ -128,6 +156,22 @@ export default function Hero() {
   const router = useRouter()
   const [isSearching, setIsSearching] = useState(false)
   const [params, setParams] = useState({ destination: '', duration: '', travelers: '' })
+  const [currentSlide, setCurrentSlide] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
+
+  // Auto-scroll slider
+  useEffect(() => {
+    if (isPaused) return
+    
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % DEMO_TOURS.length)
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [isPaused])
+
+  const nextSlide = () => setCurrentSlide(prev => (prev + 1) % DEMO_TOURS.length)
+  const prevSlide = () => setCurrentSlide(prev => (prev - 1 + DEMO_TOURS.length) % DEMO_TOURS.length)
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -142,57 +186,109 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
-      {/* Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center scale-105"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071')" }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/20" />
+    <section className="relative">
+      {/* Ads Banner Slider - Compact Height */}
+      <div className="relative w-full h-[240px] sm:h-[280px] md:h-[320px] overflow-hidden">
+        {/* Featured Tours Slider Background */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentSlide}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0"
+          >
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url('${DEMO_TOURS[currentSlide].image}')` }}
+            />
+          </motion.div>
+        </AnimatePresence>
 
-      {/* Accent orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/3 right-1/4 w-64 h-64 bg-orange-400/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
 
-      <div className="container-custom relative z-10 w-full pt-28 pb-20">
+        {/* Featured Tour Info Overlay */}
+        <div 
+          className="absolute inset-0 flex items-center"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <div className="container-custom w-full px-4 md:px-6">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.5 }}
+                className="max-w-xl"
+              >
+                <div className="text-primary-300 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Featured Tour</div>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1.5 leading-tight">
+                  {DEMO_TOURS[currentSlide].title}
+                </h2>
+                <p className="text-white/90 text-xs md:text-sm mb-2">{DEMO_TOURS[currentSlide].subtitle}</p>
+                <div className="flex items-center gap-3 md:gap-4 mb-2.5">
+                  <div className="flex items-center gap-1.5 text-white/90 text-[11px] md:text-xs">
+                    <Calendar className="w-3 h-3 md:w-3.5 md:h-3.5" />
+                    {DEMO_TOURS[currentSlide].duration}
+                  </div>
+                  <div className="text-white font-bold text-base md:text-xl">{DEMO_TOURS[currentSlide].price}</div>
+                </div>
+                <Link href="/tours" className="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-3 md:px-5 py-1.5 md:py-2 rounded-lg font-bold text-[11px] md:text-xs transition-colors shadow-lg">
+                  Book Now
+                </Link>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
 
-        {/* Eyebrow */}
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
-          className="flex justify-center mb-6">
-          <span className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 text-white/90 text-sm font-medium px-5 py-2 rounded-full">
-            <span className="w-2 h-2 bg-primary-400 rounded-full animate-pulse" />
-            Rajasthan&apos;s Most Trusted Tour Operator
-          </span>
-        </motion.div>
+        {/* Slider Controls - Bottom Right */}
+        <div className="absolute bottom-2 right-2 md:bottom-3 md:right-3 flex items-center gap-1.5 md:gap-2 z-20">
+          <button
+            onClick={prevSlide}
+            className="w-7 h-7 md:w-8 md:h-8 bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors"
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+          </button>
+          <div className="flex gap-1">
+            {DEMO_TOURS.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`h-1 rounded-full transition-all ${
+                  idx === currentSlide ? 'w-5 bg-white' : 'w-1 bg-white/50'
+                }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={nextSlide}
+            className="w-7 h-7 md:w-8 md:h-8 bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors"
+            aria-label="Next slide"
+          >
+            <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+          </button>
+        </div>
+      </div>
 
-        {/* Headline */}
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-center mb-4">
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white leading-[1.05] tracking-tight">
-            Explore
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-300 via-orange-300 to-yellow-300">
-              Incredible India
-            </span>
-          </h1>
-        </motion.div>
-
-        {/* Subheadline */}
-        <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.25 }}
-          className="text-center text-white/70 text-lg md:text-xl max-w-2xl mx-auto mb-10 tracking-wide">
-          Jaipur · Udaipur · Jaisalmer · Jodhpur · Golden Triangle &amp; Beyond
-        </motion.p>
-
-        {/* Search Card */}
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.35 }}
-          className="max-w-4xl mx-auto">
+      {/* Search Box Section - Compact */}
+      <div className="relative bg-gradient-to-b from-gray-900 to-gray-800 py-4 md:py-5">
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.6 }}
+          className="container-custom px-4 md:px-6"
+        >
           <form onSubmit={handleSearch}
-            className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-visible">
+            className="bg-white rounded-lg md:rounded-xl shadow-2xl overflow-hidden max-w-5xl mx-auto">
 
-            <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-gray-100 rounded-t-2xl overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-12 divide-y md:divide-y-0 md:divide-x divide-gray-100">
               {/* Destination */}
-              <div className="md:col-span-4 min-h-[72px]">
+              <div className="md:col-span-4 min-h-[56px] md:min-h-[60px]">
                 <Dropdown
                   label="Where to?"
                   placeholder="Select destination"
@@ -205,7 +301,7 @@ export default function Hero() {
               </div>
 
               {/* Duration */}
-              <div className="md:col-span-3 min-h-[72px]">
+              <div className="md:col-span-3 min-h-[56px] md:min-h-[60px]">
                 <Dropdown
                   label="Duration"
                   placeholder="Any duration"
@@ -218,7 +314,7 @@ export default function Hero() {
               </div>
 
               {/* Travelers */}
-              <div className="md:col-span-3 min-h-[72px]">
+              <div className="md:col-span-3 min-h-[56px] md:min-h-[60px]">
                 <Dropdown
                   label="Travelers"
                   placeholder="Any group"
@@ -231,11 +327,11 @@ export default function Hero() {
               </div>
 
               {/* Search button */}
-              <div className="md:col-span-2 flex items-stretch min-h-[72px]">
+              <div className="md:col-span-2 flex items-stretch min-h-[56px] md:min-h-[60px]">
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-sm transition-colors disabled:opacity-60 px-4 py-4 md:py-0 rounded-b-2xl md:rounded-b-none md:rounded-r-2xl"
+                  className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white font-bold text-sm transition-colors disabled:opacity-60 px-4 py-2.5 md:py-0 rounded-b-lg md:rounded-b-none md:rounded-r-xl"
                 >
                   {isSearching
                     ? <Loader2 className="w-5 h-5 animate-spin" />
@@ -247,8 +343,8 @@ export default function Hero() {
             </div>
 
             {/* Quick links */}
-            <div className="px-5 py-3 bg-gray-50/80 border-t border-gray-100 rounded-b-2xl flex flex-wrap items-center gap-2">
-              <span className="text-xs text-gray-400 font-medium mr-1">Popular:</span>
+            <div className="px-3 md:px-4 py-2 bg-gray-50/80 border-t border-gray-100 flex flex-wrap items-center gap-1.5 md:gap-2">
+              <span className="text-[11px] text-gray-400 font-medium mr-0.5">Popular:</span>
               {[
                 { label: 'Golden Triangle', href: '/tours?destination=golden-triangle' },
                 { label: 'Desert Safari',   href: '/tours?destination=jaisalmer' },
@@ -256,37 +352,14 @@ export default function Hero() {
                 { label: 'Custom Tour',     href: '/custom-tour' },
               ].map(l => (
                 <Link key={l.label} href={l.href}
-                  className="text-xs px-3 py-1.5 bg-white border border-gray-200 hover:border-primary-400 hover:text-primary-600 text-gray-600 rounded-full transition-colors font-medium">
+                  className="text-[11px] px-2 md:px-2.5 py-1 bg-white border border-gray-200 hover:border-primary-400 hover:text-primary-600 text-gray-600 rounded-full transition-colors font-medium">
                   {l.label}
                 </Link>
               ))}
             </div>
           </form>
         </motion.div>
-
-        {/* Trust row */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.55 }}
-          className="flex flex-wrap justify-center gap-6 mt-10">
-          {[
-            { icon: <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />, main: '4.9 / 5',     sub: '2,500+ reviews' },
-            { icon: <span className="text-base">🏆</span>,                        main: '14+ Years',   sub: 'of experience' },
-            { icon: <span className="text-base">🛡️</span>,                        main: 'Safe & Secure', sub: '24/7 support' },
-          ].map(b => (
-            <div key={b.main} className="flex items-center gap-2.5 text-white">
-              <div className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-                {b.icon}
-              </div>
-              <div>
-                <div className="text-sm font-bold leading-tight">{b.main}</div>
-                <div className="text-xs text-white/60">{b.sub}</div>
-              </div>
-            </div>
-          ))}
-        </motion.div>
       </div>
-
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none" />
     </section>
   )
 }
