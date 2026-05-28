@@ -151,8 +151,6 @@ export default function DestinationDetailPage() {
             <div>
               <LocationMap
                 locations={[location]}
-                center={[Number(location.lng), Number(location.lat)]}
-                zoom={location.type === 'country' ? 4 : location.type === 'state' ? 7 : location.type === 'city' ? 11 : 14}
                 height="260px"
                 selectedId={location.id}
               />
