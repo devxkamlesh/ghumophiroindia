@@ -1,0 +1,82 @@
+name,slug,type,parent_name
+Hawa Mahal,hawa-mahal,place,Jaipur
+Amber Fort,amber-fort,place,Jaipur
+City Palace Jaipur,city-palace-jaipur,place,Jaipur
+Jal Mahal,jal-mahal,place,Jaipur
+Nahargarh Fort,nahargarh-fort,place,Jaipur
+Jaigarh Fort,jaigarh-fort,place,Jaipur
+Albert Hall Museum,albert-hall-museum,place,Jaipur
+Jantar Mantar,jantar-mantar,place,Jaipur
+Birla Mandir,birla-mandir-jaipur,place,Jaipur
+Patrika Gate,patrika-gate,place,Jaipur
+,,,
+name,slug,type,parent_name
+City Palace Udaipur,city-palace-udaipur,place,Udaipur
+Lake Pichola,lake-pichola,place,Udaipur
+Fateh Sagar Lake,fateh-sagar-lake,place,Udaipur
+Jag Mandir,jag-mandir,place,Udaipur
+Saheliyon Ki Bari,saheliyon-ki-bari,place,Udaipur
+Bagore Ki Haveli,bagore-ki-haveli,place,Udaipur
+Jagdish Temple,jagdish-temple,place,Udaipur
+Karni Mata Temple,karni-mata-temple-udaipur,place,Udaipur
+,,,
+name,slug,type,parent_name
+Mehrangarh Fort,mehrangarh-fort,place,Jodhpur
+Umaid Bhawan Palace,umaid-bhawan-palace,place,Jodhpur
+Jaswant Thada,jaswant-thada,place,Jodhpur
+Clock Tower Market,clock-tower-market,place,Jodhpur
+Balsamand Lake,balsamand-lake,place,Jodhpur
+Kaylana Lake,kaylana-lake,place,Jodhpur
+,,,
+name,slug,type,parent_name
+Jaisalmer Fort,jaisalmer-fort,place,Jaisalmer
+Sam Sand Dunes,sam-sand-dunes,place,Jaisalmer
+Patwon Ki Haveli,patwon-ki-haveli,place,Jaisalmer
+Gadisar Lake,gadisar-lake,place,Jaisalmer
+Kuldhara Village,kuldhara-village,place,Jaisalmer
+Tanot Mata Temple,tanot-mata-temple,place,Jaisalmer
+Longe Wala Border,,place,Jaisalmer
+,,,
+name,slug,type,parent_name
+Dilwara Temples,dilwara-temples,place,Mount Abu
+Nakki Lake,nakki-lake,place,Mount Abu
+Guru Shikhar,guru-shikhar,place,Mount Abu
+Sunset Point,sunset-point,place,Mount Abu
+Toad Rock,toad-rock,place,Mount Abu
+Achalgarh Fort,achalgarh-fort,place,Mount Abu
+Honeymoon Point,honeymoon-point,place,Mount Abu
+Arbuda Devi Temple,arbuda-devi-temple,place,Mount Abu
+Mount Abu Wildlife Sanctuary,mount-abu-wildlife-sanctuary,place,Mount Abu
+Peace Park,peace-park,place,Mount Abu
+,,,
+name,slug,type,parent_name
+Pushkar Lake,pushkar-lake,place,Pushkar
+Brahma Temple,brahma-temple,place,Pushkar
+,,,
+name,slug,type,parent_name
+Junagarh Fort,junagarh-fort,place,Bikaner
+Karni Mata Temple,karni-mata-temple,place,Bikaner
+Lalgarh Palace,lalgarh-palace,place,Bikaner
+National Research Centre on Camel,national-research-centre-on-camel,place,Bikaner
+Gajner Palace,gajner-palace,place,Bikaner
+Rampuria Haveli,rampuria-haveli,place,Bikaner
+Bhandasar Jain Temple,bhandasar-jain-temple,place,Bikaner
+Shri Laxminath Temple,shri-laxminath-temple,place,Bikaner
+Devi Kund Sagar,devi-kund-sagar,place,Bikaner
+Prachina Museum,prachina-museum,place,Bikaner
+,,,
+name,slug,type,parent_name
+Ranthambore National Park,ranthambore-national-park,place,Sawai Madhopur
+Ranthambore Fort,ranthambore-fort,place,Sawai Madhopur
+,,,
+name,slug,type,parent_name
+Chittorgarh Fort,chittorgarh-fort,place,Chittorgarh
+Vijay Stambh,vijay-stambh,place,Chittorgarh
+Kirti Stambh,kirti-stambh,place,Chittorgarh
+Padmini Palace,padmini-palace,place,Chittorgarh
+Rana Kumbha Palace,rana-kumbha-palace,place,Chittorgarh
+Gaumukh Reservoir,gaumukh-reservoir,place,Chittorgarh
+Meera Temple,meera-temple,place,Chittorgarh
+Kalika Mata Temple,kalika-mata-temple,place,Chittorgarh
+Fateh Prakash Palace,fateh-prakash-palace,place,Chittorgarh
+Sanwariyaji Temple,sanwariyaji-temple,place,Chittorgarh

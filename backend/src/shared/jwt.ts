@@ -2,6 +2,9 @@ import { SignJWT, jwtVerify } from 'jose'
 import config from '../core/config'
 
 const secret = new TextEncoder().encode(config.jwt.secret)
+const refreshSecret = new TextEncoder().encode(
+  process.env.JWT_REFRESH_SECRET || config.jwt.secret
+)
 
 export interface JWTPayload {
   userId: number
@@ -30,7 +33,7 @@ export async function generateRefreshToken(payload: JWTPayload): Promise<string>
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(config.jwt.refreshExpiresIn)
-    .sign(secret)
+    .sign(refreshSecret)
 
   return token
 }
@@ -52,7 +55,7 @@ export async function verifyToken(token: string): Promise<JWTPayload> {
  */
 export async function verifyRefreshToken(token: string): Promise<JWTPayload> {
   try {
-    const { payload } = await jwtVerify(token, secret)
+    const { payload } = await jwtVerify(token, refreshSecret)
     return payload as unknown as JWTPayload
   } catch (error) {
     throw new Error('Invalid or expired refresh token')

@@ -13,7 +13,7 @@ const USER_KEY    = 'gpi_user'
 
 // AuthUser id is number (matches backend schema)
 export interface AuthUser {
-  id: string        // stored as string for convenience, backend sends number
+  id: number
   name: string
   email: string
   role: 'admin' | 'user' | 'superadmin'

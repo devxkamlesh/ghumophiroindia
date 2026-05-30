@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  output: 'standalone', // Enable standalone output for Docker
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
@@ -9,8 +10,6 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: '**.tripadvisor.com' },
       { protocol: 'https', hostname: '**.scene7.com' },
       { protocol: 'https', hostname: '**.rajasthan.gov.in' },
-      { protocol: 'https', hostname: 'cdn.*.com' },
-      { protocol: 'https', hostname: 'www.*.com' },
     ],
   },
   experimental: {

@@ -27,7 +27,7 @@ function LoginForm() {
 
       saveAuth(
         accessToken,
-        { id: String(user.id), name: user.name, email: user.email, role: user.role, phone: user.phone, country: user.country },
+        { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone, country: user.country },
         refreshToken,
       )
 

@@ -6,7 +6,7 @@ import {
   Search, Bell, LogOut, User, Settings,
   ExternalLink, ChevronDown, MenuIcon,
   LayoutDashboard, MapPin, Calendar, MessageSquare,
-  Wand2, Star, BarChart3, UserCircle, Globe,
+  Wand2, Star, BarChart3, UserCircle, Globe, Images,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { getUser, clearAuth } from '@/lib/auth'
@@ -19,6 +19,7 @@ const navigation = [
   { name: 'Dashboard',       href: '/dashboard',                    icon: LayoutDashboard },
   { name: 'Tours',           href: '/dashboard/tours',              icon: MapPin },
   { name: 'Locations',       href: '/dashboard/locations',          icon: Globe },
+  { name: 'Gallery',         href: '/dashboard/gallery',            icon: Images },
   { name: 'Bookings',        href: '/dashboard/bookings',           icon: Calendar },
   { name: 'Inquiries',       href: '/dashboard/inquiries',          icon: MessageSquare },
   { name: 'Custom Requests', href: '/dashboard/custom-requests',    icon: Wand2 },

@@ -230,7 +230,10 @@ export class AuthService {
     emailService.sendPasswordReset(user.email, user.name, resetToken, frontendUrl)
       .catch(err => logger.warn(`[email] Password reset email failed: ${err.message}`))
 
-    logger.info(`Password reset token for ${user.email}: ${resetToken} (expires in 1 hour)`)
+    // Only log token in development — never expose in production
+    if (process.env.NODE_ENV === 'development') {
+      logger.info(`Password reset token for ${user.email}: ${resetToken} (expires in 1 hour)`)
+    }
 
     return { message: 'If that email exists, a reset link has been sent.' }
   }

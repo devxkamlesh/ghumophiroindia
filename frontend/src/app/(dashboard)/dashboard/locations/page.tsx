@@ -5,6 +5,7 @@ import {
   Plus, Edit, Trash2, ChevronRight, ChevronDown,
   Loader2, AlertCircle, Check, X, MapPin, Globe,
   Building2, Map as MapIcon, Landmark, RefreshCw, Upload, Link2, TrendingUp,
+  Search, Filter, Download, Eye, EyeOff, Copy, ExternalLink, FileUp,
 } from 'lucide-react'
 import { locationAdminService, uploadService } from '@/services/api'
 import { cn } from '@/lib/utils'
@@ -256,7 +257,7 @@ function LocationModal({
 
 // ── Tree node row ─────────────────────────────────────────────────────────────
 function TreeRow({
-  node, allFlat, onEdit, onDelete, onAddChild, depth = 0,
+  node, allFlat, onEdit, onDelete, onAddChild, depth = 0, forceExpand = false,
 }: {
   node: LocationNode
   allFlat: LocationNode[]
@@ -264,12 +265,23 @@ function TreeRow({
   onDelete: (n: LocationNode) => void
   onAddChild: (parent: LocationNode) => void
   depth?: number
+  forceExpand?: boolean
 }) {
   const [open, setOpen] = useState(depth < 2)
   const cfg  = TYPE_CONFIG[node.type as LocationType] ?? TYPE_CONFIG.place
   const Icon = cfg.icon
   const hasChildren = (node.children?.length ?? 0) > 0
   const canAddChild = node.type !== 'place'
+
+  // Force expand/collapse from parent
+  useEffect(() => {
+    if (forceExpand !== undefined) setOpen(forceExpand)
+  }, [forceExpand])
+
+  const copyLocationDetails = (loc: LocationNode) => {
+    const details = `Name: ${loc.name}\nSlug: ${loc.slug}\nType: ${loc.type}\nPath: ${loc.path}\nLat/Lng: ${loc.lat}, ${loc.lng}\nImage: ${loc.image || 'N/A'}`
+    navigator.clipboard.writeText(details)
+  }
 
   return (
     <div>
@@ -301,6 +313,11 @@ function TreeRow({
             <span className={cn('text-xs px-1.5 py-0.5 rounded-full border font-medium', cfg.bg, cfg.color)}>
               {cfg.label}
             </span>
+            {node.isPopular && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-300 font-medium flex items-center gap-0.5">
+                <TrendingUp className="w-3 h-3" /> Popular
+              </span>
+            )}
             {node.lat && node.lng && (
               <span className="text-xs text-gray-400 flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" />{Number(node.lat).toFixed(4)}, {Number(node.lng).toFixed(4)}
@@ -312,6 +329,16 @@ function TreeRow({
 
         {/* Actions */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {node.image && (
+            <a href={node.image} target="_blank" rel="noopener noreferrer"
+              className="p-1.5 hover:bg-white rounded-lg transition-colors" title="View image">
+              <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+            </a>
+          )}
+          <button onClick={() => copyLocationDetails(node)}
+            className="p-1.5 hover:bg-white rounded-lg transition-colors" title="Copy details">
+            <Copy className="w-3.5 h-3.5 text-gray-600" />
+          </button>
           {canAddChild && (
             <button onClick={() => onAddChild(node)}
               className="p-1.5 hover:bg-white rounded-lg transition-colors" title={`Add child`}>
@@ -334,7 +361,7 @@ function TreeRow({
         <div>
           {node.children!.map(child => (
             <TreeRow key={child.id} node={child} allFlat={allFlat}
-              onEdit={onEdit} onDelete={onDelete} onAddChild={onAddChild} depth={depth + 1} />
+              onEdit={onEdit} onDelete={onDelete} onAddChild={onAddChild} depth={depth + 1} forceExpand={forceExpand} />
           ))}
         </div>
       )}
@@ -370,6 +397,272 @@ function DeleteDialog({ name, onConfirm, onCancel, loading }: {
   )
 }
 
+// ── CSV Import Modal ──────────────────────────────────────────────────────────
+function CSVImportModal({ onClose, onImport, allLocations }: {
+  onClose: () => void
+  onImport: () => void
+  allLocations: LocationNode[]
+}) {
+  const [file, setFile] = useState<File | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [results, setResults] = useState<{
+    success: LocationNode[]
+    failed: { row: number; data: any; error: string }[]
+    skipped: { row: number; data: any; reason: string }[]
+  } | null>(null)
+  const [error, setError] = useState('')
+
+  const parseCSV = (text: string): Partial<LocationNode>[] => {
+    const lines = text.trim().split('\n')
+    if (lines.length < 2) throw new Error('CSV file is empty or invalid')
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+    const data: Partial<LocationNode>[] = []
+
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''))
+      const row: any = {}
+
+      headers.forEach((header, index) => {
+        const value = values[index]
+        if (!value) return
+
+        switch (header) {
+          case 'name':
+            row.name = value
+            break
+          case 'slug':
+            row.slug = value
+            break
+          case 'type':
+            row.type = value as LocationType
+            break
+          case 'parent':
+          case 'parent_slug':
+            // Find parent by slug
+            const parent = allLocations.find(l => l.slug === value)
+            if (parent) row.parentId = parent.id
+            break
+          case 'parent_id':
+            row.parentId = parseInt(value)
+            break
+          case 'lat':
+          case 'latitude':
+            row.lat = parseFloat(value)
+            break
+          case 'lng':
+          case 'longitude':
+            row.lng = parseFloat(value)
+            break
+          case 'description':
+            row.description = value
+            break
+          case 'image':
+            row.image = value
+            break
+          case 'is_popular':
+          case 'popular':
+            row.isPopular = value.toLowerCase() === 'true' || value === '1'
+            break
+        }
+      })
+
+      if (row.name && row.slug && row.type) {
+        data.push(row)
+      }
+    }
+
+    return data
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (selectedFile) {
+      if (!selectedFile.name.endsWith('.csv')) {
+        setError('Please select a CSV file')
+        return
+      }
+      setFile(selectedFile)
+      setError('')
+      setResults(null)
+    }
+  }
+
+  const handleImport = async () => {
+    if (!file) return
+
+    setImporting(true)
+    setError('')
+
+    try {
+      const text = await file.text()
+      const locations = parseCSV(text)
+
+      if (locations.length === 0) {
+        setError('No valid locations found in CSV')
+        setImporting(false)
+        return
+      }
+
+      const importResults = await locationAdminService.bulkImport(locations)
+      setResults(importResults)
+
+      if (importResults.success.length > 0) {
+        onImport()
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to import CSV')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const downloadTemplate = () => {
+    const template = `name,slug,type,parent_slug,lat,lng,description,image,is_popular
+Rajasthan,rajasthan,state,india,26.9124,75.7873,The Land of Kings,https://example.com/image.jpg,true
+Jaipur,jaipur,city,rajasthan,26.9124,75.7873,The Pink City,https://example.com/jaipur.jpg,true
+Hawa Mahal,hawa-mahal,place,jaipur,26.9239,75.8267,Palace of Winds,https://example.com/hawa.jpg,true`
+
+    const blob = new Blob([template], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'location_import_template.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget && !importing) onClose() }}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90dvh] overflow-y-auto">
+
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h2 className="text-base font-bold text-gray-900">Import Locations from CSV</h2>
+          <button onClick={onClose} disabled={importing} className="p-1.5 hover:bg-gray-100 rounded-lg">
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {error && (
+            <div className="flex items-center gap-2 px-3 py-2.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />{error}
+            </div>
+          )}
+
+          {!results ? (
+            <>
+              {/* Instructions */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2">CSV Format</h3>
+                <p className="text-xs text-blue-700 mb-3">
+                  Your CSV file should have these columns: <code className="bg-blue-100 px-1 py-0.5 rounded">name, slug, type, parent_slug, lat, lng, description, image, is_popular</code>
+                </p>
+                <button onClick={downloadTemplate}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium">
+                  <Download className="w-3.5 h-3.5" /> Download Template
+                </button>
+              </div>
+
+              {/* File Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select CSV File</label>
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  disabled={importing}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 disabled:opacity-50"
+                />
+                {file && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+                  </p>
+                )}
+              </div>
+
+              {/* Import Button */}
+              <div className="flex gap-3 pt-2">
+                <button onClick={onClose} disabled={importing}
+                  className="flex-1 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium disabled:opacity-50">
+                  Cancel
+                </button>
+                <button onClick={handleImport} disabled={!file || importing}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold disabled:opacity-50">
+                  {importing ? <><Loader2 className="w-4 h-4 animate-spin" />Importing…</> : <><FileUp className="w-4 h-4" />Import Locations</>}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Results */}
+              <div className="space-y-3">
+                {/* Success */}
+                {results.success.length > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Check className="w-5 h-5 text-green-600" />
+                      <h3 className="text-sm font-semibold text-green-900">
+                        Successfully Imported: {results.success.length}
+                      </h3>
+                    </div>
+                    <div className="max-h-32 overflow-y-auto text-xs text-green-700 space-y-1">
+                      {results.success.map((loc, i) => (
+                        <div key={i}>✓ {loc.name} ({loc.type})</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Skipped */}
+                {results.skipped.length > 0 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="w-5 h-5 text-amber-600" />
+                      <h3 className="text-sm font-semibold text-amber-900">
+                        Skipped: {results.skipped.length}
+                      </h3>
+                    </div>
+                    <div className="max-h-32 overflow-y-auto text-xs text-amber-700 space-y-1">
+                      {results.skipped.map((item, i) => (
+                        <div key={i}>Row {item.row}: {item.data.name} - {item.reason}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Failed */}
+                {results.failed.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <X className="w-5 h-5 text-red-600" />
+                      <h3 className="text-sm font-semibold text-red-900">
+                        Failed: {results.failed.length}
+                      </h3>
+                    </div>
+                    <div className="max-h-32 overflow-y-auto text-xs text-red-700 space-y-1">
+                      {results.failed.map((item, i) => (
+                        <div key={i}>Row {item.row}: {item.data.name} - {item.error}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Close Button */}
+              <button onClick={onClose}
+                className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-semibold">
+                Close
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function LocationsPage() {
   const [flat,         setFlat]         = useState<LocationNode[]>([])
@@ -380,6 +673,11 @@ export default function LocationsPage() {
   const [deleting,     setDeleting]     = useState<LocationNode | null>(null)
   const [deleteLoading,setDeleteLoading]= useState(false)
   const [toast,        setToast]        = useState('')
+  const [searchQuery,  setSearchQuery]  = useState('')
+  const [filterType,   setFilterType]   = useState<LocationType | 'all'>('all')
+  const [showPopularOnly, setShowPopularOnly] = useState(false)
+  const [expandAll,    setExpandAll]    = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
@@ -395,6 +693,60 @@ export default function LocationsPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Filter and search logic
+  const filteredFlat = flat.filter(loc => {
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      if (!loc.name.toLowerCase().includes(q) && 
+          !loc.path.toLowerCase().includes(q) &&
+          !loc.slug.toLowerCase().includes(q)) {
+        return false
+      }
+    }
+    // Type filter
+    if (filterType !== 'all' && loc.type !== filterType) return false
+    // Popular filter
+    if (showPopularOnly && !loc.isPopular) return false
+    return true
+  })
+
+  const filteredTree = buildTree(filteredFlat)
+
+  // Export to CSV
+  const handleExport = () => {
+    const headers = ['ID', 'Name', 'Slug', 'Type', 'Parent ID', 'Path', 'Latitude', 'Longitude', 'Description', 'Image', 'Is Popular']
+    const rows = flat.map(loc => [
+      loc.id,
+      loc.name,
+      loc.slug,
+      loc.type,
+      loc.parentId || '',
+      loc.path,
+      loc.lat || '',
+      loc.lng || '',
+      loc.description || '',
+      loc.image || '',
+      loc.isPopular ? 'Yes' : 'No'
+    ])
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `locations-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+    showToast('Exported to CSV')
+  }
+
+  // Copy location details
+  const copyLocationDetails = (loc: LocationNode) => {
+    const details = `Name: ${loc.name}\nSlug: ${loc.slug}\nType: ${loc.type}\nPath: ${loc.path}\nLat/Lng: ${loc.lat}, ${loc.lng}\nImage: ${loc.image || 'N/A'}`
+    navigator.clipboard.writeText(details)
+    showToast('Copied to clipboard')
+  }
 
   const handleSave = async (data: Partial<LocationNode>) => {
     console.log('🔍 Frontend handleSave - Data being sent:', data)
@@ -443,6 +795,8 @@ export default function LocationsPage() {
     state:   flat.filter(l => l.type === 'state').length,
     city:    flat.filter(l => l.type === 'city').length,
     place:   flat.filter(l => l.type === 'place').length,
+    popular: flat.filter(l => l.isPopular).length,
+    total:   flat.length,
   }
 
   return (
@@ -467,21 +821,40 @@ export default function LocationsPage() {
       {deleting && (
         <DeleteDialog name={deleting.name} onConfirm={handleDelete} onCancel={() => setDeleting(null)} loading={deleteLoading} />
       )}
+      {showImportModal && (
+        <CSVImportModal
+          onClose={() => setShowImportModal(false)}
+          onImport={() => { load(); showToast('Locations imported successfully') }}
+          allLocations={flat}
+        />
+      )}
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Locations</h1>
-          <p className="text-gray-500 mt-1 text-sm">Manage the India → State → City → Place hierarchy</p>
+          <p className="text-gray-500 mt-1 text-sm">
+            Manage the India → State → City → Place hierarchy · {counts.total} total locations
+          </p>
         </div>
-        <button onClick={() => setModal({ mode: 'add' })}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
-          <Plus className="w-4 h-4" /> Add Location
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowImportModal(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            <FileUp className="w-4 h-4" /> Import CSV
+          </button>
+          <button onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
+          <button onClick={() => setModal({ mode: 'add' })}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors">
+            <Plus className="w-4 h-4" /> Add Location
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-6 gap-3">
         {TYPE_ORDER.map(t => {
           const cfg = TYPE_CONFIG[t]
           const Icon = cfg.icon
@@ -497,6 +870,119 @@ export default function LocationsPage() {
             </div>
           )
         })}
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center">
+            <TrendingUp className="w-5 h-5 text-amber-700" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-amber-700">{counts.popular}</p>
+            <p className="text-xs text-gray-500">Popular</p>
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-gray-700" />
+          </div>
+          <div>
+            <p className="text-xl font-bold text-gray-700">{counts.total}</p>
+            <p className="text-xs text-gray-500">Total</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Search and Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search by name, slug, or path..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded">
+                <X className="w-3.5 h-3.5 text-gray-400" />
+              </button>
+            )}
+          </div>
+
+          {/* Type Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <select
+              value={filterType}
+              onChange={e => setFilterType(e.target.value as LocationType | 'all')}
+              className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none">
+              <option value="all">All Types</option>
+              {TYPE_ORDER.map(t => (
+                <option key={t} value={t}>{TYPE_CONFIG[t].label}s</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Popular Filter */}
+          <button
+            onClick={() => setShowPopularOnly(!showPopularOnly)}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              showPopularOnly
+                ? 'bg-amber-100 text-amber-700 border border-amber-300'
+                : 'bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100'
+            )}>
+            <TrendingUp className="w-4 h-4" />
+            Popular Only
+          </button>
+
+          {/* Expand/Collapse All */}
+          <button
+            onClick={() => setExpandAll(!expandAll)}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-200 rounded-lg text-sm font-medium transition-colors">
+            {expandAll ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {expandAll ? 'Collapse' : 'Expand'} All
+          </button>
+        </div>
+
+        {/* Active Filters Summary */}
+        {(searchQuery || filterType !== 'all' || showPopularOnly) && (
+          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+            <span className="text-xs text-gray-500">Active filters:</span>
+            {searchQuery && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary-50 text-primary-700 rounded-full text-xs">
+                Search: "{searchQuery}"
+                <button onClick={() => setSearchQuery('')}><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {filterType !== 'all' && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs">
+                Type: {TYPE_CONFIG[filterType].label}s
+                <button onClick={() => setFilterType('all')}><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            {showPopularOnly && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-50 text-amber-700 rounded-full text-xs">
+                Popular Only
+                <button onClick={() => setShowPopularOnly(false)}><X className="w-3 h-3" /></button>
+              </span>
+            )}
+            <button
+              onClick={() => { setSearchQuery(''); setFilterType('all'); setShowPopularOnly(false) }}
+              className="ml-auto text-xs text-gray-500 hover:text-gray-700 hover:underline">
+              Clear all
+            </button>
+          </div>
+        )}
+
+        {/* Results count */}
+        {filteredFlat.length !== flat.length && (
+          <p className="text-xs text-gray-500 mt-3">
+            Showing {filteredFlat.length} of {flat.length} locations
+          </p>
+        )}
       </div>
 
       {error && (
@@ -514,19 +1000,34 @@ export default function LocationsPage() {
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
           </div>
-        ) : tree.length === 0 ? (
+        ) : filteredTree.length === 0 ? (
           <div className="text-center py-16">
-            <Globe className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-gray-900 mb-2">No locations yet</h3>
-            <p className="text-gray-500 text-sm mb-5">Start by adding India as a Country</p>
-            <button onClick={() => setModal({ mode: 'add' })}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-medium">
-              <Plus className="w-4 h-4" /> Add India
-            </button>
+            {flat.length === 0 ? (
+              <>
+                <Globe className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-gray-900 mb-2">No locations yet</h3>
+                <p className="text-gray-500 text-sm mb-5">Start by adding India as a Country</p>
+                <button onClick={() => setModal({ mode: 'add' })}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-sm font-medium">
+                  <Plus className="w-4 h-4" /> Add India
+                </button>
+              </>
+            ) : (
+              <>
+                <Search className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-gray-900 mb-2">No results found</h3>
+                <p className="text-gray-500 text-sm mb-5">Try adjusting your search or filters</p>
+                <button
+                  onClick={() => { setSearchQuery(''); setFilterType('all'); setShowPopularOnly(false) }}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-sm font-medium">
+                  <X className="w-4 h-4" /> Clear Filters
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div>
-            {tree.map(node => (
+            {filteredTree.map(node => (
               <TreeRow
                 key={node.id}
                 node={node}
@@ -534,6 +1035,7 @@ export default function LocationsPage() {
                 onEdit={node => setModal({ mode: 'edit', node })}
                 onDelete={node => setDeleting(node)}
                 onAddChild={parent => setModal({ mode: 'add', parent })}
+                forceExpand={expandAll}
               />
             ))}
           </div>

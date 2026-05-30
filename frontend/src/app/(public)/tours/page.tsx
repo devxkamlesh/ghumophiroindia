@@ -187,9 +187,18 @@ function ToursInner() {
   const router       = useRouter()
   const searchParams = useSearchParams()
 
+  // Map 'type' param to 'travelers' for backward compatibility
+  // Also map 'personal' to 'solo' since they're the same
+  const typeParam = searchParams.get('type')
+  const travelersParam = searchParams.get('travelers')
+  let initialTravelers = travelersParam || typeParam || ''
+  if (initialTravelers === 'personal') initialTravelers = 'solo'
+
   const [search,     setSearch]     = useState(searchParams.get('search')     ?? '')
   const [category,   setCategory]   = useState(searchParams.get('category')   ?? '')
   const [difficulty, setDifficulty] = useState(searchParams.get('difficulty') ?? '')
+  const [budget,     setBudget]     = useState(searchParams.get('budget')     ?? '')
+  const [travelers,  setTravelers]  = useState(initialTravelers)
   const [sortBy,     setSortBy]     = useState(searchParams.get('sortBy')     ?? 'createdAt')
   const [sortOrder,  setSortOrder]  = useState<'asc'|'desc'>((searchParams.get('sortOrder') as any) ?? 'desc')
   const [page,       setPage]       = useState(Number(searchParams.get('page') ?? 1))
@@ -226,33 +235,35 @@ function ToursInner() {
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault(); setPage(1)
-    push({ search, category, difficulty, sortBy, sortOrder, page: 1 })
+    push({ search, category, difficulty, budget, travelers, sortBy, sortOrder, page: 1 })
   }
 
   const onFilter = (k: string, v: string) => {
     setPage(1)
     if (k === 'category')   setCategory(v)
     if (k === 'difficulty') setDifficulty(v)
-    push({ search, category, difficulty, sortBy, sortOrder, [k]: v, page: 1 })
+    if (k === 'budget')     setBudget(v)
+    if (k === 'travelers')  setTravelers(v)
+    push({ search, category, difficulty, budget, travelers, sortBy, sortOrder, [k]: v, page: 1 })
   }
 
   const onSort = (val: string) => {
     const [sb, so] = val.split(':')
     setSortBy(sb); setSortOrder(so as any); setPage(1)
-    push({ search, category, difficulty, sortBy: sb, sortOrder: so, page: 1 })
+    push({ search, category, difficulty, budget, travelers, sortBy: sb, sortOrder: so, page: 1 })
   }
 
   const onPage = (p: number) => {
-    setPage(p); push({ search, category, difficulty, sortBy, sortOrder, page: p })
+    setPage(p); push({ search, category, difficulty, budget, travelers, sortBy, sortOrder, page: p })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const clearAll = () => {
-    setSearch(''); setCategory(''); setDifficulty(''); setPage(1)
+    setSearch(''); setCategory(''); setDifficulty(''); setBudget(''); setTravelers(''); setPage(1)
     router.push('/tours')
   }
 
-  const hasFilters = !!(search || category || difficulty)
+  const hasFilters = !!(search || category || difficulty || budget || travelers)
 
   return (
     <div className="flex gap-8">
@@ -267,6 +278,30 @@ function ToursInner() {
               {[['', 'All Categories'], ['city', 'City Tours'], ['heritage', 'Heritage'], ['desert', 'Desert Safari'], ['custom', 'Custom']].map(([v, l]) => (
                 <button key={v} onClick={() => onFilter('category', v)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${category === v ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 pt-5">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Budget</p>
+            <div className="space-y-1">
+              {[['', 'Any Budget'], ['0-10000', '₹0 - ₹10,000'], ['10000-25000', '₹10,000 - ₹25,000'], ['25000-35000', '₹25,000 - ₹35,000'], ['35000+', 'Above ₹35,000']].map(([v, l]) => (
+                <button key={v} onClick={() => onFilter('budget', v)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${budget === v ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-100 pt-5">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Travelers</p>
+            <div className="space-y-1">
+              {[['', 'Any Group'], ['solo', 'Solo / Personal'], ['couple', 'Couple'], ['group', 'Group']].map(([v, l]) => (
+                <button key={v} onClick={() => onFilter('travelers', v)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${travelers === v ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
                   {l}
                 </button>
               ))}
@@ -324,6 +359,23 @@ function ToursInner() {
               <option value="custom">Custom</option>
             </select>
 
+            <select value={budget} onChange={e => onFilter('budget', e.target.value)}
+              className="lg:hidden border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-primary-500">
+              <option value="">Budget</option>
+              <option value="0-10000">₹0-₹10k</option>
+              <option value="10000-25000">₹10k-₹25k</option>
+              <option value="25000-35000">₹25k-₹35k</option>
+              <option value="35000+">Above ₹35k</option>
+            </select>
+
+            <select value={travelers} onChange={e => onFilter('travelers', e.target.value)}
+              className="lg:hidden border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white outline-none focus:ring-2 focus:ring-primary-500">
+              <option value="">Travelers</option>
+              <option value="solo">Solo/Personal</option>
+              <option value="couple">Couple</option>
+              <option value="group">Group</option>
+            </select>
+
             <div className="flex items-center gap-1.5 text-sm text-gray-500">
               <SlidersHorizontal className="w-4 h-4" />
               <select value={`${sortBy}:${sortOrder}`} onChange={e => onSort(e.target.value)}
@@ -341,9 +393,11 @@ function ToursInner() {
         {/* Active filter pills */}
         {hasFilters && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {search     && <FilterPill label={`"${search}"`}  onRemove={() => { setSearch('');     push({ category, difficulty, sortBy, sortOrder, page: 1 }) }} />}
-            {category   && <FilterPill label={category}       onRemove={() => { setCategory('');   push({ search, difficulty, sortBy, sortOrder, page: 1 }) }} />}
-            {difficulty && <FilterPill label={difficulty}     onRemove={() => { setDifficulty(''); push({ search, category, sortBy, sortOrder, page: 1 }) }} />}
+            {search     && <FilterPill label={`"${search}"`}  onRemove={() => { setSearch('');     push({ category, difficulty, budget, travelers, sortBy, sortOrder, page: 1 }) }} />}
+            {category   && <FilterPill label={category}       onRemove={() => { setCategory('');   push({ search, difficulty, budget, travelers, sortBy, sortOrder, page: 1 }) }} />}
+            {difficulty && <FilterPill label={difficulty}     onRemove={() => { setDifficulty(''); push({ search, category, budget, travelers, sortBy, sortOrder, page: 1 }) }} />}
+            {budget     && <FilterPill label={budget}         onRemove={() => { setBudget('');     push({ search, category, difficulty, travelers, sortBy, sortOrder, page: 1 }) }} />}
+            {travelers  && <FilterPill label={travelers}      onRemove={() => { setTravelers('');  push({ search, category, difficulty, budget, sortBy, sortOrder, page: 1 }) }} />}
           </div>
         )}
 

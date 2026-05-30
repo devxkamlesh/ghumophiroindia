@@ -60,7 +60,7 @@ export default function RegisterPage() {
       })
       saveAuth(
         accessToken,
-        { id: String(user.id), name: user.name, email: user.email, role: user.role, phone: user.phone },
+        { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone },
         refreshToken,
       )
       setSuccess(true)
