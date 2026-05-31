@@ -1,6 +1,5 @@
 module.exports = {
   apps: [
-    // Backend API
     {
       name: 'ghumo-phiro-backend',
       script: 'dist/app.js',
@@ -21,7 +20,6 @@ module.exports = {
       max_memory_restart: '500M',
       watch: false
     },
-    // Frontend Next.js
     {
       name: 'ghumo-phiro-frontend',
       script: 'node_modules/.bin/next',
