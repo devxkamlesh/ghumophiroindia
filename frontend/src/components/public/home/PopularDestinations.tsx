@@ -146,11 +146,17 @@ export default function PopularDestinations({ locations = [] }: Props) {
             </button>
           )}
 
-          {/* Scroll container - NO CURSOR SCROLL */}
+          {/* Scroll container */}
           <div 
             ref={scrollRef}
-            className="flex gap-5 overflow-x-hidden pb-4 scroll-smooth snap-x snap-mandatory scrollbar-hide"
+            className="flex gap-5 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-hide"
             style={{ overscrollBehavior: 'contain' }}
+            onWheel={(e) => {
+              e.preventDefault()
+              if (scrollRef.current) {
+                scrollRef.current.scrollBy({ left: e.deltaY * 2, behavior: 'smooth' })
+              }
+            }}
           >
             {popularStates.map(state => (
               <StateCard key={state.id || state.slug} state={state} />
