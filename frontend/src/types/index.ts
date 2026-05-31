@@ -1,3 +1,19 @@
+// ─── Banners ──────────────────────────────────────────────────────────────────
+
+export interface Banner {
+  id: number
+  title: string
+  subtitle?: string | null
+  description?: string | null
+  image: string
+  linkUrl?: string | null
+  linkText?: string | null
+  displayOrder: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 // ─── Tours ────────────────────────────────────────────────────────────────────
 
 export interface Tour {
