@@ -1,5 +1,5 @@
 import {
-  pgTable, serial, text, integer, timestamp, boolean,
+  pgTable, serial, text, varchar, integer, timestamp, boolean,
   jsonb, decimal, primaryKey, index,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
