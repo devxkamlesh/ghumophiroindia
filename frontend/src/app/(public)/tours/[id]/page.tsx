@@ -11,10 +11,10 @@ import {
   Hotel, Bus, UtensilsCrossed, Camera, Binoculars,
   ChevronDown, ChevronUp, Info,
 } from 'lucide-react'
-import { tourService } from '@/services/api'
+import { tourService, locationAdminService } from '@/services/api'
 import BookingModal from '@/components/public/shared/BookingModal'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
-import type { Tour } from '@/types'
+import type { Tour, LocationNode } from '@/types'
 import { toWebP } from '@/lib/image'
 
 function priceNum(p: string | number | null | undefined) {
@@ -105,6 +105,33 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
   )
 }
 
+// ── Activity pill with image tooltip ─────────────────────────────────────────
+function ActivityPill({ name, locationMap }: { name: string; locationMap: Record<string, LocationNode> }) {
+  const [show, setShow] = useState(false)
+  const loc = locationMap[name.toLowerCase()]
+  const img = loc?.image
+
+  return (
+    <div className="relative inline-block"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      <span className="inline-flex items-center gap-1 text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-100 cursor-default">
+        <ChevronRight className="w-3 h-3" />{name}
+      </span>
+      {show && img && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
+          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden w-40">
+            <img src={toWebP(img, 300)} alt={name} className="w-full h-24 object-cover" />
+            <p className="text-xs font-semibold text-gray-800 px-2 py-1.5 text-center">{name}</p>
+          </div>
+          <div className="w-2 h-2 bg-white border-r border-b border-gray-100 rotate-45 mx-auto -mt-1" />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function TourDetailPage() {
   const { id }  = useParams<{ id: string }>()
   const router  = useRouter()
@@ -114,6 +141,7 @@ export default function TourDetailPage() {
   const [error,         setError]         = useState('')
   const [selectedImage, setSelectedImage] = useState(0)
   const [showBooking,   setShowBooking]   = useState(false)
+  const [locationMap,   setLocationMap]   = useState<Record<string, LocationNode>>({})
 
   const fetchTour = useCallback(async () => {
     setLoading(true); setError('')
@@ -125,6 +153,17 @@ export default function TourDetailPage() {
       setError(e.message || 'Tour not found')
     } finally { setLoading(false) }
   }, [id])
+
+  useEffect(() => { fetchTour() }, [fetchTour])
+
+  // Load all locations to get images for activity pills
+  useEffect(() => {
+    locationAdminService.getAll().then(locs => {
+      const map: Record<string, LocationNode> = {}
+      locs.forEach(l => { map[l.name.toLowerCase()] = l })
+      setLocationMap(map)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => { fetchTour() }, [fetchTour])
 
@@ -259,6 +298,33 @@ export default function TourDetailPage() {
               </Section>
             )}
 
+            {/* Itinerary — MOVED BEFORE included/excluded */}
+            {(tour.itinerary ?? []).length > 0 && (
+              <Section title={`Itinerary — ${(tour.itinerary ?? []).length} Days`}>
+                <div className="space-y-0">
+                  {(tour.itinerary ?? []).map((day, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="flex flex-col items-center flex-shrink-0">
+                        <div className="w-9 h-9 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold z-10">{day.day}</div>
+                        {i < (tour.itinerary ?? []).length - 1 && <div className="w-0.5 flex-1 bg-primary-100 my-1" />}
+                      </div>
+                      <div className="flex-1 pb-5">
+                        <h4 className="font-semibold text-gray-900 text-sm mb-1">{day.title}</h4>
+                        <p className="text-gray-500 text-sm mb-2">{day.description}</p>
+                        {(day.activities ?? []).length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {(day.activities ?? []).map((a, j) => (
+                              <ActivityPill key={j} name={a} locationMap={locationMap} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Section>
+            )}
+
             {/* Included / Excluded */}
             {((tour.included ?? []).length > 0 || (tour.excluded ?? []).length > 0) && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -287,35 +353,6 @@ export default function TourDetailPage() {
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Itinerary */}
-            {(tour.itinerary ?? []).length > 0 && (
-              <Section title={`Itinerary — ${(tour.itinerary ?? []).length} Days`}>
-                <div className="space-y-0">
-                  {(tour.itinerary ?? []).map((day, i) => (
-                    <div key={i} className="flex gap-4">
-                      <div className="flex flex-col items-center flex-shrink-0">
-                        <div className="w-9 h-9 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold z-10">{day.day}</div>
-                        {i < (tour.itinerary ?? []).length - 1 && <div className="w-0.5 flex-1 bg-primary-100 my-1" />}
-                      </div>
-                      <div className="flex-1 pb-5">
-                        <h4 className="font-semibold text-gray-900 text-sm mb-1">{day.title}</h4>
-                        <p className="text-gray-500 text-sm mb-2">{day.description}</p>
-                        {(day.activities ?? []).length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {(day.activities ?? []).map((a, j) => (
-                              <span key={j} className="inline-flex items-center gap-1 text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-100">
-                                <ChevronRight className="w-3 h-3" />{a}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Section>
             )}
 
             {/* Cancellation Policy */}
