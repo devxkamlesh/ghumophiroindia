@@ -105,6 +105,209 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
   )
 }
 
+// ── Booking Sidebar ───────────────────────────────────────────────────────────
+const ROOM_TYPES = [
+  { key: 'sharing', label: 'Sharing',  multiplier: 1.0 },
+  { key: 'triple',  label: 'Triple',   multiplier: 1.05 },
+  { key: 'double',  label: 'Double',   multiplier: 1.18 },
+  { key: 'single',  label: 'Single',   multiplier: 1.55 },
+]
+
+function generateDepartures(duration: number) {
+  const dates: Date[] = []
+  const today = new Date()
+  today.setHours(0,0,0,0)
+  // Generate next 12 weekly departures starting from next Saturday
+  let d = new Date(today)
+  d.setDate(d.getDate() + ((6 - d.getDay() + 7) % 7 || 7))
+  for (let i = 0; i < 12; i++) {
+    dates.push(new Date(d))
+    d.setDate(d.getDate() + 7)
+  }
+  return dates
+}
+
+function fmtDate(d: Date) {
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+}
+
+function fmtMonth(d: Date) {
+  return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
+}
+
+function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
+  const p = priceNum(tour.price)
+  const departures = generateDepartures(tour.duration)
+
+  // Group by month
+  const byMonth: Record<string, Date[]> = {}
+  departures.forEach(d => {
+    const key = fmtMonth(d)
+    if (!byMonth[key]) byMonth[key] = []
+    byMonth[key].push(d)
+  })
+
+  const [selectedDate, setSelectedDate] = useState<Date | null>(departures[0] ?? null)
+  const [travelers, setTravelers] = useState(1)
+  const [roomType, setRoomType] = useState('sharing')
+  const [showDatePicker, setShowDatePicker] = useState(false)
+
+  const room = ROOM_TYPES.find(r => r.key === roomType) ?? ROOM_TYPES[0]
+  const pricePerPerson = Math.round(p * room.multiplier)
+  const total = pricePerPerson * travelers
+
+  // Fake seats available (based on date index)
+  const seatsFor = (d: Date) => {
+    const idx = departures.findIndex(dep => dep.getTime() === d.getTime())
+    const seeds = [24, 12, 17, 8, 22, 40, 15, 30, 6, 19, 24, 11]
+    return seeds[idx % seeds.length]
+  }
+
+  const seats = selectedDate ? seatsFor(selectedDate) : tour.maxGroupSize
+
+  return (
+    <div className="space-y-4">
+
+      {/* Select Departure Date */}
+      <div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Select Departure Date</p>
+
+        {/* Selected date display */}
+        <button type="button" onClick={() => setShowDatePicker(s => !s)}
+          className="w-full flex items-center justify-between px-4 py-3 border-2 border-primary-500 rounded-xl bg-primary-50 hover:bg-primary-100 transition-colors">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-primary-600" />
+            <span className="text-sm font-bold text-primary-700">
+              {selectedDate ? fmtDate(selectedDate) : 'Choose date'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedDate && (
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${seats <= 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                {seats} seats left
+              </span>
+            )}
+            <ChevronDown className={`w-4 h-4 text-primary-600 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
+          </div>
+        </button>
+
+        {/* Date picker dropdown */}
+        {showDatePicker && (
+          <div className="mt-2 border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg">
+            {/* Price alert */}
+            <div className="bg-red-50 border-b border-red-100 px-3 py-2">
+              <p className="text-xs text-red-600 font-medium">
+                ⚠️ Price Alert: If seats drop below 5, price may increase by up to 25%.
+              </p>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto p-3 space-y-4">
+              {Object.entries(byMonth).map(([month, dates]) => (
+                <div key={month}>
+                  <p className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5" />{month}
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {dates.map((d, i) => {
+                      const s = seatsFor(d)
+                      const isSelected = selectedDate?.getTime() === d.getTime()
+                      const isLow = s <= 5
+                      return (
+                        <button key={i} type="button"
+                          onClick={() => { setSelectedDate(d); setShowDatePicker(false) }}
+                          className={`p-2 rounded-xl border text-center transition-all ${
+                            isSelected
+                              ? 'border-primary-500 bg-primary-50 text-primary-700'
+                              : isLow
+                              ? 'border-red-200 bg-red-50 hover:border-red-400'
+                              : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50'
+                          }`}>
+                          <p className={`text-xs font-bold ${isSelected ? 'text-primary-700' : isLow ? 'text-red-600' : 'text-gray-800'}`}>
+                            {fmtDate(d)}
+                          </p>
+                          <p className={`text-[10px] mt-0.5 ${isLow ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                            {s} seats
+                          </p>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Room Type */}
+      <div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Room Type</p>
+        <div className="grid grid-cols-2 gap-2">
+          {ROOM_TYPES.map(rt => {
+            const rtPrice = Math.round(p * rt.multiplier)
+            const isSelected = roomType === rt.key
+            return (
+              <button key={rt.key} type="button" onClick={() => setRoomType(rt.key)}
+                className={`p-2.5 rounded-xl border text-left transition-all ${isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300'}`}>
+                <p className={`text-xs font-bold ${isSelected ? 'text-primary-700' : 'text-gray-700'}`}>{rt.label}</p>
+                <p className={`text-xs mt-0.5 ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}>₹{rtPrice.toLocaleString('en-IN')}</p>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Travelers */}
+      <div>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Travelers</p>
+        <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-2.5">
+          <button type="button" onClick={() => setTravelers(t => Math.max(1, t - 1))}
+            className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">−</button>
+          <span className="flex-1 text-center text-sm font-bold text-gray-900">{travelers} {travelers === 1 ? 'Person' : 'Persons'}</span>
+          <button type="button" onClick={() => setTravelers(t => Math.min(tour.maxGroupSize, t + 1))}
+            className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">+</button>
+        </div>
+        <p className="text-xs text-gray-400 mt-1 text-center">Max {tour.maxGroupSize} per group</p>
+      </div>
+
+      {/* Price summary */}
+      <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 text-xs">
+        <div className="flex justify-between text-gray-500">
+          <span>₹{pricePerPerson.toLocaleString('en-IN')} × {travelers} person{travelers > 1 ? 's' : ''}</span>
+          <span className="font-medium text-gray-700">₹{total.toLocaleString('en-IN')}</span>
+        </div>
+        <div className="flex justify-between text-gray-400">
+          <span>GST included</span>
+          <span className="text-green-600 font-medium">✓</span>
+        </div>
+        <div className="border-t border-gray-200 pt-1.5 flex justify-between font-bold text-gray-900 text-sm">
+          <span>Total</span>
+          <span>₹{total.toLocaleString('en-IN')}</span>
+        </div>
+      </div>
+
+      {/* CTA buttons */}
+      <button type="button" onClick={onBook}
+        className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-sm hover:shadow-md">
+        <Calendar className="w-4 h-4" /> Book Now
+      </button>
+
+      <a href={`https://wa.me/${WHATSAPP}?text=Hi%2C%20I%20want%20to%20enquire%20about%20${encodeURIComponent(tour.title)}%20for%20${travelers}%20person${travelers > 1 ? 's' : ''}%20on%20${selectedDate ? fmtDate(selectedDate) : 'a%20date%20TBD'}`}
+        target="_blank" rel="noopener noreferrer"
+        className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
+        <WhatsAppIcon size={16} className="text-white" /> Enquire on WhatsApp
+      </a>
+
+      <a href={`tel:+${WHATSAPP}`}
+        className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl text-sm font-medium transition-colors">
+        <Phone className="w-4 h-4 text-primary-600" /> Call Us
+      </a>
+
+      <p className="text-center text-xs text-gray-400">No payment now · Pay on confirmation</p>
+    </div>
+  )
+}
+
 // ── Activity pill with image tooltip ─────────────────────────────────────────
 function ActivityPill({ name, locationMap }: { name: string; locationMap: Record<string, LocationNode> }) {
   const [show, setShow] = useState(false)
@@ -431,58 +634,26 @@ export default function TourDetailPage() {
             <div className="sticky top-24 space-y-4">
 
               {/* Booking card */}
-              <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-                <div className="mb-4">
-                  <p className="text-xs text-gray-400 mb-0.5">Price per person</p>
-                  <p className="text-3xl font-bold text-gray-900">₹{p.toLocaleString('en-IN')}</p>
+              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                {/* Price header */}
+                <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-5 py-4">
+                  <p className="text-primary-100 text-xs mb-0.5">Price per person</p>
+                  <div className="flex items-end gap-2">
+                    <p className="text-3xl font-extrabold text-white">₹{p.toLocaleString('en-IN')}</p>
+                    <p className="text-primary-200 text-sm mb-1">/ person</p>
+                  </div>
                   {rating && (
                     <div className="flex items-center gap-1 mt-1">
-                      <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-semibold text-gray-700">{rating.toFixed(1)}</span>
-                      {(tour.reviewCount ?? 0) > 0 && <span className="text-xs text-gray-400">({tour.reviewCount} reviews)</span>}
+                      <Star className="w-3.5 h-3.5 fill-yellow-300 text-yellow-300" />
+                      <span className="text-sm font-semibold text-white">{rating.toFixed(1)}</span>
+                      {(tour.reviewCount ?? 0) > 0 && <span className="text-xs text-primary-200">({tour.reviewCount} reviews)</span>}
                     </div>
                   )}
                 </div>
 
-                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs space-y-1.5">
-                  <div className="flex justify-between text-gray-500">
-                    <span>Base fare (incl. 5% GST)</span>
-                    <span className="font-medium text-gray-700">₹{p.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-400">
-                    <span>No hidden charges</span>
-                    <span className="text-green-600 font-medium">₹0</span>
-                  </div>
-                  <div className="border-t border-gray-200 pt-1.5 flex justify-between font-semibold text-gray-800">
-                    <span>Total per person</span>
-                    <span>₹{p.toLocaleString('en-IN')}</span>
-                  </div>
+                <div className="p-5 space-y-4">
+                  <BookingSidebar tour={tour} onBook={() => setShowBooking(true)} />
                 </div>
-
-                <div className="divide-y divide-gray-100 mb-4 text-sm">
-                  <Row label="Duration"   value={`${tour.duration} days`} />
-                  <Row label="Group size" value={`Max ${tour.maxGroupSize}`} />
-                  <Row label="Difficulty" value={tour.difficulty} cap />
-                  <Row label="Category"   value={tour.category}   cap />
-                </div>
-
-                <button onClick={() => setShowBooking(true)}
-                  className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md">
-                  <Calendar className="w-4 h-4" /> Book This Tour
-                </button>
-
-                <a href={`tel:+${WHATSAPP}`}
-                  className="w-full flex items-center justify-center gap-2 mt-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl text-sm font-medium transition-colors">
-                  <Phone className="w-4 h-4 text-primary-600" /> Call Us
-                </a>
-
-                <a href={`https://wa.me/${WHATSAPP}?text=Hi%2C%20I%20am%20interested%20in%20${encodeURIComponent(tour.title)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 mt-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
-                  <WhatsAppIcon size={16} className="text-white" /> WhatsApp Us
-                </a>
-
-                <p className="text-center text-xs text-gray-400 mt-3">No payment now · Pay on confirmation</p>
               </div>
 
               {/* Trust badges */}
