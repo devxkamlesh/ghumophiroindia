@@ -46,7 +46,7 @@ export default function Hero() {
   if (loading) {
     return (
       <section className="relative bg-white">
-        <div className="relative w-full h-[350px] overflow-hidden flex-shrink-0 flex items-center justify-center bg-gray-100">
+        <div className="relative w-full h-[320px] overflow-hidden flex-shrink-0 flex items-center justify-center bg-gray-100">
           <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
         </div>
       </section>
@@ -56,7 +56,7 @@ export default function Hero() {
   if (banners.length === 0) {
     return (
       <section className="relative bg-white">
-        <div className="relative w-full h-[350px] overflow-hidden flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
+        <div className="relative w-full h-[320px] overflow-hidden flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Ghumo Firo India</h2>
             <p className="text-gray-600">Explore the beauty of Rajasthan</p>
@@ -73,7 +73,7 @@ export default function Hero() {
 
       {/* Banner Slider */}
       <div
-        className="relative w-full h-[350px] overflow-hidden flex-shrink-0"
+        className="relative w-full h-[320px] overflow-hidden flex-shrink-0"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -92,28 +92,30 @@ export default function Hero() {
                 className="absolute inset-0 bg-cover bg-center"
                 style={{ backgroundImage: `url('${currentBanner.image}')` }}
               />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/35 to-black/65" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
 
-              {/* Banner info */}
-              <div className="absolute inset-0 flex items-start pt-10 pb-12">
+              {/* Banner info — vertically centered */}
+              <div className="absolute inset-0 flex items-center">
                 <div className="container-custom w-full px-4 md:px-6 lg:px-8">
-                  <div className="max-w-xl">
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1.5 leading-tight">
+                  <div className="max-w-lg flex flex-col justify-center gap-2">
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight">
                       {currentBanner.title}
                     </h2>
                     {currentBanner.subtitle && (
-                      <p className="text-white/90 text-xs md:text-sm mb-2">{currentBanner.subtitle}</p>
+                      <p className="text-white/90 text-sm md:text-base font-medium">{currentBanner.subtitle}</p>
                     )}
                     {currentBanner.description && (
-                      <p className="text-white/80 text-xs md:text-sm mb-3">{currentBanner.description}</p>
+                      <p className="text-white/75 text-xs md:text-sm">{currentBanner.description}</p>
                     )}
                     {currentBanner.linkUrl && (
-                      <Link 
-                        href={currentBanner.linkUrl} 
-                        className="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-4 md:px-5 py-1.5 md:py-2 rounded-lg font-bold text-xs md:text-sm transition-colors shadow-lg"
-                      >
-                        {currentBanner.linkText || 'Learn More'}
-                      </Link>
+                      <div className="pt-1">
+                        <Link
+                          href={currentBanner.linkUrl}
+                          className="inline-flex items-center gap-1.5 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2 rounded-lg font-bold text-sm transition-colors shadow-lg"
+                        >
+                          {currentBanner.linkText || 'Learn More'}
+                        </Link>
+                      </div>
                     )}
                   </div>
                 </div>
