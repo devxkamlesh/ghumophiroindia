@@ -23,12 +23,13 @@ export const createServer = (): Application => {
     origin: (origin, callback) => {
       // Allow requests with no origin (mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true)
-      
+
       const allowed = config.allowedOrigins
       if (allowed.includes('*') || allowed.includes(origin)) {
         return callback(null, true)
       }
-      return callback(new Error(`CORS: origin ${origin} not allowed`))
+      // Return null (block) instead of throwing an error
+      return callback(null, false)
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],

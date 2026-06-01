@@ -96,7 +96,30 @@ export default function PopularDestinations({ locations = [] }: Props) {
     }
   }, [popularStates.length])
 
-  // Don't render section if no popular states exist
+  // Attach non-passive wheel listener for horizontal scroll
+  // Only intercept when scrolling horizontally (deltaX) or when container
+  // can still scroll horizontally — never block vertical page scroll
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const handleWheel = (e: WheelEvent) => {
+      const isScrollingHorizontally = Math.abs(e.deltaX) > Math.abs(e.deltaY)
+      const canScrollMore =
+        (e.deltaY > 0 && el.scrollLeft < el.scrollWidth - el.clientWidth - 1) ||
+        (e.deltaY < 0 && el.scrollLeft > 0)
+
+      // Only hijack vertical scroll if container can scroll horizontally
+      // and user is scrolling vertically (convert to horizontal)
+      if (!isScrollingHorizontally && canScrollMore) {
+        e.preventDefault()
+        el.scrollBy({ left: e.deltaY * 2, behavior: 'smooth' })
+      }
+    }
+
+    el.addEventListener('wheel', handleWheel, { passive: false })
+    return () => el.removeEventListener('wheel', handleWheel)
+  }, [])
   if (popularStates.length === 0) return null
 
   return (
@@ -146,16 +169,15 @@ export default function PopularDestinations({ locations = [] }: Props) {
             </button>
           )}
 
-          {/* Scroll container */}
+          {/* Scroll container - touch & mouse wheel friendly */}
           <div 
             ref={scrollRef}
             className="flex gap-5 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-hide"
-            style={{ overscrollBehavior: 'contain' }}
-            onWheel={(e) => {
-              e.preventDefault()
-              if (scrollRef.current) {
-                scrollRef.current.scrollBy({ left: e.deltaY * 2, behavior: 'smooth' })
-              }
+            style={{ 
+              overscrollBehaviorX: 'contain',
+              overscrollBehaviorY: 'none',
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-x',
             }}
           >
             {popularStates.map(state => (
@@ -189,8 +211,11 @@ function StateCard({ state }: { state: LocationNode }) {
   const image = toWebP(state.image || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071', 600)
 
   return (
-    <Link href={`/destinations/${state.slug}`}
-      className="group relative rounded-3xl overflow-hidden block w-[264px] h-[240px] flex-shrink-0 snap-start snap-always">
+    <Link
+      href={`/destinations/${state.slug}`}
+      draggable={false}
+      className="group relative rounded-3xl overflow-hidden block w-[264px] h-[240px] flex-shrink-0 snap-start snap-always select-none"
+    >
       {/* Image */}
       <div
         className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
