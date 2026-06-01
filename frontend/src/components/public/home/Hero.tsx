@@ -7,6 +7,8 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { bannerService } from '@/services/api'
 import type { Banner } from '@/types'
 
+const EASE = [0.25, 0.46, 0.45, 0.94] as const
+
 const slideVariants = {
   enter: (dir: number) => ({
     x: dir > 0 ? '100%' : '-100%',
@@ -15,12 +17,12 @@ const slideVariants = {
   center: {
     x: 0,
     opacity: 1,
-    transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.55, ease: EASE },
   },
   exit: (dir: number) => ({
     x: dir > 0 ? '-100%' : '100%',
     opacity: 1,
-    transition: { duration: 0.55, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.55, ease: EASE },
   }),
 }
 
@@ -32,7 +34,7 @@ const textVariants = {
   visible: {
     opacity: 1,
     x: 0,
-    transition: { duration: 0.45, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.45, delay: 0.2, ease: EASE },
   },
 }
 
