@@ -35,7 +35,7 @@ export default function Footer() {
               <li><Link href="/about" className="hover:text-primary-400 transition-colors">About Us</Link></li>
               <li><Link href="/tours" className="hover:text-primary-400 transition-colors">All Tours</Link></li>
               <li><Link href="/custom-tour" className="hover:text-primary-400 transition-colors">Custom Tour</Link></li>
-              <li><Link href="/blog" className="hover:text-primary-400 transition-colors">Travel Blog</Link></li>
+              <li><Link href="/business" className="hover:text-primary-400 transition-colors">Business</Link></li>
               <li><Link href="/contact" className="hover:text-primary-400 transition-colors">Contact Us</Link></li>
             </ul>
           </div>
@@ -43,8 +43,8 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-4">Popular Tours</h3>
             <ul className="space-y-2">
-              <li><Link href="/golden-triangle" className="hover:text-primary-400 transition-colors">Golden Triangle</Link></li>
-              <li><Link href="/rajasthan-tours" className="hover:text-primary-400 transition-colors">Rajasthan Tours</Link></li>
+              <li><Link href="/tours?search=golden+triangle" className="hover:text-primary-400 transition-colors">Golden Triangle</Link></li>
+              <li><Link href="/tours?search=rajasthan" className="hover:text-primary-400 transition-colors">Rajasthan Tours</Link></li>
               <li><Link href="/destinations/jaipur" className="hover:text-primary-400 transition-colors">Jaipur Tours</Link></li>
               <li><Link href="/destinations/udaipur" className="hover:text-primary-400 transition-colors">Udaipur Tours</Link></li>
               <li><Link href="/destinations/jaisalmer" className="hover:text-primary-400 transition-colors">Desert Safari</Link></li>
@@ -78,11 +78,11 @@ export default function Footer() {
       <div className="border-t border-gray-800">
         <div className="container-custom py-6">
           <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-400">
-            <p>&copy; 2024 Ghumo Phiro India. All rights reserved.</p>
+            <p>&copy; 2026 Ghumo Phiro India. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link href="/privacy" className="hover:text-primary-400 transition-colors">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-primary-400 transition-colors">Terms of Service</Link>
-              <Link href="/sitemap" className="hover:text-primary-400 transition-colors">Sitemap</Link>
+              <Link href="/contact" className="hover:text-primary-400 transition-colors">Privacy Policy</Link>
+              <Link href="/contact" className="hover:text-primary-400 transition-colors">Terms of Service</Link>
+              <Link href="/destinations" className="hover:text-primary-400 transition-colors">Sitemap</Link>
             </div>
           </div>
         </div>
