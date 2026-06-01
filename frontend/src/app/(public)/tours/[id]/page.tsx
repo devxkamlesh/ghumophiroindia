@@ -7,12 +7,15 @@ import Image from 'next/image'
 import {
   Clock, Users, MapPin, Star, Check, X, Calendar,
   ArrowLeft, ChevronRight, AlertCircle, Loader2,
-  Shield, Phone, MessageCircle, Award, ThumbsUp, HeartHandshake,
+  Shield, Phone, Award, ThumbsUp, HeartHandshake,
+  Hotel, Bus, UtensilsCrossed, Camera, Binoculars,
+  ChevronDown, ChevronUp, Info,
 } from 'lucide-react'
 import { tourService } from '@/services/api'
 import BookingModal from '@/components/public/shared/BookingModal'
+import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import type { Tour } from '@/types'
-import { toWebP, cloudinarySrcSet } from '@/lib/image'
+import { toWebP } from '@/lib/image'
 
 function priceNum(p: string | number | null | undefined) {
   if (!p) return 0
@@ -20,12 +23,42 @@ function priceNum(p: string | number | null | undefined) {
 }
 
 const FALLBACK = 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&q=80'
+const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') || '919876543210'
 
 const DIFF: Record<string, string> = {
   easy:        'bg-green-100 text-green-700',
   moderate:    'bg-amber-100 text-amber-700',
   challenging: 'bg-red-100 text-red-700',
 }
+
+const CANCELLATION_POLICY = [
+  { days: 'Registration charges', rule: 'Non-refundable and non-transferable.' },
+  { days: 'Within 7 days', rule: '100% of tour package amount charged as cancellation fees.' },
+  { days: '15 days before', rule: '50% of tour package amount charged as cancellation fees.' },
+  { days: '30 days before', rule: '25% of tour package amount charged as cancellation fees.' },
+  { days: 'Weather / Govt restrictions', rule: 'Certain activities may be cancelled. No refund provided. Alternate activity will be arranged.' },
+  { days: 'Lockdown at destination', rule: 'Credit shell released, valid for 365 days for same number of persons after deduction of IRCTC/Airline charges.' },
+]
+
+const TERMS = [
+  'Full payment must be made before 7 days of trip begins. Pending payments may lead to cancellation.',
+  'Standard check-in time is 11 AM. Early check-in is subject to availability.',
+  'Transportation is as per itinerary and not at disposal. AC will not work on hills.',
+  'Package rates are subject to change without prior notice due to Force Majeure events, strikes, fairs, festivals, weather conditions, traffic problems, overbooking of hotels/flights.',
+  'Company reserves the right to cancel bookings even after payment acceptance without assigning any reason. Full refund will be provided in such cases.',
+  'Company may dismiss any guest for misbehavior, especially if it affects the group or involves physical/verbal assault to the Tour Manager, without any refunds.',
+  'Hotel and/or tour programme may change due to unavoidable circumstances.',
+  'Registration once booked cannot be cancelled, transferred or exchanged.',
+  'Travellers are solely responsible for any mishappening, theft, loss, injuries, or illegal activities (including carrying banned drugs) during the tour.',
+  'No act of misconduct or indiscipline shall be tolerated on the tours.',
+  'In case of vehicle breakdown, travellers must wait for repair or alternate option arranged by the company. If 4x4 pickup is required due to heavy snow or road jam, client should pay extra.',
+  'Travellers must take care of their luggage and belongings. Management shall not be accountable for missing items.',
+  'COVID guidelines must be followed by all travellers.',
+  'Departure time is fixed. Anyone missing the bus shall not be eligible for any refunds. We shall call you twice before scheduled departure.',
+  'Travellers cannot drink or smoke in the vehicle during the trip.',
+  'Company reserves the right to take photographs of participants for promotional purposes. Participants who prefer their image not be used must inform the tour leader at commencement.',
+  'Company has rights to terminate any person during the trip due to misconduct, anti-social activities, or illegal activities. Remaining trip amount will be refunded.',
+]
 
 function DetailSkeleton() {
   return (
@@ -34,32 +67,40 @@ function DetailSkeleton() {
       <div className="container-custom py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-5">
-            <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-1/4" />
-              <div className="h-8 bg-gray-200 rounded w-3/4" />
-            </div>
+            <div className="h-8 bg-gray-200 rounded w-3/4" />
             <div className="bg-white rounded-2xl p-6 space-y-3">
-              <div className="h-5 bg-gray-200 rounded w-1/3" />
               <div className="h-4 bg-gray-200 rounded w-full" />
               <div className="h-4 bg-gray-200 rounded w-5/6" />
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-6 h-64 space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/2" />
-            <div className="h-4 bg-gray-200 rounded" />
-            <div className="h-12 bg-gray-200 rounded-xl mt-4" />
-          </div>
+          <div className="bg-white rounded-2xl p-6 h-64" />
         </div>
       </div>
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, icon }: { title: string; children: React.ReactNode; icon?: React.ReactNode }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-6">
-      <h2 className="text-base font-bold text-gray-900 mb-4">{title}</h2>
+      <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+        {icon}{title}
+      </h2>
       {children}
+    </div>
+  )
+}
+
+function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="border border-gray-200 rounded-2xl overflow-hidden">
+      <button type="button" onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
+        <span className="font-bold text-gray-900 text-sm">{title}</span>
+        {open ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+      </button>
+      {open && <div className="px-5 pb-5 bg-white border-t border-gray-100">{children}</div>}
     </div>
   )
 }
@@ -77,11 +118,8 @@ export default function TourDetailPage() {
   const fetchTour = useCallback(async () => {
     setLoading(true); setError('')
     try {
-      // id param can be a numeric ID or a slug — handle both
       const numId = Number(id)
-      const data = isNaN(numId)
-        ? await tourService.getBySlug(id)   // slug e.g. "pushkar-spiritual-journey"
-        : await tourService.getById(numId)  // numeric id e.g. 42
+      const data = isNaN(numId) ? await tourService.getBySlug(id) : await tourService.getById(numId)
       setTour(data)
     } catch (e: any) {
       setError(e.message || 'Tour not found')
@@ -116,25 +154,35 @@ export default function TourDetailPage() {
 
   const p      = priceNum(tour.price)
   const rating = tour.rating ? Number(tour.rating) : null
-  const images = (tour.images?.length ? tour.images : [FALLBACK])
+  const images = tour.images?.length ? tour.images : [FALLBACK]
   const main   = toWebP(images[selectedImage] ?? FALLBACK, 1200)
+
+  // Detect package includes from included array
+  const pkgIcons = [
+    { key: 'hotel',      icon: Hotel,          label: 'Hotel',       match: /hotel|accommodat/i },
+    { key: 'transport',  icon: Bus,            label: 'Transport',   match: /transport|vehicle|cab|bus|transfer/i },
+    { key: 'meals',      icon: UtensilsCrossed,label: 'Meals',       match: /meal|breakfast|lunch|dinner|food/i },
+    { key: 'sightseeing',icon: Binoculars,     label: 'Sightseeing', match: /sightseeing|visit|tour guide|guide/i },
+    { key: 'camera',     icon: Camera,         label: 'Photography', match: /photo|camera|photography/i },
+  ]
+  const detectedPkg = pkgIcons.filter(p => (tour.included ?? []).some(inc => p.match.test(inc)))
 
   return (
     <div className="min-h-screen bg-gray-50">
 
       {/* Hero */}
-      <div className="relative h-[400px] md:h-[480px] bg-gray-900 overflow-hidden">
+      <div className="relative h-[380px] md:h-[460px] bg-gray-900 overflow-hidden">
         <Image src={main} alt={tour.title} fill className="object-cover opacity-90" priority sizes="100vw" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
         <button onClick={() => router.back()}
-          className="absolute top-20 left-5 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-2 rounded-xl text-sm font-medium transition-colors border border-white/20">
+          className="absolute top-5 left-5 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-2 rounded-xl text-sm font-medium transition-colors border border-white/20">
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
 
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            {images.slice(0, 5).map((img, i) => (
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-2">
+            {images.slice(0, 6).map((img, i) => (
               <button key={i} onClick={() => setSelectedImage(i)}
                 className={`relative w-12 h-9 rounded-lg overflow-hidden border-2 transition-all ${i === selectedImage ? 'border-white scale-110' : 'border-white/40 hover:border-white/70'}`}>
                 <Image src={toWebP(img, 100)} alt="" fill className="object-cover" sizes="48px" />
@@ -143,14 +191,27 @@ export default function TourDetailPage() {
           </div>
         )}
 
-        <div className="absolute bottom-14 left-0 right-0 px-5">
+        <div className="absolute bottom-5 left-0 right-0 px-5">
           <div className="container-custom">
             <div className="flex flex-wrap gap-2 mb-2">
               <span className="bg-primary-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full capitalize">{tour.category}</span>
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${DIFF[tour.difficulty] ?? 'bg-gray-100 text-gray-700'}`}>{tour.difficulty}</span>
               {tour.isFeatured && <span className="bg-yellow-400 text-yellow-900 text-xs font-semibold px-2.5 py-1 rounded-full">⭐ Featured</span>}
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">{tour.title}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">{tour.title}</h1>
+            <div className="flex flex-wrap items-center gap-4 mt-2">
+              <span className="flex items-center gap-1.5 text-white/80 text-sm"><Clock className="w-4 h-4" />{tour.duration} Days</span>
+              <span className="flex items-center gap-1.5 text-white/80 text-sm"><Users className="w-4 h-4" />Max {tour.maxGroupSize} pax</span>
+              {(tour.destinations ?? []).length > 0 && (
+                <span className="flex items-center gap-1.5 text-white/80 text-sm"><MapPin className="w-4 h-4" />{(tour.destinations ?? []).join(' · ')}</span>
+              )}
+              {rating && (
+                <span className="flex items-center gap-1 text-yellow-300 text-sm font-semibold">
+                  <Star className="w-4 h-4 fill-yellow-300" />{rating.toFixed(1)}
+                  {(tour.reviewCount ?? 0) > 0 && <span className="text-white/60 font-normal">({tour.reviewCount})</span>}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -159,26 +220,35 @@ export default function TourDetailPage() {
       <div className="container-custom py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* Left */}
+          {/* ── Left column ─────────────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-5">
 
-            {/* Stats */}
-            <div className="bg-white rounded-2xl border border-gray-100 px-5 py-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <Stat icon={Clock}  label="Duration"   value={`${tour.duration} days`} />
-              <Stat icon={Users}  label="Group size" value={`Max ${tour.maxGroupSize}`} />
-              {rating && <Stat icon={Star} label="Rating" value={`${rating.toFixed(1)} / 5`} highlight />}
-              {(tour.destinations ?? []).length > 0 && (
-                <Stat icon={MapPin} label="Destination" value={(tour.destinations ?? [])[0]} />
-              )}
-            </div>
-
+            {/* About */}
             <Section title="About This Tour">
               <p className="text-gray-600 text-sm leading-relaxed">{tour.description}</p>
               {tour.longDescription && <p className="text-gray-600 text-sm leading-relaxed mt-3">{tour.longDescription}</p>}
             </Section>
 
+            {/* Package Includes icons */}
+            {detectedPkg.length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+                <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-5">Package Includes</h2>
+                <div className="flex flex-wrap gap-4">
+                  {detectedPkg.map(({ key, icon: Icon, label }) => (
+                    <div key={key} className="flex flex-col items-center gap-2 bg-gray-50 rounded-2xl px-6 py-4 min-w-[90px] border border-gray-100">
+                      <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-primary-600" />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700">{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Highlights */}
             {(tour.highlights ?? []).length > 0 && (
-              <Section title="Highlights">
+              <Section title="Tour Highlights">
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {(tour.highlights ?? []).map((h, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -189,6 +259,7 @@ export default function TourDetailPage() {
               </Section>
             )}
 
+            {/* Included / Excluded */}
             {((tour.included ?? []).length > 0 || (tour.excluded ?? []).length > 0) && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {(tour.included ?? []).length > 0 && (
@@ -218,21 +289,17 @@ export default function TourDetailPage() {
               </div>
             )}
 
+            {/* Itinerary */}
             {(tour.itinerary ?? []).length > 0 && (
               <Section title={`Itinerary — ${(tour.itinerary ?? []).length} Days`}>
                 <div className="space-y-0">
                   {(tour.itinerary ?? []).map((day, i) => (
                     <div key={i} className="flex gap-4">
-                      {/* Timeline spine */}
                       <div className="flex flex-col items-center flex-shrink-0">
-                        <div className="w-9 h-9 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold z-10">
-                          {day.day}
-                        </div>
-                        {i < (tour.itinerary ?? []).length - 1 && (
-                          <div className="w-0.5 flex-1 bg-primary-100 my-1" />
-                        )}
+                        <div className="w-9 h-9 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold z-10">{day.day}</div>
+                        {i < (tour.itinerary ?? []).length - 1 && <div className="w-0.5 flex-1 bg-primary-100 my-1" />}
                       </div>
-                      <div className={`flex-1 pb-5 ${i < (tour.itinerary ?? []).length - 1 ? '' : ''}`}>
+                      <div className="flex-1 pb-5">
                         <h4 className="font-semibold text-gray-900 text-sm mb-1">{day.title}</h4>
                         <p className="text-gray-500 text-sm mb-2">{day.description}</p>
                         {(day.activities ?? []).length > 0 && (
@@ -251,18 +318,44 @@ export default function TourDetailPage() {
               </Section>
             )}
 
-            {/* Why choose this tour */}
+            {/* Cancellation Policy */}
+            <Accordion title="🚫 Cancellation Policy" defaultOpen>
+              <div className="pt-4 space-y-3">
+                {CANCELLATION_POLICY.map((item, i) => (
+                  <div key={i} className="flex gap-3 p-3 bg-red-50 rounded-xl border border-red-100">
+                    <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0 mt-1.5" />
+                    <div>
+                      <p className="text-xs font-bold text-red-700">{item.days}</p>
+                      <p className="text-xs text-red-600 mt-0.5">{item.rule}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Accordion>
+
+            {/* Terms & Conditions */}
+            <Accordion title="📋 Terms & Conditions">
+              <div className="pt-4 space-y-2">
+                {TERMS.map((term, i) => (
+                  <div key={i} className="flex gap-2.5 text-sm text-gray-600">
+                    <span className="text-primary-500 font-bold flex-shrink-0 text-xs mt-0.5">{i + 1}.</span>
+                    <p className="leading-relaxed">{term}</p>
+                  </div>
+                ))}
+              </div>
+            </Accordion>
+
+            {/* Why choose */}
             <div className="bg-gradient-to-br from-primary-50 to-green-50 rounded-2xl border border-primary-100 p-6">
               <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Award className="w-5 h-5 text-primary-600" />
-                Why Choose This Tour?
+                <Award className="w-5 h-5 text-primary-600" /> Why Choose This Tour?
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   { icon: '🏆', title: 'Expert Local Guides', desc: 'Certified guides with 10+ years experience' },
                   { icon: '💰', title: 'Best Price Guarantee', desc: 'We match any lower price you find' },
                   { icon: '🔒', title: 'Secure Booking', desc: 'Your data and payment are fully protected' },
-                  { icon: '📞', title: '24/7 Support', desc: 'We\'re available before, during & after your trip' },
+                  { icon: '📞', title: '24/7 Support', desc: "We're available before, during & after your trip" },
                   { icon: '🚌', title: 'All Transfers Included', desc: 'Airport pickup, hotel drops, sightseeing' },
                   { icon: '⭐', title: 'Trusted by 1000+ Travelers', desc: 'Verified reviews from real customers' },
                 ].map(({ icon, title, desc }) => (
@@ -277,31 +370,26 @@ export default function TourDetailPage() {
               </div>
             </div>
 
-            {/* Reviews placeholder */}
+            {/* Reviews */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6">
               <h2 className="text-base font-bold text-gray-900 mb-1">Traveler Reviews</h2>
               {(tour.reviewCount ?? 0) > 0 && rating ? (
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="flex">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`w-4 h-4 ${s <= Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`} />
-                    ))}
-                  </div>
+                  <div className="flex">{[1,2,3,4,5].map(s => <Star key={s} className={`w-4 h-4 ${s <= Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`} />)}</div>
                   <span className="text-sm font-bold text-gray-900">{Number(rating).toFixed(1)}</span>
                   <span className="text-sm text-gray-400">({tour.reviewCount} reviews)</span>
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="flex justify-center mb-2">
-                    {[1,2,3,4,5].map(s => <Star key={s} className="w-6 h-6 text-gray-200" />)}
-                  </div>
+                  <div className="flex justify-center mb-2">{[1,2,3,4,5].map(s => <Star key={s} className="w-6 h-6 text-gray-200" />)}</div>
                   <p className="text-sm text-gray-500">No reviews yet — be the first to review!</p>
                 </div>
               )}
             </div>
+
           </div>
 
-          {/* Sidebar */}
+          {/* ── Sidebar ─────────────────────────────────────────────── */}
           <div>
             <div className="sticky top-24 space-y-4">
 
@@ -319,7 +407,6 @@ export default function TourDetailPage() {
                   )}
                 </div>
 
-                {/* Price breakdown */}
                 <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs space-y-1.5">
                   <div className="flex justify-between text-gray-500">
                     <span>Base fare (incl. 5% GST)</span>
@@ -342,26 +429,23 @@ export default function TourDetailPage() {
                   <Row label="Category"   value={tour.category}   cap />
                 </div>
 
-                <button
-                  onClick={() => setShowBooking(true)}
-                  className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md"
-                >
+                <button onClick={() => setShowBooking(true)}
+                  className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md">
                   <Calendar className="w-4 h-4" /> Book This Tour
                 </button>
 
-                <a href="tel:+919876543210"
+                <a href={`tel:+${WHATSAPP}`}
                   className="w-full flex items-center justify-center gap-2 mt-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl text-sm font-medium transition-colors">
-                  <Phone className="w-4 h-4 text-primary-600" /> +91 98765 43210
+                  <Phone className="w-4 h-4 text-primary-600" /> Call Us
                 </a>
 
-                <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 mt-2 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 py-2.5 rounded-xl text-sm font-medium transition-colors">
-                  <MessageCircle className="w-4 h-4" /> WhatsApp Us
+                <a href={`https://wa.me/${WHATSAPP}?text=Hi%2C%20I%20am%20interested%20in%20${encodeURIComponent(tour.title)}`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 mt-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
+                  <WhatsAppIcon size={16} className="text-white" /> WhatsApp Us
                 </a>
 
-                <p className="text-center text-xs text-gray-400 mt-3">
-                  No payment now · Pay on confirmation
-                </p>
+                <p className="text-center text-xs text-gray-400 mt-3">No payment now · Pay on confirmation</p>
               </div>
 
               {/* Trust badges */}
@@ -373,7 +457,7 @@ export default function TourDetailPage() {
                 <ul className="space-y-2.5">
                   {[
                     { icon: ThumbsUp,       text: 'Best price guarantee' },
-                    { icon: Check,          text: 'Free cancellation (48h)' },
+                    { icon: Check,          text: 'Transparent pricing' },
                     { icon: Award,          text: 'Expert local guides' },
                     { icon: HeartHandshake, text: '24/7 customer support' },
                     { icon: Shield,         text: 'Verified & trusted operator' },
@@ -388,13 +472,16 @@ export default function TourDetailPage() {
                 </ul>
               </div>
 
-              {/* Cancellation policy */}
+              {/* Quick cancellation summary */}
               <div className="bg-amber-50 rounded-2xl border border-amber-200 p-4">
-                <p className="text-xs font-semibold text-amber-800 mb-2">Cancellation Policy</p>
+                <p className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5" /> Cancellation Summary
+                </p>
                 <ul className="space-y-1.5 text-xs text-amber-700">
-                  <li>• Free cancel up to 48h before</li>
-                  <li>• 50% refund: 24–48h before</li>
-                  <li>• No refund within 24h</li>
+                  <li>• 30+ days before: 25% charges</li>
+                  <li>• 15–30 days before: 50% charges</li>
+                  <li>• Within 7 days: 100% charges</li>
+                  <li>• Registration: Non-refundable</li>
                 </ul>
               </div>
 
@@ -403,10 +490,7 @@ export default function TourDetailPage() {
         </div>
       </div>
 
-      {/* Booking modal */}
-      {showBooking && (
-        <BookingModal tour={tour} onClose={() => setShowBooking(false)} />
-      )}
+      {showBooking && <BookingModal tour={tour} onClose={() => setShowBooking(false)} />}
     </div>
   )
 }
