@@ -112,11 +112,17 @@ function Accordion({ title, children, defaultOpen = false }: { title: string; ch
 }
 
 // ── Booking Sidebar ───────────────────────────────────────────────────────────
+const HOTEL_CATEGORIES = [
+  { key: '3star', label: '3 Star', stars: 3, multiplier: 1.0, icon: '🏨' },
+  { key: '4star', label: '4 Star', stars: 4, multiplier: 1.25, icon: '🏨' },
+  { key: '5star', label: '5 Star', stars: 5, multiplier: 1.6, icon: '🏨' },
+]
+
 const ROOM_TYPES = [
-  { key: 'sharing', label: 'Sharing',  multiplier: 1.0 },
-  { key: 'triple',  label: 'Triple',   multiplier: 1.05 },
-  { key: 'double',  label: 'Double',   multiplier: 1.18 },
-  { key: 'single',  label: 'Single',   multiplier: 1.55 },
+  { key: 'sharing', label: 'Sharing', capacity: '4-6 pax', multiplier: 1.0 },
+  { key: 'triple',  label: 'Triple',  capacity: '3 pax', multiplier: 1.05 },
+  { key: 'double',  label: 'Double',  capacity: '2 pax', multiplier: 1.18 },
+  { key: 'single',  label: 'Single',  capacity: '1 pax', multiplier: 1.55 },
 ]
 
 function generateDepartures(duration: number) {
@@ -157,6 +163,10 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
   const [adults, setAdults] = useState(2)
   const [children, setChildren] = useState(0)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showHotelPicker, setShowHotelPicker] = useState(false)
+  
+  // Hotel category selection (locked for all rooms once first room is selected)
+  const [selectedHotel, setSelectedHotel] = useState<string | null>(null)
   
   // Room selections: { roomKey: count }
   const [roomSelections, setRoomSelections] = useState<Record<string, number>>({
@@ -168,22 +178,31 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
 
   // Update room selection
   const updateRoomCount = (key: string, delta: number) => {
-    setRoomSelections(prev => ({
-      ...prev,
-      [key]: Math.max(0, prev[key] + delta)
-    }))
+    setRoomSelections(prev => {
+      const newCount = Math.max(0, prev[key] + delta)
+      // If first room being added and no hotel selected, prompt hotel selection
+      const totalRoomsBeforeUpdate = Object.values(prev).reduce((sum, count) => sum + count, 0)
+      if (totalRoomsBeforeUpdate === 0 && newCount > 0 && !selectedHotel) {
+        setShowHotelPicker(true)
+        return prev
+      }
+      return { ...prev, [key]: newCount }
+    })
   }
 
   // Calculate total travelers and price
   const totalTravelers = adults + children
   const totalRooms = Object.values(roomSelections).reduce((sum, count) => sum + count, 0)
   
-  // Calculate price based on room selections
+  // Get selected hotel multiplier
+  const hotelMultiplier = HOTEL_CATEGORIES.find(h => h.key === selectedHotel)?.multiplier ?? 1.0
+  
+  // Calculate price based on room selections and hotel category
   let totalPrice = 0
   ROOM_TYPES.forEach(room => {
     const count = roomSelections[room.key]
     if (count > 0) {
-      const roomPrice = Math.round(p * room.multiplier)
+      const roomPrice = Math.round(p * room.multiplier * hotelMultiplier)
       totalPrice += roomPrice * count
     }
   })
@@ -301,43 +320,161 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
         }
       `}</style>
 
-      {/* Room Type - Compact Multiple Selection */}
+      {/* Hotel Category Selection - Opens in Side Panel */}
       <div>
-        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Rooms (Optional)</p>
-        <div className="space-y-1.5">
-          {ROOM_TYPES.map(rt => {
-            const rtPrice = Math.round(p * rt.multiplier)
-            const count = roomSelections[rt.key]
-            return (
-              <div key={rt.key} 
-                className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${
-                  count > 0 ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
-                }`}>
-                <div className="flex-1">
-                  <p className={`text-xs font-bold ${count > 0 ? 'text-primary-700' : 'text-gray-700'}`}>
-                    {rt.label} <span className={`font-normal ${count > 0 ? 'text-primary-600' : 'text-gray-500'}`}>₹{(rtPrice/1000).toFixed(0)}k</span>
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <button 
-                    type="button" 
-                    onClick={() => updateRoomCount(rt.key, -1)}
-                    disabled={count === 0}
-                    className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 text-sm font-bold transition-colors">
-                    −
+        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Hotel Category</p>
+        
+        <button 
+          type="button" 
+          onClick={() => setShowHotelPicker(true)}
+          className="w-full flex items-center justify-between px-3 py-2 border-2 border-gray-300 rounded-lg hover:border-primary-500 transition-colors">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{selectedHotel ? HOTEL_CATEGORIES.find(h => h.key === selectedHotel)?.icon : '🏨'}</span>
+            <span className="text-xs font-bold text-gray-700">
+              {selectedHotel ? HOTEL_CATEGORIES.find(h => h.key === selectedHotel)?.label : 'Select Hotel'}
+            </span>
+          </div>
+          {selectedHotel && (
+            <div className="flex gap-0.5">
+              {Array.from({ length: HOTEL_CATEGORIES.find(h => h.key === selectedHotel)?.stars ?? 0 }).map((_, i) => (
+                <span key={i} className="text-yellow-500 text-xs">⭐</span>
+              ))}
+            </div>
+          )}
+          {!selectedHotel && <ChevronDown className="w-3.5 h-3.5 text-gray-400" />}
+        </button>
+
+        {/* Hotel picker panel */}
+        {showHotelPicker && (
+          <>
+            <div className="fixed inset-0 bg-black/20 z-40" onClick={() => !selectedHotel && setShowHotelPicker(false)} />
+            
+            <div className="fixed left-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 overflow-y-auto animate-slide-in-left">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                <h3 className="font-bold text-gray-900">Select Hotel Category</h3>
+                {selectedHotel && (
+                  <button onClick={() => setShowHotelPicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                    <X className="w-5 h-5 text-gray-500" />
                   </button>
-                  <span className="w-4 text-center text-xs font-bold text-gray-900">{count}</span>
-                  <button 
-                    type="button" 
-                    onClick={() => updateRoomCount(rt.key, 1)}
-                    className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold transition-colors">
-                    +
-                  </button>
+                )}
+              </div>
+
+              <div className="p-4">
+                <p className="text-xs text-gray-500 mb-4">All rooms will be in the same hotel category</p>
+                
+                <div className="space-y-3">
+                  {HOTEL_CATEGORIES.map(hotel => {
+                    const pricePerRoom = Math.round(p * hotel.multiplier)
+                    const isSelected = selectedHotel === hotel.key
+                    return (
+                      <button 
+                        key={hotel.key}
+                        onClick={() => { 
+                          setSelectedHotel(hotel.key)
+                          setShowHotelPicker(false)
+                        }}
+                        className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
+                          isSelected 
+                            ? 'border-primary-500 bg-primary-50' 
+                            : 'border-gray-200 hover:border-primary-300'
+                        }`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{hotel.icon}</span>
+                            <div>
+                              <p className={`text-sm font-bold ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}>
+                                {hotel.label} Hotel
+                              </p>
+                              <div className="flex gap-0.5 mt-0.5">
+                                {Array.from({ length: hotel.stars }).map((_, i) => (
+                                  <span key={i} className="text-yellow-500 text-xs">⭐</span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          {isSelected && <Check className="w-5 h-5 text-primary-600" />}
+                        </div>
+                        <p className={`text-xs ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}>
+                          From ₹{(pricePerRoom/1000).toFixed(0)}k per room
+                        </p>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
-            )
-          })}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Room Type - Compact Multiple Selection */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Rooms (Optional)</p>
+          {selectedHotel && (
+            <button 
+              onClick={() => {
+                setSelectedHotel(null)
+                setRoomSelections({ sharing: 0, triple: 0, double: 0, single: 0 })
+              }}
+              className="text-[10px] text-primary-600 hover:text-primary-700 font-medium">
+              Change Hotel
+            </button>
+          )}
         </div>
+        
+        {!selectedHotel ? (
+          <div className="text-center py-6 px-4 border-2 border-dashed border-gray-200 rounded-lg">
+            <span className="text-3xl mb-2 block">🏨</span>
+            <p className="text-xs text-gray-500 mb-2">Select hotel category first</p>
+            <button 
+              onClick={() => setShowHotelPicker(true)}
+              className="text-xs text-primary-600 font-semibold hover:text-primary-700">
+              Choose Hotel →
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {ROOM_TYPES.map(rt => {
+              const rtPrice = Math.round(p * rt.multiplier * hotelMultiplier)
+              const count = roomSelections[rt.key]
+              return (
+                <div key={rt.key} 
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${
+                    count > 0 ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
+                  }`}>
+                  <div className="flex-1">
+                    <p className={`text-xs font-bold ${count > 0 ? 'text-primary-700' : 'text-gray-700'}`}>
+                      {rt.label} 
+                      <span className={`ml-1.5 text-[10px] font-normal ${count > 0 ? 'text-primary-600' : 'text-gray-400'}`}>
+                        {rt.capacity}
+                      </span>
+                    </p>
+                    <p className={`text-[10px] ${count > 0 ? 'text-primary-600' : 'text-gray-500'}`}>
+                      ₹{(rtPrice/1000).toFixed(0)}k/room
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button 
+                      type="button" 
+                      onClick={() => updateRoomCount(rt.key, -1)}
+                      disabled={count === 0}
+                      className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 text-sm font-bold transition-colors">
+                      −
+                    </button>
+                    <span className="w-4 text-center text-xs font-bold text-gray-900">{count}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => updateRoomCount(rt.key, 1)}
+                      className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold transition-colors">
+                      +
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Travelers - Compact Adults & Children */}
