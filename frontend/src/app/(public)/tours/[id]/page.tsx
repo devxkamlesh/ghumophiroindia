@@ -154,13 +154,42 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
   })
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(departures[0] ?? null)
-  const [travelers, setTravelers] = useState(1)
-  const [roomType, setRoomType] = useState('sharing')
+  const [adults, setAdults] = useState(2)
+  const [children, setChildren] = useState(0)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  
+  // Room selections: { roomKey: count }
+  const [roomSelections, setRoomSelections] = useState<Record<string, number>>({
+    sharing: 0,
+    triple: 0,
+    double: 0,
+    single: 0,
+  })
 
-  const room = ROOM_TYPES.find(r => r.key === roomType) ?? ROOM_TYPES[0]
-  const pricePerPerson = Math.round(p * room.multiplier)
-  const total = pricePerPerson * travelers
+  // Update room selection
+  const updateRoomCount = (key: string, delta: number) => {
+    setRoomSelections(prev => ({
+      ...prev,
+      [key]: Math.max(0, prev[key] + delta)
+    }))
+  }
+
+  // Calculate total travelers and price
+  const totalTravelers = adults + children
+  const totalRooms = Object.values(roomSelections).reduce((sum, count) => sum + count, 0)
+  
+  // Calculate price based on room selections
+  let totalPrice = 0
+  ROOM_TYPES.forEach(room => {
+    const count = roomSelections[room.key]
+    if (count > 0) {
+      const roomPrice = Math.round(p * room.multiplier)
+      totalPrice += roomPrice * count
+    }
+  })
+
+  // If no rooms selected, show base price per person
+  const displayPrice = totalRooms > 0 ? totalPrice : p * totalTravelers
 
   // Fake seats available (based on date index)
   const seatsFor = (d: Date) => {
@@ -197,7 +226,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
           </div>
         </button>
 
-        {/* Date picker dropdown */}
+        {/* Date picker dropdown - Side by side layout */}
         {showDatePicker && (
           <div className="mt-2 border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg">
             {/* Price alert */}
@@ -207,13 +236,13 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
               </p>
             </div>
 
-            <div className="max-h-64 overflow-y-auto p-3 space-y-4">
+            <div className="max-h-80 overflow-y-auto p-3">
               {Object.entries(byMonth).map(([month, dates]) => (
-                <div key={month}>
+                <div key={month} className="mb-4 last:mb-0">
                   <p className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />{month}
                   </p>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-4 gap-2">
                     {dates.map((d, i) => {
                       const s = seatsFor(d)
                       const isSelected = selectedDate?.getTime() === d.getTime()
@@ -221,9 +250,9 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
                       return (
                         <button key={i} type="button"
                           onClick={() => { setSelectedDate(d); setShowDatePicker(false) }}
-                          className={`p-2 rounded-xl border text-center transition-all ${
+                          className={`p-2.5 rounded-lg border text-center transition-all ${
                             isSelected
-                              ? 'border-primary-500 bg-primary-50 text-primary-700'
+                              ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
                               : isLow
                               ? 'border-red-200 bg-red-50 hover:border-red-400'
                               : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50'
@@ -245,50 +274,121 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
         )}
       </div>
 
-      {/* Room Type */}
+      {/* Room Type - Multiple Selection */}
       <div>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Room Type</p>
-        <div className="grid grid-cols-2 gap-2">
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Select Rooms</p>
+        <div className="space-y-2">
           {ROOM_TYPES.map(rt => {
             const rtPrice = Math.round(p * rt.multiplier)
-            const isSelected = roomType === rt.key
+            const count = roomSelections[rt.key]
             return (
-              <button key={rt.key} type="button" onClick={() => setRoomType(rt.key)}
-                className={`p-2.5 rounded-xl border text-left transition-all ${isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300'}`}>
-                <p className={`text-xs font-bold ${isSelected ? 'text-primary-700' : 'text-gray-700'}`}>{rt.label}</p>
-                <p className={`text-xs mt-0.5 ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}>₹{rtPrice.toLocaleString('en-IN')}</p>
-              </button>
+              <div key={rt.key} 
+                className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                  count > 0 ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
+                }`}>
+                <div className="flex-1">
+                  <p className={`text-sm font-bold ${count > 0 ? 'text-primary-700' : 'text-gray-700'}`}>
+                    {rt.label}
+                  </p>
+                  <p className={`text-xs mt-0.5 ${count > 0 ? 'text-primary-600' : 'text-gray-500'}`}>
+                    ₹{rtPrice.toLocaleString('en-IN')} per room
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    type="button" 
+                    onClick={() => updateRoomCount(rt.key, -1)}
+                    disabled={count === 0}
+                    className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-colors">
+                    −
+                  </button>
+                  <span className="w-6 text-center text-sm font-bold text-gray-900">{count}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => updateRoomCount(rt.key, 1)}
+                    className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">
+                    +
+                  </button>
+                </div>
+              </div>
             )
           })}
         </div>
+        {totalRooms > 0 && (
+          <p className="text-xs text-gray-500 mt-2">
+            Total: {totalRooms} room{totalRooms > 1 ? 's' : ''} selected
+          </p>
+        )}
       </div>
 
-      {/* Travelers */}
+      {/* Travelers - Adults & Children */}
       <div>
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Travelers</p>
-        <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-2.5">
-          <button type="button" onClick={() => setTravelers(t => Math.max(1, t - 1))}
-            className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">−</button>
-          <span className="flex-1 text-center text-sm font-bold text-gray-900">{travelers} {travelers === 1 ? 'Person' : 'Persons'}</span>
-          <button type="button" onClick={() => setTravelers(t => Math.min(tour.maxGroupSize, t + 1))}
-            className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">+</button>
+        
+        {/* Adults */}
+        <div className="mb-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold text-gray-600">Adults</span>
+            <span className="text-xs text-gray-400">Age 12+</span>
+          </div>
+          <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-2.5">
+            <button type="button" onClick={() => setAdults(a => Math.max(1, a - 1))}
+              className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">−</button>
+            <span className="flex-1 text-center text-sm font-bold text-gray-900">{adults}</span>
+            <button type="button" onClick={() => setAdults(a => Math.min(tour.maxGroupSize - children, a + 1))}
+              className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">+</button>
+          </div>
         </div>
-        <p className="text-xs text-gray-400 mt-1 text-center">Max {tour.maxGroupSize} per group</p>
+        
+        {/* Children */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-semibold text-gray-600">Children</span>
+            <span className="text-xs text-gray-400">Age 2-11</span>
+          </div>
+          <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-2.5">
+            <button type="button" onClick={() => setChildren(c => Math.max(0, c - 1))}
+              className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">−</button>
+            <span className="flex-1 text-center text-sm font-bold text-gray-900">{children}</span>
+            <button type="button" onClick={() => setChildren(c => Math.min(tour.maxGroupSize - adults, c + 1))}
+              className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">+</button>
+          </div>
+        </div>
+        
+        <p className="text-xs text-gray-400 mt-2 text-center">
+          Total: {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''} (Max {tour.maxGroupSize})
+        </p>
       </div>
 
       {/* Price summary */}
       <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 text-xs">
-        <div className="flex justify-between text-gray-500">
-          <span>₹{pricePerPerson.toLocaleString('en-IN')} × {travelers} person{travelers > 1 ? 's' : ''}</span>
-          <span className="font-medium text-gray-700">₹{total.toLocaleString('en-IN')}</span>
-        </div>
+        {totalRooms > 0 ? (
+          <>
+            {ROOM_TYPES.map(room => {
+              const count = roomSelections[room.key]
+              if (count === 0) return null
+              const roomPrice = Math.round(p * room.multiplier)
+              return (
+                <div key={room.key} className="flex justify-between text-gray-500">
+                  <span>{room.label} × {count}</span>
+                  <span className="font-medium text-gray-700">₹{(roomPrice * count).toLocaleString('en-IN')}</span>
+                </div>
+              )
+            })}
+          </>
+        ) : (
+          <div className="flex justify-between text-gray-500">
+            <span>Base price × {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}</span>
+            <span className="font-medium text-gray-700">₹{displayPrice.toLocaleString('en-IN')}</span>
+          </div>
+        )}
         <div className="flex justify-between text-gray-400">
           <span>GST included</span>
           <span className="text-green-600 font-medium">✓</span>
         </div>
         <div className="border-t border-gray-200 pt-1.5 flex justify-between font-bold text-gray-900 text-sm">
           <span>Total</span>
-          <span>₹{total.toLocaleString('en-IN')}</span>
+          <span>₹{displayPrice.toLocaleString('en-IN')}</span>
         </div>
       </div>
 
@@ -298,7 +398,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
         <Calendar className="w-4 h-4" /> Book Now
       </button>
 
-      <a href={`https://wa.me/${WHATSAPP}?text=Hi%2C%20I%20want%20to%20enquire%20about%20${encodeURIComponent(tour.title)}%20for%20${travelers}%20person${travelers > 1 ? 's' : ''}%20on%20${selectedDate ? fmtDate(selectedDate) : 'a%20date%20TBD'}`}
+      <a href={`https://wa.me/${WHATSAPP}?text=Hi%2C%20I%20want%20to%20enquire%20about%20${encodeURIComponent(tour.title)}%20for%20${adults}%20adult${adults > 1 ? 's' : ''}${children > 0 ? `%20and%20${children}%20child${children > 1 ? 'ren' : ''}` : ''}%20on%20${selectedDate ? fmtDate(selectedDate) : 'a%20date%20TBD'}`}
         target="_blank" rel="noopener noreferrer"
         className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
         <WhatsAppIcon size={16} className="text-white" /> Enquire on WhatsApp
@@ -545,53 +645,12 @@ export default function TourDetailPage() {
               // Deduplicate consecutive same locations
               const unique = routeLocations.filter((l, i) => i === 0 || l.id !== routeLocations[i - 1].id)
               return unique.length >= 2 ? (
-                <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
-                      <MapPin className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900">Tour Route Map</h2>
-                      <p className="text-sm text-gray-500">Follow the journey on highways and main roads</p>
-                    </div>
-                  </div>
-                  
-                  <TourRouteMap locations={unique} height="500px" />
-                  
-                  {/* Journey Steps */}
-                  <div className="mt-6 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs">
-                        {unique.length}
-                      </span>
-                      Journey Stops
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {unique.map((l, i) => {
-                        const isFirst = i === 0
-                        const isLast = i === unique.length - 1
-                        const emoji = isFirst ? '🚩' : isLast ? '🏁' : '📍'
-                        const bgColor = isFirst ? 'from-green-500 to-green-600' : isLast ? 'from-red-500 to-red-600' : 'from-orange-500 to-orange-600'
-                        const borderColor = isFirst ? 'border-green-200' : isLast ? 'border-red-200' : 'border-orange-200'
-                        
-                        return (
-                          <div key={l.id} className={`bg-white rounded-xl border-2 ${borderColor} p-3 shadow-sm hover:shadow-md transition-shadow`}>
-                            <div className="flex items-center gap-3">
-                              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${bgColor} flex items-center justify-center text-white text-lg shadow-md`}>
-                                {emoji}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                                  {isFirst ? 'Start' : isLast ? 'Destination' : `Stop ${i}`}
-                                </div>
-                                <div className="text-sm font-bold text-gray-900 truncate">{l.name}</div>
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
+                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-orange-600" />
+                    Tour Route Map
+                  </h2>
+                  <TourRouteMap locations={unique} height="460px" />
                 </div>
               ) : null
             })()}

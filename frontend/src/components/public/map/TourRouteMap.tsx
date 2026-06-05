@@ -11,10 +11,22 @@ interface Props {
   height?: string
 }
 
-// Fetch route geometry from OSRM (Open Source Routing Machine)
-async function fetchRoute(coords: [number, number][]): Promise<[number, number][]> {
+// Segment colors for routes A→B, B→C, C→D, etc.
+const SEGMENT_COLORS = [
+  '#facc15', // yellow-400
+  '#22c55e', // green-500
+  '#3b82f6', // blue-500
+  '#a855f7', // purple-500
+  '#ec4899', // pink-500
+  '#f97316', // orange-500
+  '#14b8a6', // teal-500
+  '#ef4444', // red-500
+]
+
+// Fetch route segment between two points
+async function fetchRouteSegment(from: [number, number], to: [number, number]): Promise<[number, number][]> {
   try {
-    const coordsStr = coords.map(c => `${c[0]},${c[1]}`).join(';')
+    const coordsStr = `${from[0]},${from[1]};${to[0]},${to[1]}`
     const url = `https://router.project-osrm.org/route/v1/driving/${coordsStr}?overview=full&geometries=geojson`
     
     const res = await fetch(url)
@@ -24,10 +36,10 @@ async function fetchRoute(coords: [number, number][]): Promise<[number, number][
     if (data.code === 'Ok' && data.routes?.[0]?.geometry?.coordinates) {
       return data.routes[0].geometry.coordinates as [number, number][]
     }
-    return coords // Fallback to straight lines
+    return [from, to] // Fallback to straight line
   } catch (err) {
     console.warn('OSRM routing failed, using direct path:', err)
-    return coords
+    return [from, to]
   }
 }
 
@@ -72,109 +84,90 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
 
       const coords: [number, number][] = valid.map(l => [Number(l.lng), Number(l.lat)])
 
-      // Fetch road-based route
+      // Fetch route segments with different colors
       setRouteLoading(true)
-      const routeCoords = await fetchRoute(coords)
+      
+      for (let i = 0; i < coords.length - 1; i++) {
+        const segmentCoords = await fetchRouteSegment(coords[i], coords[i + 1])
+        const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length]
+        
+        // Add each segment as a separate source
+        m.addSource(`route-segment-${i}`, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {},
+            geometry: { type: 'LineString', coordinates: segmentCoords },
+          },
+        })
+
+        // Outer glow for each segment
+        m.addLayer({
+          id: `route-glow-${i}`,
+          type: 'line',
+          source: `route-segment-${i}`,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: { 
+            'line-color': color, 
+            'line-width': 12, 
+            'line-opacity': 0.15,
+            'line-blur': 6
+          },
+        })
+
+        // Main road line for each segment
+        m.addLayer({
+          id: `route-line-${i}`,
+          type: 'line',
+          source: `route-segment-${i}`,
+          layout: { 'line-join': 'round', 'line-cap': 'round' },
+          paint: {
+            'line-color': color,
+            'line-width': 5,
+            'line-opacity': 0.95,
+          },
+        })
+
+        // Center dash line (highway marking style)
+        m.addLayer({
+          id: `route-centerline-${i}`,
+          type: 'line',
+          source: `route-segment-${i}`,
+          layout: { 'line-join': 'round', 'line-cap': 'butt' },
+          paint: {
+            'line-color': '#ffffff',
+            'line-width': 1.5,
+            'line-dasharray': [3, 3],
+            'line-opacity': 0.8,
+          },
+        })
+      }
+      
       setRouteLoading(false)
 
-      // ── Add route lines (road-based) ──────────────────────────────
-      m.addSource('route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: { type: 'LineString', coordinates: routeCoords },
-        },
-      })
-
-      // Outer glow
-      m.addLayer({
-        id: 'route-glow',
-        type: 'line',
-        source: 'route',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: { 
-          'line-color': '#f97316', 
-          'line-width': 12, 
-          'line-opacity': 0.15,
-          'line-blur': 6
-        },
-      })
-
-      // Main road line (solid, highway-like)
-      m.addLayer({
-        id: 'route-line',
-        type: 'line',
-        source: 'route',
-        layout: { 'line-join': 'round', 'line-cap': 'round' },
-        paint: {
-          'line-color': '#f97316',
-          'line-width': 5,
-          'line-opacity': 0.95,
-        },
-      })
-
-      // Center dash line (highway marking style)
-      m.addLayer({
-        id: 'route-centerline',
-        type: 'line',
-        source: 'route',
-        layout: { 'line-join': 'round', 'line-cap': 'butt' },
-        paint: {
-          'line-color': '#ffffff',
-          'line-width': 1.5,
-          'line-dasharray': [3, 3],
-          'line-opacity': 0.8,
-        },
-      })
-
-      // ── Enhanced Markers ───────────────────────────────────────────
+      // ── Simple Markers - Just Location Names ──────────────────────
       valid.forEach((loc, i) => {
-        const isFirst = i === 0
-        const isLast = i === valid.length - 1
-
         const el = document.createElement('div')
-        el.style.cssText = `
-          cursor: pointer; position: relative;
-          animation: markerDrop 0.6s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.12}s both;
-        `
+        el.style.cssText = `cursor: pointer;`
 
-        const bgColor = isFirst ? '#10b981' : isLast ? '#ef4444' : '#f97316'
-        const icon = isFirst ? '🚩' : isLast ? '🏁' : (i + 1)
-
+        const color = i === 0 ? '#10b981' : i === valid.length - 1 ? '#ef4444' : SEGMENT_COLORS[i % SEGMENT_COLORS.length]
+        
+        // Simple label only
         el.innerHTML = `
           <div style="
-            position: relative;
-            width: 44px; height: 44px;
-            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.25));
-          ">
-            <div style="
-              width: 44px; height: 44px; border-radius: 50% 50% 50% 0;
-              background: ${bgColor};
-              transform: rotate(-45deg);
-              border: 3px solid white;
-            "></div>
-            <div style="
-              position: absolute; top: 50%; left: 50%;
-              transform: translate(-50%, -60%);
-              color: white; font-size: ${isFirst || isLast ? '18px' : '15px'}; 
-              font-weight: 700;
-              text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            ">${icon}</div>
-          </div>
-          <div style="
-            position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
-            background: ${bgColor}; color: white; 
-            font-size: 11px; font-weight: 600; text-align: center;
-            padding: 4px 10px; border-radius: 8px; 
-            white-space: nowrap; max-width: 140px;
-            overflow: hidden; text-overflow: ellipsis;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            border: 2px solid white;
+            background: white;
+            color: ${color};
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            border: 2px solid ${color};
           ">${loc.name}</div>
         `
 
-        new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        new maplibregl.Marker({ element: el, anchor: 'center' })
           .setLngLat([Number(loc.lng), Number(loc.lat)])
           .addTo(m)
       })
@@ -206,25 +199,10 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
       
       <div ref={containerRef} className="w-full h-full" />
 
-      {/* Enhanced Legend */}
-      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg px-4 py-3 border-2 border-orange-100">
-        <div className="flex items-center gap-4 text-xs font-medium text-gray-700">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white text-[10px] shadow-md">
-              🚩
-            </div>
-            <span>Start</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Navigation className="w-4 h-4 text-orange-500" />
-            <span>Highway Route</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center text-white text-[10px] shadow-md">
-              🏁
-            </div>
-            <span>End</span>
-          </div>
+      {/* Simple Legend */}
+      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-md px-3 py-2 border border-gray-200">
+        <div className="flex items-center gap-3 text-xs font-medium text-gray-600">
+          <span>Route Map</span>
         </div>
       </div>
 

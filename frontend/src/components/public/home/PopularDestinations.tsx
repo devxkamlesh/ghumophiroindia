@@ -54,10 +54,14 @@ export default function PopularDestinations({ locations = [] }: Props) {
     }
   }
 
-  // Auto-scroll effect
+  // Auto-scroll effect (disabled on mobile/touch devices)
   useEffect(() => {
     const scrollContainer = scrollRef.current
     if (!scrollContainer || popularStates.length === 0) return
+
+    // Check if device supports touch (mobile)
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+    if (isTouchDevice) return // Don't auto-scroll on mobile
 
     let scrollInterval: NodeJS.Timeout
     let isPaused = false
@@ -83,42 +87,28 @@ export default function PopularDestinations({ locations = [] }: Props) {
 
     scrollContainer.addEventListener('mouseenter', handleMouseEnter)
     scrollContainer.addEventListener('mouseleave', handleMouseLeave)
-    scrollContainer.addEventListener('scroll', checkScrollPosition)
 
     startAutoScroll()
-    checkScrollPosition()
 
     return () => {
       clearInterval(scrollInterval)
       scrollContainer.removeEventListener('mouseenter', handleMouseEnter)
       scrollContainer.removeEventListener('mouseleave', handleMouseLeave)
-      scrollContainer.removeEventListener('scroll', checkScrollPosition)
     }
   }, [popularStates.length])
 
-  // Attach non-passive wheel listener for horizontal scroll
-  // Only intercept when scrolling horizontally (deltaX) or when container
-  // can still scroll horizontally — never block vertical page scroll
+  // Simplified touch handling - no custom touch listeners needed
+  // Browser handles it natively with proper CSS
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
 
-    const handleWheel = (e: WheelEvent) => {
-      const isScrollingHorizontally = Math.abs(e.deltaX) > Math.abs(e.deltaY)
-      const canScrollMore =
-        (e.deltaY > 0 && el.scrollLeft < el.scrollWidth - el.clientWidth - 1) ||
-        (e.deltaY < 0 && el.scrollLeft > 0)
-
-      // Only hijack vertical scroll if container can scroll horizontally
-      // and user is scrolling vertically (convert to horizontal)
-      if (!isScrollingHorizontally && canScrollMore) {
-        e.preventDefault()
-        el.scrollBy({ left: e.deltaY * 2, behavior: 'smooth' })
-      }
+    checkScrollPosition()
+    el.addEventListener('scroll', checkScrollPosition)
+    
+    return () => {
+      el.removeEventListener('scroll', checkScrollPosition)
     }
-
-    el.addEventListener('wheel', handleWheel, { passive: false })
-    return () => el.removeEventListener('wheel', handleWheel)
   }, [])
   if (popularStates.length === 0) return null
 
@@ -169,15 +159,16 @@ export default function PopularDestinations({ locations = [] }: Props) {
             </button>
           )}
 
-          {/* Scroll container - touch & mouse wheel friendly */}
+          {/* Scroll container - optimized for smooth mobile scrolling */}
           <div 
             ref={scrollRef}
-            className="flex gap-5 overflow-x-auto pb-4 scroll-smooth snap-x snap-mandatory scrollbar-hide"
+            className="flex gap-5 overflow-x-auto overflow-y-hidden pb-4 scroll-smooth snap-x snap-mandatory scrollbar-hide"
             style={{ 
               overscrollBehaviorX: 'contain',
-              overscrollBehaviorY: 'none',
+              overscrollBehaviorY: 'auto',
               WebkitOverflowScrolling: 'touch',
-              touchAction: 'pan-x',
+              scrollSnapType: 'x mandatory',
+              willChange: 'scroll-position',
             }}
           >
             {popularStates.map(state => (
