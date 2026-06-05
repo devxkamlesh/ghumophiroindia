@@ -266,7 +266,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
 
       {/* ═══════════ Date Picker Modal ═══════════ */}
       {showDatePicker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col animate-modal-pop">
             {/* Header */}
@@ -325,7 +325,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
 
       {/* ═══════════ Rooms + Hotel Modal ═══════════ */}
       {showRoomPicker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowRoomPicker(false)} />
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col animate-modal-pop">
             {/* Header */}
