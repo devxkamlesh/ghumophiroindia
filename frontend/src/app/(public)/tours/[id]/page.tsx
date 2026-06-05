@@ -201,112 +201,136 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
   const seats = selectedDate ? seatsFor(selectedDate) : tour.maxGroupSize
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
 
-      {/* Select Departure Date */}
-      <div>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Select Departure Date</p>
+      {/* Select Departure Date - Opens on Left Side */}
+      <div className="relative">
+        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Date</p>
 
         {/* Selected date display */}
         <button type="button" onClick={() => setShowDatePicker(s => !s)}
-          className="w-full flex items-center justify-between px-4 py-3 border-2 border-primary-500 rounded-xl bg-primary-50 hover:bg-primary-100 transition-colors">
+          className="w-full flex items-center justify-between px-3 py-2 border-2 border-primary-500 rounded-lg bg-primary-50 hover:bg-primary-100 transition-colors">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-primary-600" />
-            <span className="text-sm font-bold text-primary-700">
+            <Calendar className="w-3.5 h-3.5 text-primary-600" />
+            <span className="text-xs font-bold text-primary-700">
               {selectedDate ? fmtDate(selectedDate) : 'Choose date'}
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {selectedDate && (
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${seats <= 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
-                {seats} seats left
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${seats <= 5 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}`}>
+                {seats} left
               </span>
             )}
-            <ChevronDown className={`w-4 h-4 text-primary-600 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 text-primary-600 transition-transform ${showDatePicker ? 'rotate-180' : ''}`} />
           </div>
         </button>
 
-        {/* Date picker dropdown - Side by side layout */}
+        {/* Date picker panel - Opens to the left */}
         {showDatePicker && (
-          <div className="mt-2 border border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg">
-            {/* Price alert */}
-            <div className="bg-red-50 border-b border-red-100 px-3 py-2">
-              <p className="text-xs text-red-600 font-medium">
-                ⚠️ Price Alert: If seats drop below 5, price may increase by up to 25%.
-              </p>
-            </div>
+          <>
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black/20 z-40" onClick={() => setShowDatePicker(false)} />
+            
+            {/* Left side panel */}
+            <div className="fixed left-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 overflow-y-auto animate-slide-in-left">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+                <h3 className="font-bold text-gray-900">Select Date</h3>
+                <button onClick={() => setShowDatePicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              {/* Price alert */}
+              <div className="bg-red-50 border-b border-red-100 px-4 py-2.5">
+                <p className="text-xs text-red-600 font-medium">
+                  ⚠️ If seats drop below 5, price may increase by up to 25%.
+                </p>
+              </div>
 
-            <div className="max-h-80 overflow-y-auto p-3">
-              {Object.entries(byMonth).map(([month, dates]) => (
-                <div key={month} className="mb-4 last:mb-0">
-                  <p className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5" />{month}
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {dates.map((d, i) => {
-                      const s = seatsFor(d)
-                      const isSelected = selectedDate?.getTime() === d.getTime()
-                      const isLow = s <= 5
-                      return (
-                        <button key={i} type="button"
-                          onClick={() => { setSelectedDate(d); setShowDatePicker(false) }}
-                          className={`p-2.5 rounded-lg border text-center transition-all ${
-                            isSelected
-                              ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
-                              : isLow
-                              ? 'border-red-200 bg-red-50 hover:border-red-400'
-                              : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50'
-                          }`}>
-                          <p className={`text-xs font-bold ${isSelected ? 'text-primary-700' : isLow ? 'text-red-600' : 'text-gray-800'}`}>
-                            {fmtDate(d)}
-                          </p>
-                          <p className={`text-[10px] mt-0.5 ${isLow ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
-                            {s} seats
-                          </p>
-                        </button>
-                      )
-                    })}
+              <div className="p-4">
+                {Object.entries(byMonth).map(([month, dates]) => (
+                  <div key={month} className="mb-5 last:mb-0">
+                    <p className="text-xs font-bold text-gray-500 mb-3 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />{month}
+                    </p>
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {dates.map((d, i) => {
+                        const s = seatsFor(d)
+                        const isSelected = selectedDate?.getTime() === d.getTime()
+                        const isLow = s <= 5
+                        return (
+                          <button key={i} type="button"
+                            onClick={() => { setSelectedDate(d); setShowDatePicker(false) }}
+                            className={`p-3 rounded-lg border text-center transition-all ${
+                              isSelected
+                                ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
+                                : isLow
+                                ? 'border-red-200 bg-red-50 hover:border-red-400'
+                                : 'border-gray-200 hover:border-primary-300 hover:bg-primary-50'
+                            }`}>
+                            <p className={`text-sm font-bold ${isSelected ? 'text-primary-700' : isLow ? 'text-red-600' : 'text-gray-800'}`}>
+                              {fmtDate(d)}
+                            </p>
+                            <p className={`text-[10px] mt-1 ${isLow ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                              {s} seats
+                            </p>
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 
-      {/* Room Type - Multiple Selection */}
+      <style jsx>{`
+        @keyframes slide-in-left {
+          from {
+            transform: translateX(-100%);
+          }
+          to {
+            transform: translateX(0);
+          }
+        }
+        .animate-slide-in-left {
+          animation: slide-in-left 0.3s ease-out;
+        }
+      `}</style>
+
+      {/* Room Type - Compact Multiple Selection */}
       <div>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Select Rooms</p>
-        <div className="space-y-2">
+        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Rooms (Optional)</p>
+        <div className="space-y-1.5">
           {ROOM_TYPES.map(rt => {
             const rtPrice = Math.round(p * rt.multiplier)
             const count = roomSelections[rt.key]
             return (
               <div key={rt.key} 
-                className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                className={`flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${
                   count > 0 ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
                 }`}>
                 <div className="flex-1">
-                  <p className={`text-sm font-bold ${count > 0 ? 'text-primary-700' : 'text-gray-700'}`}>
-                    {rt.label}
-                  </p>
-                  <p className={`text-xs mt-0.5 ${count > 0 ? 'text-primary-600' : 'text-gray-500'}`}>
-                    ₹{rtPrice.toLocaleString('en-IN')} per room
+                  <p className={`text-xs font-bold ${count > 0 ? 'text-primary-700' : 'text-gray-700'}`}>
+                    {rt.label} <span className={`font-normal ${count > 0 ? 'text-primary-600' : 'text-gray-500'}`}>₹{(rtPrice/1000).toFixed(0)}k</span>
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button 
                     type="button" 
                     onClick={() => updateRoomCount(rt.key, -1)}
                     disabled={count === 0}
-                    className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-colors">
+                    className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 text-sm font-bold transition-colors">
                     −
                   </button>
-                  <span className="w-6 text-center text-sm font-bold text-gray-900">{count}</span>
+                  <span className="w-4 text-center text-xs font-bold text-gray-900">{count}</span>
                   <button 
                     type="button" 
                     onClick={() => updateRoomCount(rt.key, 1)}
-                    className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">
+                    className="w-6 h-6 rounded-md bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold transition-colors">
                     +
                   </button>
                 </div>
@@ -314,50 +338,43 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
             )
           })}
         </div>
-        {totalRooms > 0 && (
-          <p className="text-xs text-gray-500 mt-2">
-            Total: {totalRooms} room{totalRooms > 1 ? 's' : ''} selected
-          </p>
-        )}
       </div>
 
-      {/* Travelers - Adults & Children */}
+      {/* Travelers - Compact Adults & Children */}
       <div>
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Travelers</p>
+        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Travelers</p>
         
-        {/* Adults */}
-        <div className="mb-2">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-gray-600">Adults</span>
-            <span className="text-xs text-gray-400">Age 12+</span>
+        <div className="grid grid-cols-2 gap-2">
+          {/* Adults */}
+          <div>
+            <div className="text-[10px] text-gray-500 mb-1 flex items-center justify-between">
+              <span className="font-semibold">Adults</span>
+              <span>12+</span>
+            </div>
+            <div className="flex items-center border border-gray-200 rounded-lg px-2 py-1.5">
+              <button type="button" onClick={() => setAdults(a => Math.max(1, a - 1))}
+                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold">−</button>
+              <span className="flex-1 text-center text-xs font-bold text-gray-900">{adults}</span>
+              <button type="button" onClick={() => setAdults(a => Math.min(tour.maxGroupSize - children, a + 1))}
+                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold">+</button>
+            </div>
           </div>
-          <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-2.5">
-            <button type="button" onClick={() => setAdults(a => Math.max(1, a - 1))}
-              className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">−</button>
-            <span className="flex-1 text-center text-sm font-bold text-gray-900">{adults}</span>
-            <button type="button" onClick={() => setAdults(a => Math.min(tour.maxGroupSize - children, a + 1))}
-              className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">+</button>
+          
+          {/* Children */}
+          <div>
+            <div className="text-[10px] text-gray-500 mb-1 flex items-center justify-between">
+              <span className="font-semibold">Children</span>
+              <span>2-11</span>
+            </div>
+            <div className="flex items-center border border-gray-200 rounded-lg px-2 py-1.5">
+              <button type="button" onClick={() => setChildren(c => Math.max(0, c - 1))}
+                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold">−</button>
+              <span className="flex-1 text-center text-xs font-bold text-gray-900">{children}</span>
+              <button type="button" onClick={() => setChildren(c => Math.min(tour.maxGroupSize - adults, c + 1))}
+                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold">+</button>
+            </div>
           </div>
         </div>
-        
-        {/* Children */}
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-gray-600">Children</span>
-            <span className="text-xs text-gray-400">Age 2-11</span>
-          </div>
-          <div className="flex items-center gap-3 border border-gray-200 rounded-xl px-4 py-2.5">
-            <button type="button" onClick={() => setChildren(c => Math.max(0, c - 1))}
-              className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">−</button>
-            <span className="flex-1 text-center text-sm font-bold text-gray-900">{children}</span>
-            <button type="button" onClick={() => setChildren(c => Math.min(tour.maxGroupSize - adults, c + 1))}
-              className="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">+</button>
-          </div>
-        </div>
-        
-        <p className="text-xs text-gray-400 mt-2 text-center">
-          Total: {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''} (Max {tour.maxGroupSize})
-        </p>
       </div>
 
       {/* Price summary */}
