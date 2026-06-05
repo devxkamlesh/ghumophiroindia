@@ -222,6 +222,10 @@ const PKG_ICONS = [
 
 const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') || '919876543210'
 
+// Mock location chips — shown when a tour has no destinations set yet.
+// TODO: replace with real tour.destinations from the database.
+const MOCK_PLACES = ['Jaipur', 'Udaipur', 'Jodhpur', 'Pushkar']
+
 function TourCard({ tour }: { tour: Tour }) {
   const p      = priceNum(tour.price)
   const rating = tour.rating ? Number(tour.rating) : null
@@ -229,7 +233,16 @@ function TourCard({ tour }: { tour: Tour }) {
   const nights = tour.duration > 1 ? tour.duration - 1 : 0
   const included = tour.included ?? []
   const detectedPkg = PKG_ICONS.filter(pkg => included.some(inc => pkg.match.test(inc)))
-  const places = tour.destinations ?? []
+  // Fallback to default inclusions when none are set (mock — replace with real data later)
+  const displayPkg = detectedPkg.length > 0 ? detectedPkg : PKG_ICONS
+
+  // Location chips — fallback to mock places when destinations are empty
+  const places = (tour.destinations && tour.destinations.length > 0)
+    ? tour.destinations
+    : MOCK_PLACES
+
+  // Mock original (strikethrough) price — ~22% higher than deal price
+  const originalPrice = Math.round((p * 1.22) / 100) * 100
 
   return (
     <div className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col sm:flex-row">
@@ -265,19 +278,17 @@ function TourCard({ tour }: { tour: Tour }) {
         </div>
 
         {/* Includes icons */}
-        {detectedPkg.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3">
-            {detectedPkg.map(({ key, icon: Icon, label }) => (
-              <span key={key} className="flex items-center gap-1.5 text-xs text-gray-600">
-                <Icon className="w-4 h-4 text-primary-500" />{label}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-3">
+          {displayPkg.map(({ key, icon: Icon, label }) => (
+            <span key={key} className="flex items-center gap-1.5 text-xs text-gray-600">
+              <Icon className="w-4 h-4 text-primary-500" />{label}
+            </span>
+          ))}
+        </div>
 
         {/* Location chips */}
         {places.length > 0 && (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
             {places.slice(0, 5).map((place, i) => (
               <span key={i} className="flex items-center gap-1 text-xs text-gray-500">
                 <MapPin className="w-3 h-3 text-gray-400" />{place}
@@ -288,16 +299,23 @@ function TourCard({ tour }: { tour: Tour }) {
             )}
           </div>
         )}
+
+        {/* Quick Quotation */}
+        <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi, I want a quick quotation for ${tour.title}`)}`}
+          target="_blank" rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
+          ₹ Quick Quotation <ArrowRight className="w-3 h-3" />
+        </a>
       </div>
 
       {/* Right: price + CTAs */}
       <div className="sm:w-52 flex-shrink-0 border-t sm:border-t-0 sm:border-l border-gray-100 p-4 sm:p-5 flex flex-col justify-center bg-gray-50/50">
         <p className="text-[11px] font-semibold text-green-600 uppercase tracking-wide mb-0.5">Super Deal Price</p>
-        <div className="flex items-end gap-1 mb-0.5">
+        <div className="flex items-end gap-1.5 mb-0.5">
           <p className="text-2xl font-extrabold text-gray-900">₹{p.toLocaleString('en-IN')}</p>
-          <span className="text-gray-400 text-xs mb-1">/-</span>
+          <span className="text-gray-400 text-xs line-through mb-1">₹{originalPrice.toLocaleString('en-IN')}</span>
         </div>
-        <p className="text-[11px] text-gray-400 mb-3">per person</p>
+        <p className="text-[11px] text-gray-400 mb-3">per person on sharing</p>
 
         <Link href={`/tours/${tour.id}`}
           className="w-full text-center bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors mb-2">
