@@ -387,8 +387,8 @@ export default function ModernHeader() {
 
       {/* ══ ROW 2: Nav links — desktop only (auto-hide on scroll down) ══ */}
       <div className={cn(
-        'hidden lg:block bg-gradient-to-r from-orange-50/30 to-transparent border-t border-gray-50 overflow-hidden transition-all duration-300 ease-in-out',
-        navHidden ? 'max-h-0 opacity-0 border-transparent' : 'max-h-16 opacity-100'
+        'hidden lg:block bg-gradient-to-r from-orange-50/30 to-transparent border-t border-gray-50 transition-all duration-300 ease-in-out',
+        navHidden ? 'max-h-0 opacity-0 border-transparent overflow-hidden' : 'max-h-16 opacity-100 overflow-visible'
       )}>
         <div className="container-custom px-4 lg:px-6">
           <div className="flex items-center h-12">
