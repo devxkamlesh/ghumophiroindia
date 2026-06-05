@@ -134,18 +134,23 @@ export default function LocationMap({
 
       const cfg = config[location.type as keyof typeof config] || config.place
 
-      // Create custom marker element with animation
+      // Outer element — MapLibre controls its transform for positioning.
+      // We must NOT set transform on this element or the pin jumps to 0,0.
       const el = document.createElement('div')
       el.className = 'custom-marker'
-      el.style.cssText = `
-        width: ${cfg.size}px;
-        height: ${cfg.size * 1.2}px;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      el.style.cssText = `width:${cfg.size}px;height:${cfg.size * 1.2}px;cursor:pointer;`
+
+      // Inner element — holds the visual + animation/hover transforms.
+      const inner = document.createElement('div')
+      inner.style.cssText = `
+        width: 100%;
+        height: 100%;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
+        transform-origin: bottom center;
         animation: markerDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.05}s both;
       `
 
-      el.innerHTML = `
+      inner.innerHTML = `
         <svg width="${cfg.size}" height="${cfg.size * 1.2}" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow: visible;">
           <defs>
             <filter id="glow-${location.id}" x="-50%" y="-50%" width="200%" height="200%">
@@ -168,6 +173,7 @@ export default function LocationMap({
           <circle cx="12" cy="8" r="3" fill="white"/>
         </svg>
       `
+      el.appendChild(inner)
 
       // Hover effect with pulse + popup near the pin
       const popup = new maplibregl.Popup({
@@ -186,13 +192,13 @@ export default function LocationMap({
       `)
 
       el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.3) translateY(-6px)'
-        el.style.filter = 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3))'
+        inner.style.transform = 'scale(1.3) translateY(-6px)'
+        inner.style.filter = 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3))'
         popup.setLngLat([lng, lat]).addTo(map.current!)
       })
       el.addEventListener('mouseleave', () => {
-        el.style.transform = 'scale(1) translateY(0)'
-        el.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))'
+        inner.style.transform = 'scale(1) translateY(0)'
+        inner.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))'
         popup.remove()
       })
 

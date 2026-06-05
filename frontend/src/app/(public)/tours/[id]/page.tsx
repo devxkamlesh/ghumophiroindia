@@ -131,7 +131,6 @@ const HOTEL_CATEGORIES = [
 ]
 
 const ROOM_TYPES = [
-  { key: 'sharing', label: 'Sharing', capacity: '4-6 pax', multiplier: 1.0 },
   { key: 'triple',  label: 'Triple',  capacity: '3 pax', multiplier: 1.05 },
   { key: 'double',  label: 'Double',  capacity: '2 pax', multiplier: 1.18 },
   { key: 'single',  label: 'Single',  capacity: '1 pax', multiplier: 1.55 },
@@ -190,7 +189,6 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: (data: BookingDa
   
   // Room selections: { roomKey: count }
   const [roomSelections, setRoomSelections] = useState<Record<string, number>>({
-    sharing: 0,
     triple: 0,
     double: 0,
     single: 0,
@@ -378,7 +376,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: (data: BookingDa
                         onClick={() => {
                           if (selectedHotel !== hotel.key) {
                             setSelectedHotel(hotel.key)
-                            setRoomSelections({ sharing: 0, triple: 0, double: 0, single: 0 })
+                            setRoomSelections({ triple: 0, double: 0, single: 0 })
                           }
                         }}
                         className={`p-3 rounded-xl border-2 text-center transition-all ${
