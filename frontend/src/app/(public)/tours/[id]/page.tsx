@@ -16,6 +16,12 @@ import BookingModal from '@/components/public/shared/BookingModal'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
 import type { Tour, LocationNode } from '@/types'
 import { toWebP } from '@/lib/image'
+import dynamic from 'next/dynamic'
+
+const TourRouteMap = dynamic(() => import('@/components/public/map/TourRouteMap'), {
+  ssr: false,
+  loading: () => <div className="h-[380px] bg-gray-100 rounded-2xl animate-pulse" />,
+})
 
 function priceNum(p: string | number | null | undefined) {
   if (!p) return 0
@@ -527,6 +533,37 @@ export default function TourDetailPage() {
                 </div>
               </Section>
             )}
+
+            {/* Tour Route Map — shows connected route of itinerary locations */}
+            {(() => {
+              const routeLocations = (tour.itinerary ?? [])
+                .map(day => day.locationId
+                  ? Object.values(locationMap).find(l => l.id === day.locationId)
+                  : Object.values(locationMap).find(l => l.name.toLowerCase() === day.title.toLowerCase())
+                )
+                .filter((l): l is LocationNode => !!l && !!l.lat && !!l.lng)
+              // Deduplicate consecutive same locations
+              const unique = routeLocations.filter((l, i) => i === 0 || l.id !== routeLocations[i - 1].id)
+              return unique.length >= 2 ? (
+                <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                  <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 text-primary-600" />
+                    Tour Route Map
+                  </h2>
+                  <TourRouteMap locations={unique} height="360px" />
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {unique.map((l, i) => (
+                      <span key={l.id} className="inline-flex items-center gap-1.5 text-xs bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-full">
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold ${i === 0 ? 'bg-green-500' : i === unique.length - 1 ? 'bg-red-500' : 'bg-orange-500'}`}>
+                          {i === 0 ? '▶' : i === unique.length - 1 ? '⚑' : i + 1}
+                        </span>
+                        {l.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null
+            })()}
 
             {/* Included / Excluded */}
             {((tour.included ?? []).length > 0 || (tour.excluded ?? []).length > 0) && (
