@@ -98,9 +98,9 @@ function DetailSkeleton() {
 
 function Section({ title, children, icon }: { title: string; children: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6">
-      <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-        {icon}{title}
+    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+      <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2.5">
+        {icon ?? <span className="w-1 h-5 bg-primary-600 rounded-full" />}{title}
       </h2>
       {children}
     </div>
@@ -110,11 +110,13 @@ function Section({ title, children, icon }: { title: string; children: React.Rea
 function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="border border-gray-200 rounded-2xl overflow-hidden">
+    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
       <button type="button" onClick={() => setOpen(o => !o)}
         className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
         <span className="font-bold text-gray-900 text-sm">{title}</span>
-        {open ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+        <span className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${open ? 'bg-primary-50' : 'bg-gray-100'}`}>
+          {open ? <ChevronUp className="w-4 h-4 text-primary-600" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        </span>
       </button>
       {open && <div className="px-5 pb-5 bg-white border-t border-gray-100">{children}</div>}
     </div>
@@ -673,22 +675,22 @@ export default function TourDetailPage() {
 
         <div className="absolute bottom-5 left-0 right-0 px-5">
           <div className="container-custom">
-            <div className="flex flex-wrap gap-2 mb-2">
-              <span className="bg-primary-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full capitalize">{tour.category}</span>
+            <div className="flex flex-wrap gap-2 mb-2.5">
+              <span className="bg-primary-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full capitalize shadow-sm">{tour.category}</span>
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${DIFF[tour.difficulty] ?? 'bg-gray-100 text-gray-700'}`}>{tour.difficulty}</span>
-              {tour.isFeatured && <span className="bg-yellow-400 text-yellow-900 text-xs font-semibold px-2.5 py-1 rounded-full">⭐ Featured</span>}
+              {tour.isFeatured && <span className="bg-yellow-400 text-yellow-900 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><Star className="w-3 h-3 fill-yellow-900" /> Featured</span>}
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">{tour.title}</h1>
-            <div className="flex flex-wrap items-center gap-4 mt-2">
-              <span className="flex items-center gap-1.5 text-white/80 text-sm"><Clock className="w-4 h-4" />{tour.duration} Days</span>
-              <span className="flex items-center gap-1.5 text-white/80 text-sm"><Users className="w-4 h-4" />Max {tour.maxGroupSize} pax</span>
+            <h1 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg tracking-tight">{tour.title}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="flex items-center gap-1.5 text-white text-xs font-medium bg-white/15 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-white/20"><Clock className="w-3.5 h-3.5" />{tour.duration} Days</span>
+              <span className="flex items-center gap-1.5 text-white text-xs font-medium bg-white/15 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-white/20"><Users className="w-3.5 h-3.5" />Max {tour.maxGroupSize} pax</span>
               {(tour.destinations ?? []).length > 0 && (
-                <span className="flex items-center gap-1.5 text-white/80 text-sm"><MapPin className="w-4 h-4" />{(tour.destinations ?? []).join(' · ')}</span>
+                <span className="flex items-center gap-1.5 text-white text-xs font-medium bg-white/15 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-white/20"><MapPin className="w-3.5 h-3.5" />{(tour.destinations ?? []).join(' · ')}</span>
               )}
               {rating && (
-                <span className="flex items-center gap-1 text-yellow-300 text-sm font-semibold">
-                  <Star className="w-4 h-4 fill-yellow-300" />{rating.toFixed(1)}
-                  {(tour.reviewCount ?? 0) > 0 && <span className="text-white/60 font-normal">({tour.reviewCount})</span>}
+                <span className="flex items-center gap-1 text-yellow-900 text-xs font-bold bg-yellow-300 px-2.5 py-1.5 rounded-lg shadow-sm">
+                  <Star className="w-3.5 h-3.5 fill-yellow-900" />{rating.toFixed(1)}
+                  {(tour.reviewCount ?? 0) > 0 && <span className="font-medium opacity-70">({tour.reviewCount})</span>}
                 </span>
               )}
             </div>
@@ -711,11 +713,11 @@ export default function TourDetailPage() {
 
             {/* Package Includes icons */}
             {detectedPkg.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                 <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-5">Package Includes</h2>
                 <div className="flex flex-wrap gap-4">
                   {detectedPkg.map(({ key, icon: Icon, label }) => (
-                    <div key={key} className="flex flex-col items-center gap-2 bg-gray-50 rounded-2xl px-6 py-4 min-w-[90px] border border-gray-100">
+                    <div key={key} className="flex flex-col items-center gap-2 bg-gradient-to-b from-gray-50 to-white rounded-2xl px-6 py-4 min-w-[90px] border border-gray-100 hover:border-primary-200 hover:-translate-y-0.5 transition-all duration-300">
                       <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
                         <Icon className="w-5 h-5 text-primary-600" />
                       </div>
@@ -744,21 +746,26 @@ export default function TourDetailPage() {
               <Section title={`Itinerary — ${(tour.itinerary ?? []).length} Days`}>
                 <div className="space-y-0">
                   {(tour.itinerary ?? []).map((day, i) => (
-                    <div key={i} className="flex gap-4">
+                    <div key={i} className="flex gap-4 group">
                       <div className="flex flex-col items-center flex-shrink-0">
-                        <div className="w-9 h-9 rounded-full bg-primary-600 text-white flex items-center justify-center text-sm font-bold z-10">{day.day}</div>
-                        {i < (tour.itinerary ?? []).length - 1 && <div className="w-0.5 flex-1 bg-primary-100 my-1" />}
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center text-sm font-bold z-10 shadow-md ring-4 ring-primary-50 group-hover:scale-110 transition-transform">{day.day}</div>
+                        {i < (tour.itinerary ?? []).length - 1 && <div className="w-0.5 flex-1 bg-gradient-to-b from-primary-200 to-primary-50 my-1" />}
                       </div>
                       <div className="flex-1 pb-5">
-                        <h4 className="font-semibold text-gray-900 text-sm mb-1">{day.title}</h4>
-                        <p className="text-gray-500 text-sm mb-2">{day.description}</p>
-                        {(day.activities ?? []).length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {(day.activities ?? []).map((a, j) => (
-                              <ActivityPill key={j} name={a} locationMap={locationMap} />
-                            ))}
-                          </div>
-                        )}
+                        <div className="rounded-xl p-3 -mt-1 group-hover:bg-gray-50 transition-colors">
+                          <h4 className="font-semibold text-gray-900 text-sm mb-1 flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-primary-500 uppercase tracking-wider">Day {day.day}</span>
+                            {day.title}
+                          </h4>
+                          <p className="text-gray-500 text-sm mb-2">{day.description}</p>
+                          {(day.activities ?? []).length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {(day.activities ?? []).map((a, j) => (
+                                <ActivityPill key={j} name={a} locationMap={locationMap} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -791,8 +798,11 @@ export default function TourDetailPage() {
             {((tour.included ?? []).length > 0 || (tour.excluded ?? []).length > 0) && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {(tour.included ?? []).length > 0 && (
-                  <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                    <h3 className="text-sm font-bold text-green-700 mb-3 flex items-center gap-1.5"><Check className="w-4 h-4" /> Included</h3>
+                  <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-green-700 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center"><Check className="w-3.5 h-3.5" /></span>
+                      What's Included
+                    </h3>
                     <ul className="space-y-2">
                       {(tour.included ?? []).map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
@@ -803,8 +813,11 @@ export default function TourDetailPage() {
                   </div>
                 )}
                 {(tour.excluded ?? []).length > 0 && (
-                  <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                    <h3 className="text-sm font-bold text-red-600 mb-3 flex items-center gap-1.5"><X className="w-4 h-4" /> Excluded</h3>
+                  <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-red-600 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-lg bg-red-100 flex items-center justify-center"><X className="w-3.5 h-3.5" /></span>
+                      Not Included
+                    </h3>
                     <ul className="space-y-2">
                       {(tour.excluded ?? []).map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
