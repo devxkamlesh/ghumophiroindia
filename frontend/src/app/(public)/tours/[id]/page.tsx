@@ -534,7 +534,7 @@ export default function TourDetailPage() {
               </Section>
             )}
 
-            {/* Tour Route Map — shows connected route of itinerary locations */}
+            {/* Tour Route Map — Highway route with real roads */}
             {(() => {
               const routeLocations = (tour.itinerary ?? [])
                 .map(day => day.locationId
@@ -545,21 +545,52 @@ export default function TourDetailPage() {
               // Deduplicate consecutive same locations
               const unique = routeLocations.filter((l, i) => i === 0 || l.id !== routeLocations[i - 1].id)
               return unique.length >= 2 ? (
-                <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                  <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-primary-600" />
-                    Tour Route Map
-                  </h2>
-                  <TourRouteMap locations={unique} height="360px" />
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {unique.map((l, i) => (
-                      <span key={l.id} className="inline-flex items-center gap-1.5 text-xs bg-gray-50 border border-gray-200 text-gray-700 px-2.5 py-1 rounded-full">
-                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-white text-[9px] font-bold ${i === 0 ? 'bg-green-500' : i === unique.length - 1 ? 'bg-red-500' : 'bg-orange-500'}`}>
-                          {i === 0 ? '▶' : i === unique.length - 1 ? '⚑' : i + 1}
-                        </span>
-                        {l.name}
+                <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg">
+                      <MapPin className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-gray-900">Tour Route Map</h2>
+                      <p className="text-sm text-gray-500">Follow the journey on highways and main roads</p>
+                    </div>
+                  </div>
+                  
+                  <TourRouteMap locations={unique} height="500px" />
+                  
+                  {/* Journey Steps */}
+                  <div className="mt-6 bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
+                    <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs">
+                        {unique.length}
                       </span>
-                    ))}
+                      Journey Stops
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {unique.map((l, i) => {
+                        const isFirst = i === 0
+                        const isLast = i === unique.length - 1
+                        const emoji = isFirst ? '🚩' : isLast ? '🏁' : '📍'
+                        const bgColor = isFirst ? 'from-green-500 to-green-600' : isLast ? 'from-red-500 to-red-600' : 'from-orange-500 to-orange-600'
+                        const borderColor = isFirst ? 'border-green-200' : isLast ? 'border-red-200' : 'border-orange-200'
+                        
+                        return (
+                          <div key={l.id} className={`bg-white rounded-xl border-2 ${borderColor} p-3 shadow-sm hover:shadow-md transition-shadow`}>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${bgColor} flex items-center justify-center text-white text-lg shadow-md`}>
+                                {emoji}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                                  {isFirst ? 'Start' : isLast ? 'Destination' : `Stop ${i}`}
+                                </div>
+                                <div className="text-sm font-bold text-gray-900 truncate">{l.name}</div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
               ) : null
