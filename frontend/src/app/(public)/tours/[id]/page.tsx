@@ -159,7 +159,15 @@ function fmtMonth(d: Date) {
   return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
 }
 
-function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
+interface BookingData {
+  selectedDate: Date | null
+  adults: number
+  children: number
+  selectedHotel: string | null
+  roomSelections: Record<string, number>
+}
+
+function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: (data: BookingData) => void }) {
   const p = priceNum(tour.price)
   const departures = generateDepartures(tour.duration)
 
@@ -527,7 +535,7 @@ function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: () => void }) {
       </div>
 
       {/* CTA buttons */}
-      <button type="button" onClick={onBook}
+      <button type="button" onClick={() => onBook({ selectedDate, adults, children, selectedHotel, roomSelections })}
         className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-sm hover:shadow-md">
         <Calendar className="w-4 h-4" /> Book Now
       </button>
@@ -584,6 +592,7 @@ export default function TourDetailPage() {
   const [error,         setError]         = useState('')
   const [selectedImage, setSelectedImage] = useState(0)
   const [showBooking,   setShowBooking]   = useState(false)
+  const [bookingData,   setBookingData]   = useState<BookingData | null>(null)
   const [locationMap,   setLocationMap]   = useState<Record<string, LocationNode>>({})
 
   const fetchTour = useCallback(async () => {
@@ -924,7 +933,7 @@ export default function TourDetailPage() {
                 </div>
 
                 <div className="p-5 space-y-4">
-                  <BookingSidebar tour={tour} onBook={() => setShowBooking(true)} />
+                  <BookingSidebar tour={tour} onBook={(data) => { setBookingData(data); setShowBooking(true) }} />
                 </div>
               </div>
 
@@ -970,7 +979,17 @@ export default function TourDetailPage() {
         </div>
       </div>
 
-      {showBooking && <BookingModal tour={tour} onClose={() => setShowBooking(false)} />}
+      {showBooking && (
+        <BookingModal 
+          tour={tour} 
+          onClose={() => setShowBooking(false)}
+          selectedDate={bookingData?.selectedDate}
+          adults={bookingData?.adults}
+          children={bookingData?.children}
+          selectedHotel={bookingData?.selectedHotel}
+          roomSelections={bookingData?.roomSelections}
+        />
+      )}
     </div>
   )
 }
