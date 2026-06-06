@@ -34,9 +34,8 @@ export default function FeaturedTours({ tours }: Props) {
             Most <span className="text-blue-600">Popular</span> Tour
           </h2>
           <p className="mx-auto mt-4 max-w-3xl text-sm text-gray-600 md:text-base">
-            "Discover the world's most popular tours with Enlivetrips – where every journey is crafted
-            for unforgettable experiences." Your best place for adventure, culture, and memories that
-            last a lifetime starts here
+            Discover the world's most popular tours with unforgettable experiences. Your best place
+            for adventure, culture, and memories that last a lifetime starts here.
           </p>
         </div>
 
@@ -48,6 +47,16 @@ export default function FeaturedTours({ tours }: Props) {
               800
             )
             const price = priceNum(tour.price)
+
+            // Get start/end locations from tour locations
+            const startLocation = tour.tourLocations?.[0]?.name || 'Delhi'
+            const endLocation = tour.tourLocations?.[tour.tourLocations.length - 1]?.name || 'Delhi'
+            const locationText = startLocation === endLocation 
+              ? `${startLocation} To ${endLocation}` 
+              : `${startLocation} - ${endLocation}`
+
+            // Generate upcoming dates (placeholder - would come from booking system)
+            const upcomingDates = generateUpcomingDates(4)
 
             return (
               <div
@@ -65,7 +74,7 @@ export default function FeaturedTours({ tours }: Props) {
                   {/* Start-End Badge */}
                   <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow backdrop-blur-sm">
                     <MapPin className="h-3.5 w-3.5 text-green-600" />
-                    Delhi To Delhi
+                    {locationText}
                   </div>
 
                   {/* Duration Badge */}
@@ -84,7 +93,7 @@ export default function FeaturedTours({ tours }: Props) {
                   {/* Dates */}
                   <div className="mb-3 flex items-center gap-1.5 text-xs text-gray-600">
                     <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                    <span className="line-clamp-1">12 Jun, 19 Jun, 26 Jun, ...</span>
+                    <span className="line-clamp-1">{upcomingDates}</span>
                   </div>
 
                   {/* Price */}
@@ -115,4 +124,19 @@ export default function FeaturedTours({ tours }: Props) {
       </div>
     </section>
   )
+}
+
+// Helper function to generate upcoming dates
+function generateUpcomingDates(count: number): string {
+  const dates: string[] = []
+  const today = new Date()
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  
+  for (let i = 0; i < count; i++) {
+    const futureDate = new Date(today)
+    futureDate.setDate(today.getDate() + (i * 7)) // Weekly dates
+    dates.push(`${futureDate.getDate()} ${months[futureDate.getMonth()]}`)
+  }
+  
+  return dates.join(', ') + ', ...'
 }
