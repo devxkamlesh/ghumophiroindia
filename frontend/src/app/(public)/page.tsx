@@ -1,4 +1,5 @@
 import Hero from '@/components/public/home/Hero'
+import AdsBanner from '@/components/public/home/AdsBanner'
 import FeaturedTours from '@/components/public/home/FeaturedTours'
 import PopularDestinations from '@/components/public/home/PopularDestinations'
 import HowItWorks from '@/components/public/home/HowItWorks'
@@ -39,8 +40,9 @@ export default async function Home() {
   return (
     <>
       <Hero />
-      <FeaturedTours tours={featuredTours} />
+      <AdsBanner />
       <PopularDestinations locations={allLocations} />
+      <FeaturedTours tours={featuredTours} />
       <HowItWorks />
       <WhyChooseUs />
       <Testimonials />

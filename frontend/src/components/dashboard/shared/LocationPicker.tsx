@@ -20,21 +20,25 @@ interface Props {
   selectedIds: number[]
   onChange: (ids: number[]) => void
   singleSelect?: boolean
+  locations?: LocationNode[] // Optional: pass pre-fetched locations to avoid refetching
 }
 
-export function LocationPicker({ selectedIds, onChange, singleSelect }: Props) {
-  const [all,      setAll]      = useState<LocationNode[]>([])
+export function LocationPicker({ selectedIds, onChange, singleSelect, locations: propLocations }: Props) {
+  const [all,      setAll]      = useState<LocationNode[]>(propLocations || [])
   const [search,   setSearch]   = useState('')
   const [open,     setOpen]     = useState(false)
   const [loading,  setLoading]  = useState(false)
 
   useEffect(() => {
-    setLoading(true)
-    locationAdminService.getAll()
-      .then(setAll)
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+    // Only fetch if locations weren't passed as prop
+    if (!propLocations) {
+      setLoading(true)
+      locationAdminService.getAll()
+        .then(setAll)
+        .catch(() => {})
+        .finally(() => setLoading(false))
+    }
+  }, [propLocations])
 
   const selected = all.filter(l => selectedIds.includes(l.id))
 

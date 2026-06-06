@@ -408,7 +408,7 @@ export default function NewTourPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Price (₹) <span className="text-red-500">*</span></label>
-                <input type="number" min="0" step="100" value={form.price} onChange={e => set('price')(parseFloat(e.target.value) || 0)} className={cls} required />
+                <input type="number" min="0" step="100" value={form.price} onChange={e => set('price')(e.target.value === '' ? 0 : parseFloat(e.target.value))} className={cls} required />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Group Size <span className="text-red-500">*</span></label>
@@ -444,7 +444,7 @@ export default function NewTourPage() {
           <Section title="Images & Destinations">
             <div className="space-y-5">
               <ImageField images={form.images} onChange={set('images')} />
-              <LocationPicker selectedIds={form.locationIds} onChange={set('locationIds')} />
+              <LocationPicker selectedIds={form.locationIds} onChange={set('locationIds')} locations={allLocations} />
             </div>
           </Section>
 
@@ -483,6 +483,7 @@ export default function NewTourPage() {
                         if (name) updateDay(i, 'title', name)
                       }}
                       singleSelect
+                      locations={allLocations}
                     />
                   </div>
                   <div>
@@ -497,7 +498,7 @@ export default function NewTourPage() {
                   </div>
                   <div>
                     <p className="text-xs font-medium text-gray-500 mb-1.5">🗺 Places to visit (activities)</p>
-                    <LocationPicker selectedIds={day.activityLocationIds} onChange={ids => updateDay(i, 'activityLocationIds', ids)} />
+                    <LocationPicker selectedIds={day.activityLocationIds} onChange={ids => updateDay(i, 'activityLocationIds', ids)} locations={allLocations} />
                   </div>
                 </div>
               ))}

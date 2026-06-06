@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Playfair_Display, Jost } from 'next/font/google'
+import { Inter, Playfair_Display, Jost, Dancing_Script, Montez } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({
@@ -17,6 +17,19 @@ const playfair = Playfair_Display({
 const jost = Jost({
   subsets: ['latin'],
   variable: '--font-jost',
+  display: 'swap',
+})
+
+const dancingScript = Dancing_Script({
+  subsets: ['latin'],
+  variable: '--font-dancing',
+  display: 'swap',
+})
+
+const montez = Montez({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-montez',
   display: 'swap',
 })
 
@@ -38,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable} ${jost.variable}`}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable} ${jost.variable} ${dancingScript.variable} ${montez.variable}`}>
       <body className="font-sans">
         {children}
       </body>

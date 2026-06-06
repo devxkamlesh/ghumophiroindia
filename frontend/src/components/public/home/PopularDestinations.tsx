@@ -1,231 +1,177 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Compass, ChevronLeft, ChevronRight } from 'lucide-react'
+import { motion } from 'motion/react'
 import type { LocationNode } from '@/types'
 import { toWebP } from '@/lib/image'
 
-/* ─── Helpers ───────────────────────────────────────────────────────────── */
-/** Extract country & state from path like "india/rajasthan/jaipur" */
-function parsePath(path: string) {
-  const parts = path.split('/')
-  return {
-    country: parts[0] ? capitalize(parts[0]) : null,
-    state:   parts[1] ? capitalize(parts[1]) : null,
-  }
-}
-function capitalize(s: string) {
-  return s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-}
-
-/* ─── Component ─────────────────────────────────────────────────────────── */
 interface Props { locations?: LocationNode[] }
 
+const EASE = [0.25, 0.46, 0.45, 0.94] as const
+
 export default function PopularDestinations({ locations = [] }: Props) {
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(true)
-
-  // Filter only states that are marked as popular
   const popularStates = locations.filter(l => l.type === 'state' && l.isPopular)
+  const [activeIndex, setActiveIndex] = useState(Math.floor(popularStates.length / 2))
 
-  // Check scroll position to show/hide buttons
-  const checkScrollPosition = () => {
-    const container = scrollRef.current
-    if (!container) return
-
-    setCanScrollLeft(container.scrollLeft > 0)
-    setCanScrollRight(
-      container.scrollLeft < container.scrollWidth - container.clientWidth - 10
-    )
-  }
-
-  // Scroll functions
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -284, behavior: 'smooth' })
-    }
-  }
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 284, behavior: 'smooth' })
-    }
-  }
-
-  // Auto-scroll effect (disabled on mobile/touch devices)
-  useEffect(() => {
-    const scrollContainer = scrollRef.current
-    if (!scrollContainer || popularStates.length === 0) return
-
-    // Check if device supports touch (mobile)
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
-    if (isTouchDevice) return // Don't auto-scroll on mobile
-
-    let scrollInterval: NodeJS.Timeout
-    let isPaused = false
-
-    const startAutoScroll = () => {
-      scrollInterval = setInterval(() => {
-        if (!isPaused && scrollContainer) {
-          const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth
-          const currentScroll = scrollContainer.scrollLeft
-
-          if (currentScroll >= maxScroll) {
-            scrollContainer.scrollTo({ left: 0, behavior: 'smooth' })
-          } else {
-            scrollContainer.scrollBy({ left: 284, behavior: 'smooth' })
-          }
-        }
-      }, 3000)
-    }
-
-    // Pause on hover
-    const handleMouseEnter = () => { isPaused = true }
-    const handleMouseLeave = () => { isPaused = false }
-
-    scrollContainer.addEventListener('mouseenter', handleMouseEnter)
-    scrollContainer.addEventListener('mouseleave', handleMouseLeave)
-
-    startAutoScroll()
-
-    return () => {
-      clearInterval(scrollInterval)
-      scrollContainer.removeEventListener('mouseenter', handleMouseEnter)
-      scrollContainer.removeEventListener('mouseleave', handleMouseLeave)
-    }
-  }, [popularStates.length])
-
-  // Simplified touch handling - no custom touch listeners needed
-  // Browser handles it natively with proper CSS
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-
-    checkScrollPosition()
-    el.addEventListener('scroll', checkScrollPosition)
-    
-    return () => {
-      el.removeEventListener('scroll', checkScrollPosition)
-    }
-  }, [])
   if (popularStates.length === 0) return null
 
+  const goToPrev = () => {
+    setActiveIndex(prev => (prev === 0 ? popularStates.length - 1 : prev - 1))
+  }
+
+  const goToNext = () => {
+    setActiveIndex(prev => (prev === popularStates.length - 1 ? 0 : prev + 1))
+  }
+
   return (
-    <section className="py-16 md:py-20 bg-white">
+    <section className="relative overflow-hidden bg-white py-16 md:py-20">
       <div className="container-custom">
-
-        {/* ── Header ────────────────────────────────────────────────── */}
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <div className="inline-flex items-center gap-2 text-primary-600 text-sm font-semibold mb-3">
-              <Compass className="w-4 h-4" />
-              <span>Popular Destinations</span>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
-              Explore India
-            </h2>
-          </div>
-          <Link href="/destinations"
-            className="inline-flex items-center gap-2 text-primary-600 font-semibold hover:gap-3 transition-all text-sm shrink-0">
-            View all destinations <ArrowRight className="w-4 h-4" />
-          </Link>
+        {/* Heading */}
+        <div className="mb-16 text-center">
+          <p className="font-montez text-3xl text-[#f97316] md:text-4xl">
+            Top Destination
+          </p>
+          <h2 className="mt-1 text-3xl font-extrabold text-slate-800 md:text-5xl">
+            Popular Destination
+          </h2>
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            Horizontal Scrollable Row with Navigation Buttons
-        ══════════════════════════════════════════════════════════════════ */}
-        <div className="relative">
-          {/* Left scroll button */}
-          {canScrollLeft && (
-            <button
-              onClick={scrollLeft}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all hover:scale-110 hidden md:flex"
-              aria-label="Scroll left"
-            >
-              <ChevronLeft className="w-6 h-6 text-gray-700" />
-            </button>
-          )}
+        {/* Overlapping Cards Container (440:630 aspect ratio, infinite loop, progressive scale) */}
+        <div className="relative mx-auto flex h-[580px] items-center justify-center overflow-hidden px-4 md:h-[680px]">
+          {popularStates.map((state, index) => {
+            // Calculate offset with wrap-around for infinite loop
+            let offset = index - activeIndex
+            const halfLength = Math.floor(popularStates.length / 2)
+            
+            // Wrap offset to always show closest cards
+            if (offset > halfLength) {
+              offset -= popularStates.length
+            } else if (offset < -halfLength) {
+              offset += popularStates.length
+            }
 
-          {/* Right scroll button */}
-          {canScrollRight && (
-            <button
-              onClick={scrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-all hover:scale-110 hidden md:flex"
-              aria-label="Scroll right"
-            >
-              <ChevronRight className="w-6 h-6 text-gray-700" />
-            </button>
-          )}
+            const isFocused = index === activeIndex
+            const absOffset = Math.abs(offset)
+            const isVisible = absOffset <= 2
 
-          {/* Scroll container - optimized for smooth mobile scrolling */}
-          <div 
-            ref={scrollRef}
-            className="flex gap-5 overflow-x-auto overflow-y-hidden pb-4 scroll-smooth snap-x snap-mandatory scrollbar-hide"
-            style={{ 
-              overscrollBehaviorX: 'contain',
-              overscrollBehaviorY: 'auto',
-              WebkitOverflowScrolling: 'touch',
-              scrollSnapType: 'x mandatory',
-              willChange: 'scroll-position',
-            }}
-          >
-            {popularStates.map(state => (
-              <StateCard key={state.id || state.slug} state={state} />
-            ))}
-          </div>
-          
-          {/* Gradient fades on edges - reduced width */}
-          <div className="absolute top-0 left-0 bottom-4 w-12 bg-gradient-to-r from-white to-transparent pointer-events-none hidden md:block" />
-          <div className="absolute top-0 right-0 bottom-4 w-12 bg-gradient-to-l from-white to-transparent pointer-events-none hidden md:block" />
+            // Progressive scale: center 100%, ±1 is 85%, ±2 is 65%
+            let scale = 1
+            if (absOffset === 1) scale = 0.85
+            else if (absOffset === 2) scale = 0.65
+            else if (absOffset > 2) scale = 0.5
+
+            // Horizontal position - with gap between cards
+            const xOffset = offset * (absOffset === 2 ? 200 : 220)
+            
+            const zIndex = 10 - absOffset
+            const opacity = isVisible ? 1 : 0
+            const blur = isFocused ? 0 : absOffset === 1 ? 2 : 4
+
+            return (
+              <motion.div
+                key={state.id || state.slug}
+                initial={false}
+                animate={{
+                  x: xOffset,
+                  scale,
+                  opacity,
+                  zIndex,
+                  filter: `blur(${blur}px) brightness(${isFocused ? 1 : 0.7})`,
+                }}
+                transition={{ duration: 0.6, ease: EASE }}
+                onClick={() => setActiveIndex(index)}
+                className="absolute cursor-pointer"
+                style={{ pointerEvents: isVisible ? 'auto' : 'none' }}
+              >
+                <DestinationCard state={state} isFocused={isFocused} />
+              </motion.div>
+            )
+          })}
+
+          {/* Navigation Arrows */}
+          {popularStates.length > 1 && (
+            <>
+              <button
+                onClick={goToPrev}
+                aria-label="Previous destination"
+                className="absolute left-2 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white md:left-8 md:h-12 md:w-12"
+              >
+                <svg className="h-5 w-5 text-gray-800 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={goToNext}
+                aria-label="Next destination"
+                className="absolute right-2 top-1/2 z-30 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm transition-all hover:scale-110 hover:bg-white md:right-8 md:h-12 md:w-12"
+              >
+                <svg className="h-5 w-5 text-gray-800 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
-
       </div>
-
-      {/* Hide scrollbar */}
-      <style jsx global>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </section>
   )
 }
 
-/* ─── State Card ────────────────────────────────────────────────────────── */
-function StateCard({ state }: { state: LocationNode }) {
-  const image = toWebP(state.image || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071', 600)
+function DestinationCard({ state, isFocused }: { state: LocationNode; isFocused: boolean }) {
+  const image = toWebP(
+    state.image || 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071',
+    800
+  )
+
+  const tourCount = state.children?.filter(c => c.type === 'city').length || 0
 
   return (
-    <Link
-      href={`/destinations/${state.slug}`}
-      draggable={false}
-      className="group relative rounded-3xl overflow-hidden block w-[264px] h-[240px] flex-shrink-0 snap-start snap-always select-none"
+    <div
+      className="relative w-[320px] overflow-hidden rounded-3xl shadow-2xl transition-shadow duration-500 md:w-[400px]"
+      style={{
+        aspectRatio: '440 / 630',
+        boxShadow: isFocused
+          ? '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+          : '0 10px 30px -5px rgba(0, 0, 0, 0.3)',
+      }}
     >
-      {/* Image */}
+      {/* Background Image */}
       <div
-        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+        className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url('${image}')` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-      {/* Content */}
-      <div className="absolute inset-0 p-5 flex flex-col justify-end">
-        <h3 className="font-bold text-white text-lg leading-tight transition-all duration-300 group-hover:translate-y-[-2px] group-hover:text-xl">
-          {state.name}
-        </h3>
+      {/* Dark overlay at bottom */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+
+      {/* Content at bottom - left aligned with button on right */}
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-6">
+        <div className="text-left flex-1 min-w-0">
+          <h3 className="text-xl font-bold text-white drop-shadow-lg leading-tight md:text-2xl">
+            {state.name}
+          </h3>
+          <p className="mt-1 text-xs font-medium text-white/90 md:text-sm">
+            {tourCount} Package{tourCount !== 1 ? 's' : ''}
+          </p>
+        </div>
+
+        {isFocused && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.15, duration: 0.3 }}
+            className="flex-shrink-0"
+          >
+            <Link
+              href={`/destinations/${state.slug}`}
+              className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border-2 border-white bg-white/10 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white hover:text-slate-800"
+            >
+              View All <span className="text-base">→</span>
+            </Link>
+          </motion.div>
+        )}
       </div>
-
-      {/* Enhanced hover overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/0 via-black/0 to-black/0 group-hover:from-black/30 group-hover:via-black/10 group-hover:to-transparent transition-all duration-300" />
-      
-      {/* Subtle glow border on hover */}
-      <div className="absolute inset-0 border-2 border-transparent group-hover:border-white/30 rounded-3xl transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]" />
-    </Link>
+    </div>
   )
 }
