@@ -27,7 +27,7 @@ export default function FeaturedTours({ tours }: Props) {
       <div className="container-custom">
         {/* Header */}
         <div className="mb-12 text-center">
-          <p className="font-montez text-3xl text-[#f97316] md:text-4xl">
+          <p className="font-montez text-4xl text-[#f97316] md:text-5xl lg:text-6xl">
             Best Place For You
           </p>
           <h2 className="mt-1 font-poppins text-3xl font-bold text-slate-800 md:text-5xl">
