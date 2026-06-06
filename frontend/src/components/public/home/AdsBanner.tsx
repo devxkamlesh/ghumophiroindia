@@ -64,10 +64,10 @@ export default function AdsBanner() {
           transition={{ duration: 0.6, ease: EASE }}
           className="mb-12 text-center"
         >
-          <p className="font-montez text-4xl font-bold text-[#f97316] md:text-5xl lg:text-6xl">
+          <p className="font-montez text-4xl text-[#f97316] md:text-5xl lg:text-6xl">
             Wonderful Place For You
           </p>
-          <h2 className="mt-1 text-3xl font-extrabold text-slate-800 md:text-5xl">
+          <h2 className="mt-1 font-merriweather text-3xl font-extrabold text-slate-800 md:text-5xl">
             Tour Categories
           </h2>
         </motion.div>
