@@ -62,52 +62,187 @@ function buildAIPrompt(locations: LocationNode[]) {
     places.length    ? `// PLACES\n${places.join(',\n')}`       : '',
   ].filter(Boolean).join(',\n\n')
 
-  return `You are creating a tour package for an Indian travel website.
-Use ONLY the locations listed below. Pick relevant ones based on the tour.
+  return `You are a travel expert creating detailed tour packages for an Indian travel website. Your task is to generate a comprehensive, realistic tour package in JSON format.
 
-AVAILABLE LOCATIONS (use exact id, name, slug):
+🎯 OBJECTIVE: Create a complete tour package with ALL fields filled accurately and professionally.
+
+📍 AVAILABLE LOCATIONS (MUST use exact id, name, slug from this list):
 [
 ${locationList}
 ]
 
-Fill in the following JSON. Return ONLY valid JSON, no explanation, no markdown.
+📋 FIELD REQUIREMENTS:
+
+1. BASIC INFO:
+   - title: Catchy, descriptive name (e.g., "Royal Rajasthan Heritage Tour", "Golden Triangle Expedition")
+   - description: 1-2 sentences for listing cards (80-120 words, highlight USPs)
+   - longDescription: 3-5 detailed paragraphs for tour detail page (300-500 words, include:
+     • Tour overview and what makes it special
+     • Who it's perfect for (families, adventure seekers, culture enthusiasts)
+     • What travelers will experience
+     • Best time to visit
+     • Cultural insights or historical context)
+
+2. PRICING & LOGISTICS:
+   - duration: Total days (realistic: 3-15 days for most tours)
+   - price: Per person in INR (₹15,000-₹80,000 range, based on: duration, luxury level, destinations)
+   - maxGroupSize: 8-25 people (smaller for luxury/adventure, larger for budget tours)
+   - difficulty: "easy" (city tours, cultural), "moderate" (some walking/travel), "challenging" (treks, long journeys)
+   - category: "heritage" (forts, palaces), "city" (urban exploration), "desert" (Rajasthan), "custom" (mix)
+   - isFeatured: true for premium/popular tours, false for regular
+
+3. VISUAL CONTENT:
+   - images: Array of 4-8 high-quality Unsplash URLs
+     • Use actual Unsplash photo IDs for Indian destinations
+     • Format: "https://images.unsplash.com/photo-PHOTOID?w=1200&q=80"
+     • Example IDs: photo-1524492412937-b28074a5d7da (Taj Mahal), photo-1477587458883-47145ed94245 (Jaipur Palace)
+     • Mix: monuments, landscapes, culture, activities
+
+4. HIGHLIGHTS (6-10 items):
+   - Specific attractions/experiences (not generic)
+   - Mix of monuments, activities, cultural experiences
+   - Examples: "Sunrise visit to Taj Mahal", "Elephant ride at Amber Fort", "Traditional Rajasthani dinner with folk dance"
+
+5. INCLUDED (8-15 items):
+   - Be comprehensive and specific
+   - Categories: Accommodation, Meals, Transport, Guides, Activities, Permits
+   - Examples:
+     • "4-star hotel accommodation (double occupancy) for ${duration-1} nights"
+     • "Daily breakfast and ${Math.floor(duration/2)} dinners"
+     • "AC vehicle (sedan/SUV/tempo traveler based on group)"
+     • "Professional English-speaking tour guide"
+     • "All monument entry fees and parking charges"
+     • "Airport pickup and drop"
+     • "Mineral water bottles during travel"
+
+6. EXCLUDED (6-10 items):
+   - Common exclusions travelers should know
+   - Examples:
+     • "International/domestic flight tickets"
+     • "Lunch (available at own cost)"
+     • "Personal expenses (laundry, phone, shopping)"
+     • "Travel insurance"
+     • "Camera/video fees at monuments"
+     • "Tips for guide and driver (recommended ₹200-300/day)"
+     • "Any meals not mentioned in inclusions"
+
+7. LOCATION IDs:
+   - Select 3-8 relevant location IDs from the list above
+   - Match the tour theme (e.g., Golden Triangle: Delhi, Agra, Jaipur)
+   - Order them logically (travel route)
+
+8. ITINERARY (CRITICAL - Be very detailed):
+   - One object per day
+   - Each day MUST have:
+     • day: Number (1, 2, 3...)
+     • title: Location name or "Travel to X" or "Explore Y"
+     • description: Detailed 100-150 word narrative of the day
+       - Include: morning/afternoon/evening breakdown
+       - Specific activities and timings (approx)
+       - Meals included
+       - Travel details if moving cities
+       - Free time or optional activities
+     • locationId: Main location ID for that day (from available locations)
+     • activityLocationIds: Array of 2-5 place IDs visited that day
+
+   EXAMPLE FULL DAY:
+   {
+     "day": 1,
+     "title": "Arrival in Delhi - Historical Old Delhi Tour",
+     "description": "Welcome to India! Upon arrival at Delhi airport, our representative will greet you and transfer you to your hotel. After check-in and freshen up, we'll start with a half-day tour of Old Delhi. Visit the magnificent Red Fort (UNESCO World Heritage Site), explore the bustling lanes of Chandni Chowk on a rickshaw ride, and see Jama Masjid, India's largest mosque. Drive past India Gate and Parliament House. Evening free for leisure. Overnight stay at hotel. (Meals: Dinner included)",
+     "locationId": 23,
+     "activityLocationIds": [45, 67, 89, 102]
+   }
+
+🎨 STYLE GUIDELINES:
+- Write naturally and engagingly (not robotic)
+- Use specific names, not generic terms
+- Include realistic prices (research typical tour costs)
+- Make itinerary descriptions vivid and exciting
+- Balance information with readability
+
+⚠️ CRITICAL RULES:
+1. Return ONLY valid JSON (no markdown, no explanation, no code blocks)
+2. Use ONLY location IDs from the provided list
+3. Fill EVERY field (no empty strings or arrays)
+4. Make it realistic and sellable
+5. Proofread for grammar and consistency
+
+📦 JSON TEMPLATE (fill this completely):
 
 {
-  "title": "Tour name",
-  "description": "Short 1-2 sentence description for listing cards",
-  "longDescription": "Detailed 3-5 paragraph description for tour detail page",
-  "duration": 6,
-  "price": 24999,
-  "maxGroupSize": 15,
+  "title": "Royal Rajasthan Heritage Tour - 7 Days of Palaces & Culture",
+  "description": "Immerse yourself in the royal grandeur of Rajasthan with this 7-day heritage tour covering Jaipur, Jodhpur, and Udaipur. Experience magnificent forts, opulent palaces, vibrant markets, and authentic Rajasthani culture. Perfect for history lovers and photography enthusiasts.",
+  "longDescription": "Discover the enchanting land of maharajas with our carefully crafted 7-day Royal Rajasthan Heritage Tour. This journey takes you through three jewels of Rajasthan - the Pink City of Jaipur, the Blue City of Jodhpur, and the City of Lakes, Udaipur. Each destination offers a unique blend of architectural marvels, rich history, and vibrant culture.\\n\\nThis tour is perfect for travelers who appreciate history, architecture, and cultural immersion. Whether you're a solo traveler, couple, or family, our expertly designed itinerary balances guided tours with free time for personal exploration. You'll stay in carefully selected heritage properties that reflect Rajasthan's royal past while enjoying modern comforts.\\n\\nExperience the grandeur of Amber Fort's mirror palaces, witness the magnificent sunset from Mehrangarh Fort, cruise on Lake Pichola surrounded by palaces, and shop for traditional handicrafts in bustling bazaars. Savor authentic Rajasthani cuisine including dal baati churma and laal maas, and enjoy cultural performances featuring folk music and dance.\\n\\nThe best time for this tour is October to March when the weather is pleasant for sightseeing. Our experienced guides will share fascinating stories of Rajput valor, architectural innovations, and local traditions that bring these magnificent monuments to life. With comfortable accommodations, reliable transport, and comprehensive inclusions, this tour ensures a hassle-free and memorable Rajasthan experience.",
+  "duration": 7,
+  "price": 28999,
+  "maxGroupSize": 16,
   "difficulty": "easy",
   "category": "heritage",
   "isFeatured": false,
   "images": [
-    "https://images.unsplash.com/photo-XXXXX?w=1200&q=80"
+    "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&q=80",
+    "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=1200&q=80",
+    "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=1200&q=80",
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80",
+    "https://images.unsplash.com/photo-1548013146-72479768bada?w=1200&q=80",
+    "https://images.unsplash.com/photo-1599661046289-e31897846e41?w=1200&q=80"
   ],
   "highlights": [
-    "Visit Amber Fort",
-    "Taj Mahal at sunrise"
+    "Explore the magnificent Amber Fort with elephant ride experience",
+    "Visit the iconic Hawa Mahal (Palace of Winds) in Jaipur",
+    "Witness stunning sunset from Mehrangarh Fort, Jodhpur",
+    "Romantic boat ride on Lake Pichola, Udaipur",
+    "Explore the opulent City Palace and Crystal Gallery",
+    "Shop for traditional handicrafts in local bazaars",
+    "Traditional Rajasthani dinner with folk dance performance",
+    "Photography opportunities at colorful markets and monuments"
   ],
   "included": [
-    "Hotel accommodation (5 nights)",
-    "Daily breakfast",
-    "AC vehicle",
-    "Tour guide"
+    "6 nights accommodation in 4-star heritage hotels (double/twin sharing)",
+    "Daily breakfast at hotels",
+    "4 dinners including 1 special Rajasthani cultural dinner",
+    "AC vehicle (sedan/SUV/tempo traveler based on group size)",
+    "Professional English-speaking tour guide throughout",
+    "All monument entry fees and parking charges",
+    "Elephant ride at Amber Fort",
+    "Boat ride on Lake Pichola, Udaipur",
+    "Airport/railway station pickup and drop in Jaipur",
+    "Mineral water bottles during travel",
+    "All applicable taxes and GST"
   ],
   "excluded": [
-    "International flights",
-    "Personal expenses",
-    "Camera fees"
+    "Flight or train tickets to/from Jaipur",
+    "Lunch on all days (available at restaurants, ₹300-500 per meal)",
+    "Personal expenses (laundry, phone calls, shopping, beverages)",
+    "Travel insurance (strongly recommended)",
+    "Camera and video fees at monuments (₹100-500 per monument)",
+    "Tips for guide and driver (recommended ₹300-500 per day)",
+    "Any meals not mentioned in inclusions",
+    "Cost of optional activities or services not mentioned in itinerary"
   ],
-  "locationIds": [1, 2, 3],
+  "locationIds": [12, 23, 34, 45, 56, 67],
   "itinerary": [
     {
       "day": 1,
-      "title": "Arrival in Delhi",
-      "description": "Arrive at Delhi airport, check in to hotel, evening visit to India Gate.",
-      "locationId": 1,
-      "activityLocationIds": [4, 5]
+      "title": "Arrival in Jaipur - Pink City Welcome",
+      "description": "Welcome to the Pink City of Jaipur! Upon arrival at Jaipur airport or railway station, our representative will greet you with traditional welcome and transfer you to your heritage hotel. After check-in and freshen up, enjoy a leisurely evening exploring the nearby Bapu Bazaar and Johari Bazaar, famous for traditional Rajasthani textiles, jewelry, and handicrafts. In the evening, visit the beautifully lit Birla Mandir (Laxmi Narayan Temple) for peaceful views of the city. Return to hotel for welcome dinner featuring authentic Rajasthani cuisine. Overnight at Jaipur. (Meals: Dinner included)",
+      "locationId": 12,
+      "activityLocationIds": [23, 34, 45]
+    },
+    {
+      "day": 2,
+      "title": "Jaipur Fort & Palace Exploration",
+      "description": "After breakfast, embark on a full day tour of Jaipur's magnificent monuments. Start with an elephant ride (or jeep) up to the majestic Amber Fort, exploring its mirror palace (Sheesh Mahal), royal chambers, and stunning courtyards. En route back, photo stop at Jal Mahal (Water Palace) floating in Man Sagar Lake. After lunch break, visit the iconic Hawa Mahal (Palace of Winds) with its 953 pink windows, then explore the grand City Palace complex with its museum showcasing royal artifacts. End the day at Jantar Mantar, the UNESCO-listed astronomical observatory. Evening free for shopping or optional light and sound show at Amber Fort (₹200 per person). Overnight at Jaipur. (Meals: Breakfast)",
+      "locationId": 12,
+      "activityLocationIds": [56, 67, 78, 89, 90]
+    },
+    {
+      "day": 3,
+      "title": "Jaipur to Jodhpur - Journey to Blue City (5 hours)",
+      "description": "After breakfast and hotel checkout, depart for Jodhpur, the Blue City of Rajasthan (approximately 340 km, 5-6 hours drive). En route, visit the famous Ajmer Sharif Dargah (optional, if time permits) and Pushkar's sacred lake and Brahma Temple. Arrive in Jodhpur by late afternoon and check into your hotel. Evening at leisure to explore the blue-painted old city streets near the clock tower and bustling Sardar Market. Don't miss trying the famous Jodhpur mirchi vada and makhania lassi. Overnight at Jodhpur. (Meals: Breakfast)",
+      "locationId": 23,
+      "activityLocationIds": [101, 102]
     }
   ]
 }`
