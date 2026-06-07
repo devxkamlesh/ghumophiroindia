@@ -59,6 +59,7 @@ export interface Itinerary {
   title: string
   description: string
   activities: string[]           // location names (for display)
+  meals?: string[]               // ['breakfast','lunch','dinner']
   locationId?: number | null     // main location for this day
   activityLocationIds?: number[] // location IDs for activities
 }

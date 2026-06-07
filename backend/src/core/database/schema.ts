@@ -44,7 +44,7 @@ export const tours = pgTable('tours', {
   included:        jsonb('included').$type<string[]>().notNull(),
   excluded:        jsonb('excluded').$type<string[]>().notNull(),
   itinerary:       jsonb('itinerary').$type<Array<{
-    day: number; title: string; description: string; activities: string[]
+    day: number; title: string; description: string; activities: string[]; meals?: string[]
   }>>().notNull(),
   destinations:    jsonb('destinations').$type<string[]>().notNull(),
   rating:          decimal('rating', { precision: 2, scale: 1 }),

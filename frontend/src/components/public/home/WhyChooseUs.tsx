@@ -1,30 +1,76 @@
 'use client'
 
 import { Shield, Award, HeadphonesIcon, Sparkles, Users, ThumbsUp } from 'lucide-react'
+import { motion } from 'motion/react'
 
 const features = [
-  { icon: Shield,          title: 'Safe & Secure',   description: 'Licensed guides, insured vehicles, and 24/7 support for worry-free travel.',  color: 'text-blue-600',   bg: 'bg-blue-50' },
-  { icon: Award,           title: 'Expert Guides',   description: 'Local experts with deep knowledge of history, culture, and hidden gems.',       color: 'text-violet-600', bg: 'bg-violet-50' },
-  { icon: HeadphonesIcon,  title: '24/7 Support',    description: 'Round-the-clock assistance before, during, and after your journey.',            color: 'text-emerald-600',bg: 'bg-emerald-50' },
-  { icon: Sparkles,        title: 'Customizable',    description: 'Tailor every aspect of your tour to match your preferences and budget.',         color: 'text-amber-600',  bg: 'bg-amber-50' },
-  { icon: Users,           title: 'Small Groups',    description: 'Intimate experiences with small group sizes for personalized attention.',        color: 'text-pink-600',   bg: 'bg-pink-50' },
-  { icon: ThumbsUp,        title: 'Best Price',      description: 'Competitive pricing with no hidden fees and flexible payment options.',          color: 'text-orange-600', bg: 'bg-orange-50' },
+  {
+    icon: Shield,
+    title: 'Safe & Secure',
+    description: 'Licensed guides, insured vehicles, and 24/7 support for worry-free travel.',
+    gradient: 'from-blue-500 to-cyan-500',
+    glow: 'shadow-blue-500/25',
+  },
+  {
+    icon: Award,
+    title: 'Expert Guides',
+    description: 'Local experts with deep knowledge of history, culture, and hidden gems.',
+    gradient: 'from-violet-500 to-purple-500',
+    glow: 'shadow-violet-500/25',
+  },
+  {
+    icon: HeadphonesIcon,
+    title: '24/7 Support',
+    description: 'Round-the-clock assistance before, during, and after your journey.',
+    gradient: 'from-emerald-500 to-teal-500',
+    glow: 'shadow-emerald-500/25',
+  },
+  {
+    icon: Sparkles,
+    title: 'Customizable',
+    description: 'Tailor every aspect of your tour to match your preferences and budget.',
+    gradient: 'from-amber-500 to-orange-500',
+    glow: 'shadow-amber-500/25',
+  },
+  {
+    icon: Users,
+    title: 'Small Groups',
+    description: 'Intimate experiences with small group sizes for personalized attention.',
+    gradient: 'from-pink-500 to-rose-500',
+    glow: 'shadow-pink-500/25',
+  },
+  {
+    icon: ThumbsUp,
+    title: 'Best Price',
+    description: 'Competitive pricing with no hidden fees and flexible payment options.',
+    gradient: 'from-orange-500 to-red-500',
+    glow: 'shadow-orange-500/25',
+  },
 ]
 
 const stats = [
-  { number: '2,500+', label: 'Happy Travelers' },
-  { number: '14+',    label: 'Years Experience' },
-  { number: '4.9/5',  label: 'Average Rating' },
-  { number: '98%',    label: 'Satisfaction Rate' },
+  { number: '1,200+', label: 'Happy Travelers' },
+  { number: '4+',     label: 'Years Experience' },
+  { number: '4.8/5',  label: 'Average Rating' },
+  { number: '50+',    label: 'Destinations Covered' },
 ]
 
 export default function WhyChooseUs() {
   return (
-    <section className="py-20 md:py-28 bg-gray-50">
-      <div className="container-custom">
+    <section className="relative py-20 md:py-28 bg-white overflow-hidden">
+      {/* Decorative background */}
+      <div className="absolute inset-0 -z-0 opacity-[0.4]"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at 1px 1px, rgba(0,0,0,0.06) 1px, transparent 0)',
+          backgroundSize: '28px 28px',
+        }}
+      />
+
+      <div className="container-custom relative">
 
         {/* Header */}
-        <div className="text-center mb-14">
+        <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 text-primary-600 text-sm font-semibold mb-3">
             <span className="w-4 h-px bg-primary-400" />
             Why Ghumo Phiro India
@@ -35,30 +81,49 @@ export default function WhyChooseUs() {
         </div>
 
         {/* Features */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-14">
-          {features.map(f => {
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+          {features.map((f, i) => {
             const Icon = f.icon
             return (
-              <div key={f.title}
-                className="group bg-white rounded-2xl p-7 border border-gray-100 hover:border-primary-200 hover:shadow-lg transition-all duration-300">
-                <div className={`w-12 h-12 ${f.bg} rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}>
-                  <Icon className={`w-6 h-6 ${f.color}`} />
+              <motion.div
+                key={f.title}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="group relative bg-white rounded-3xl p-7 border border-gray-100 hover:border-transparent hover:shadow-xl transition-all duration-300"
+              >
+                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${f.gradient} flex items-center justify-center mb-5 shadow-lg ${f.glow} group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300`}>
+                  <Icon className="w-8 h-8 text-white" strokeWidth={2} />
                 </div>
                 <h3 className="font-bold text-gray-900 text-lg mb-2">{f.title}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{f.description}</p>
-              </div>
+              </motion.div>
             )
           })}
         </div>
 
         {/* Stats bar */}
-        <div className="bg-gray-900 rounded-2xl p-8 md:p-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map(s => (
-              <div key={s.label} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold text-white mb-1">{s.number}</div>
+        <div className="relative overflow-hidden bg-gray-900 rounded-3xl p-8 md:p-12">
+          {/* glow accents */}
+          <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary-500/20 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -right-10 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl" />
+
+          <div className="relative grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="text-center"
+              >
+                <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-1">
+                  {s.number}
+                </div>
                 <div className="text-gray-400 text-sm">{s.label}</div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
