@@ -1,32 +1,22 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import {
-  Clock, Users, MapPin, Star, Check, X, Calendar,
-  ArrowLeft, ChevronRight, AlertCircle, Loader2,
-  Shield, Phone, Award, ThumbsUp, HeartHandshake,
-  Hotel, Bus, UtensilsCrossed, Camera, Binoculars,
-  ChevronDown, ChevronUp, Info,
+  Clock, Users, MapPin, Star, Check, X, ChevronRight,
+  AlertCircle, Loader2, Shield, Award, ThumbsUp, HeartHandshake,
+  Hotel, Bus, UtensilsCrossed, Camera, Binoculars, Coffee, Utensils,
+  ChevronDown, ChevronUp, Info, Mountain, Tag, Phone, Share2, Sparkles,
+  Wallet, ShieldCheck, Headphones, FileText, Ban,
 } from 'lucide-react'
 import { tourService, locationAdminService } from '@/services/api'
-import BookingModal from '@/components/public/shared/BookingModal'
+import BookingCalculator from '@/components/public/tour/BookingCalculator'
+import TourGallery from '@/components/public/tour/TourGallery'
+import FeaturedTours from '@/components/public/tour/FeaturedTours'
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon'
-import type { Tour, LocationNode } from '@/types'
-import { toWebP } from '@/lib/image'
+import type { Tour, LocationNode, Itinerary } from '@/types'
 import dynamic from 'next/dynamic'
-
-// Portal renders children directly into document.body, escaping any parent
-// stacking context so modals always appear above the fixed header.
-function Portal({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => { setMounted(true) }, [])
-  if (!mounted) return null
-  return createPortal(children, document.body)
-}
 
 const TourRouteMap = dynamic(() => import('@/components/public/map/TourRouteMap'), {
   ssr: false,
@@ -40,12 +30,6 @@ function priceNum(p: string | number | null | undefined) {
 
 const FALLBACK = 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1200&q=80'
 const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') || '919876543210'
-
-const DIFF: Record<string, string> = {
-  easy:        'bg-green-100 text-green-700',
-  moderate:    'bg-amber-100 text-amber-700',
-  challenging: 'bg-red-100 text-red-700',
-}
 
 const CANCELLATION_POLICY = [
   { days: 'Registration charges', rule: 'Non-refundable and non-transferable.' },
@@ -76,603 +60,250 @@ const TERMS = [
   'Company has rights to terminate any person during the trip due to misconduct, anti-social activities, or illegal activities. Remaining trip amount will be refunded.',
 ]
 
+// ── Section navigation anchors ────────────────────────────────────────────────
+const NAV_SECTIONS = [
+  { id: 'overview',   label: 'Overview' },
+  { id: 'itinerary',  label: 'Itinerary' },
+  { id: 'inclusions', label: 'Inclusions' },
+  { id: 'policies',   label: 'Policies' },
+  { id: 'reviews',    label: 'Reviews' },
+]
+
+// ════════════════════════════════════════════════════════════════════════════
+// Presentational helpers
+// ════════════════════════════════════════════════════════════════════════════
+
 function DetailSkeleton() {
   return (
     <div className="min-h-screen bg-gray-50 animate-pulse">
-      <div className="h-[420px] bg-gray-200 w-full" />
-      <div className="container-custom py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="container-custom py-6 space-y-4">
+        <div className="h-4 bg-gray-200 rounded w-1/3" />
+        <div className="h-8 bg-gray-200 rounded w-2/3" />
+        <div className="h-[460px] bg-gray-200 rounded-3xl w-full" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-4">
           <div className="lg:col-span-2 space-y-5">
-            <div className="h-8 bg-gray-200 rounded w-3/4" />
             <div className="bg-white rounded-2xl p-6 space-y-3">
               <div className="h-4 bg-gray-200 rounded w-full" />
               <div className="h-4 bg-gray-200 rounded w-5/6" />
+              <div className="h-4 bg-gray-200 rounded w-4/6" />
             </div>
           </div>
-          <div className="bg-white rounded-2xl p-6 h-64" />
+          <div className="bg-white rounded-2xl p-6 h-72" />
         </div>
       </div>
     </div>
   )
 }
 
-function Section({ title, children, icon }: { title: string; children: React.ReactNode; icon?: React.ReactNode }) {
+function Section({ id, title, children, icon }: { id?: string; title: string; children: React.ReactNode; icon?: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
-      <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2.5">
-        {icon ?? <span className="w-1 h-5 bg-primary-600 rounded-full" />}{title}
+    <section id={id} className="scroll-mt-40 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+      <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2.5">
+        {icon ?? <span className="w-1.5 h-6 bg-primary-600 rounded-full" />}{title}
       </h2>
       {children}
-    </div>
+    </section>
   )
 }
 
-function Accordion({ title, children, defaultOpen = false }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
+function Accordion({ title, children, defaultOpen = false }: { title: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+    <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm bg-white">
       <button type="button" onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-5 py-4 bg-white hover:bg-gray-50 transition-colors text-left">
-        <span className="font-bold text-gray-900 text-sm">{title}</span>
+        className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left">
+        <span className="font-bold text-gray-900 text-sm flex items-center gap-2">{title}</span>
         <span className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${open ? 'bg-primary-50' : 'bg-gray-100'}`}>
           {open ? <ChevronUp className="w-4 h-4 text-primary-600" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
         </span>
       </button>
-      {open && <div className="px-5 pb-5 bg-white border-t border-gray-100">{children}</div>}
+      {open && <div className="px-5 pb-5 border-t border-gray-100">{children}</div>}
     </div>
   )
 }
 
-// ── Booking Sidebar ───────────────────────────────────────────────────────────
-const HOTEL_CATEGORIES = [
-  { key: '3star', label: '3 Star', stars: 3, multiplier: 1.0 },
-  { key: '4star', label: '4 Star', stars: 4, multiplier: 1.25 },
-  { key: '5star', label: '5 Star', stars: 5, multiplier: 1.6 },
+// Meals detected from a day's text → shown as chips under the day
+const MEAL_TYPES = [
+  { key: 'breakfast', label: 'Breakfast', icon: Coffee,          match: /breakfast/i },
+  { key: 'lunch',     label: 'Lunch',     icon: Utensils,        match: /\blunch\b/i },
+  { key: 'dinner',    label: 'Dinner',    icon: UtensilsCrossed, match: /\bdinner\b/i },
 ]
 
-const ROOM_TYPES = [
-  { key: 'triple',  label: 'Triple',  capacity: '3 pax', multiplier: 1.05 },
-  { key: 'double',  label: 'Double',  capacity: '2 pax', multiplier: 1.18 },
-  { key: 'single',  label: 'Single',  capacity: '1 pax', multiplier: 1.55 },
-]
-
-function generateDepartures(duration: number) {
-  const dates: Date[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  // Start from next week, generate ~30 departures every 3-4 days across ~5-6 months
-  let d = new Date(today)
-  d.setDate(d.getDate() + 7)
-  for (let i = 0; i < 30; i++) {
-    dates.push(new Date(d))
-    d.setDate(d.getDate() + (i % 2 === 0 ? 4 : 3))
-  }
-  return dates
+function detectMeals(day: Itinerary) {
+  const text = [day.title, day.description, ...(day.activities ?? [])].join(' ')
+  return MEAL_TYPES.filter(m => m.match.test(text))
 }
 
-function fmtDate(d: Date) {
-  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
-}
-
-function fmtFull(d: Date) {
-  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-function shortMonth(d: Date) {
-  return d.toLocaleDateString('en-IN', { month: 'short' })
-}
-
-function fmtMonth(d: Date) {
-  return d.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
-}
-
-interface BookingData {
-  selectedDate: Date | null
-  adults: number
-  children: number
-  selectedHotel: string | null
-  roomSelections: Record<string, number>
-}
-
-function BookingSidebar({ tour, onBook }: { tour: Tour; onBook: (data: BookingData) => void }) {
-  const p = priceNum(tour.price)
-  const departures = generateDepartures(tour.duration)
-
-  // Group by month
-  const byMonth: Record<string, Date[]> = {}
-  departures.forEach(d => {
-    const key = fmtMonth(d)
-    if (!byMonth[key]) byMonth[key] = []
-    byMonth[key].push(d)
-  })
-
-  const [selectedDate, setSelectedDate] = useState<Date | null>(departures[0] ?? null)
-  const [adults, setAdults] = useState(2)
-  const [children, setChildren] = useState(0)
-  const [showDatePicker, setShowDatePicker] = useState(false)
-  const [showRoomPicker, setShowRoomPicker] = useState(false)
-  
-  // Hotel category selection (locked for all rooms once first room is selected)
-  const [selectedHotel, setSelectedHotel] = useState<string | null>(null)
-  
-  // Room selections: { roomKey: count }
-  const [roomSelections, setRoomSelections] = useState<Record<string, number>>({
-    triple: 0,
-    double: 0,
-    single: 0,
-  })
-
-  // Update room selection
-  const updateRoomCount = (key: string, delta: number) => {
-    setRoomSelections(prev => ({ ...prev, [key]: Math.max(0, prev[key] + delta) }))
-  }
-
-  // Calculate total travelers and price
-  const totalTravelers = adults + children
-  const totalRooms = Object.values(roomSelections).reduce((sum, count) => sum + count, 0)
-  
-  // Get selected hotel multiplier
-  const hotelMultiplier = HOTEL_CATEGORIES.find(h => h.key === selectedHotel)?.multiplier ?? 1.0
-  
-  // Calculate price based on room selections and hotel category
-  let totalPrice = 0
-  ROOM_TYPES.forEach(room => {
-    const count = roomSelections[room.key]
-    if (count > 0) {
-      const roomPrice = Math.round(p * room.multiplier * hotelMultiplier)
-      totalPrice += roomPrice * count
-    }
-  })
-
-  // If no rooms selected, show base price per person
-  const displayPrice = totalRooms > 0 ? totalPrice : p * totalTravelers
-
-  // Fake seats available (based on date index) — mock data, replace later
-  const seatsFor = (d: Date) => {
-    const idx = departures.findIndex(dep => dep.getTime() === d.getTime())
-    const seeds = [24, 12, 0, 8, 22, 40, 15, 30, 5, 19, 24, 11, 35, 0, 18, 27, 9, 64, 42, 6]
-    return seeds[idx % seeds.length]
-  }
-
-  // Mock seat breakdown — NS (non-sharing) & VUS (with-sharing)
-  const seatInfo = (d: Date) => {
-    const total = seatsFor(d)
-    const vus = Math.round(total * 0.4)
-    return { total, ns: total, vus, soldOut: total === 0 }
-  }
-
-  const seats = selectedDate ? seatsFor(selectedDate) : tour.maxGroupSize
-  const selectedHotelData = HOTEL_CATEGORIES.find(h => h.key === selectedHotel)
-
-  // Route summary (round trip — start & end at first destination)
-  const startCity = tour.destinations?.[0] ?? 'India'
-  const endCity = tour.destinations?.[tour.destinations.length - 1] ?? startCity
-  const nights = tour.duration > 1 ? tour.duration - 1 : 0
-  const endDate = selectedDate
-    ? new Date(selectedDate.getTime() + (tour.duration - 1) * 86400000)
-    : null
-
-  // Group departures by short-month label for the sidebar chips
-  const byShortMonth: Record<string, Date[]> = {}
-  departures.forEach(d => {
-    const key = shortMonth(d)
-    if (!byShortMonth[key]) byShortMonth[key] = []
-    byShortMonth[key].push(d)
-  })
-  const departureYear = departures[0]?.getFullYear() ?? new Date().getFullYear()
+// A single day row in the itinerary timeline
+function ItineraryDay({ day, isLast }: { day: Itinerary; isLast: boolean }) {
+  const activities = day.activities ?? []
+  const meals = detectMeals(day)
 
   return (
-    <div className="space-y-3">
-
-      {/* Select Departure Date — rich panel */}
-      <div className="border-2 border-dashed border-orange-300 rounded-xl p-3 bg-orange-50/30">
-        <button type="button" onClick={() => setShowDatePicker(true)}
-          className="w-full flex items-center justify-center gap-2 text-orange-600 font-bold text-sm mb-3 hover:text-orange-700 transition-colors">
-          Select Departure Date <Calendar className="w-4 h-4" />
-        </button>
-
-        {/* Route summary */}
-        <div className="flex items-center justify-between bg-white rounded-xl px-3 py-2.5 mb-3 border border-gray-100">
-          <div className="text-center min-w-0">
-            <p className="text-[10px] text-gray-400 truncate max-w-[70px]">{startCity}</p>
-            <p className="text-xs font-bold text-gray-900">{selectedDate ? fmtFull(selectedDate) : '—'}</p>
-          </div>
-          <div className="flex-1 flex flex-col items-center px-2">
-            <span className="text-[10px] text-gray-500 mb-1 whitespace-nowrap">{tour.duration} Days, {nights} Nights</span>
-            <div className="w-full flex items-center">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 flex-shrink-0" />
-              <span className="flex-1 border-t border-dashed border-orange-300" />
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500 flex-shrink-0" />
-            </div>
-          </div>
-          <div className="text-center min-w-0">
-            <p className="text-[10px] text-gray-400 truncate max-w-[70px]">{endCity}</p>
-            <p className="text-xs font-bold text-gray-900">{endDate ? fmtFull(endDate) : '—'}</p>
-          </div>
-        </div>
-
-        {/* Departures chips by month */}
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold text-gray-700">Departures</p>
-          <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">Y {departureYear}</span>
-        </div>
-        <div className="space-y-2 max-h-44 overflow-y-auto pr-1 scrollbar-hide">
-          {Object.entries(byShortMonth).map(([mon, dates]) => (
-            <div key={mon} className="flex items-start gap-2">
-              <span className="bg-orange-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-md min-w-[42px] text-center flex-shrink-0">{mon}</span>
-              <div className="flex flex-wrap gap-1.5">
-                {dates.map((d, i) => {
-                  const { soldOut } = seatInfo(d)
-                  const isSel = selectedDate?.getTime() === d.getTime()
-                  return (
-                    <button key={i} type="button" disabled={soldOut}
-                      onClick={() => setSelectedDate(d)}
-                      className={`w-8 h-8 rounded-md text-xs font-semibold border transition-all ${
-                        isSel
-                          ? 'bg-orange-500 text-white border-orange-500'
-                          : soldOut
-                          ? 'border-gray-100 text-gray-300 line-through cursor-not-allowed'
-                          : 'border-gray-200 text-gray-700 hover:border-orange-400 hover:text-orange-600'
-                      }`}>
-                      {d.getDate()}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+    <div className="flex gap-3 sm:gap-5">
+      {/* DAY label */}
+      <div className="w-12 sm:w-16 flex-shrink-0 text-right pt-0.5">
+        <p className="text-sm sm:text-lg font-extrabold text-gray-800 leading-none tracking-tight">
+          DAY <span className="text-primary-600">{day.day}</span>
+        </p>
       </div>
 
-      {/* Rooms & Hotel Selection */}
-      <div>
-        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Rooms & Hotel</p>
-        <button type="button" onClick={() => setShowRoomPicker(true)}
-          className="w-full flex items-center justify-between px-3 py-2.5 border-2 border-gray-300 rounded-xl hover:border-primary-500 transition-colors">
-          <div className="flex items-center gap-2">
-            <Hotel className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-bold text-gray-700">
-              {selectedHotel && totalRooms > 0
-                ? `${selectedHotelData?.label} · ${totalRooms} room${totalRooms > 1 ? 's' : ''}`
-                : selectedHotel
-                ? `${selectedHotelData?.label} · Add rooms`
-                : 'Select rooms'}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {selectedHotelData && (
-              <div className="flex gap-0.5">
-                {Array.from({ length: selectedHotelData.stars }).map((_, i) => (
-                  <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-            )}
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          </div>
-        </button>
+      {/* Marker + dashed connector */}
+      <div className="flex flex-col items-center flex-shrink-0">
+        <MapPin className="w-4 h-4 text-primary-500" strokeWidth={2.2} />
+        {!isLast && <div className="w-px flex-1 border-l-2 border-dashed border-primary-200 my-1" />}
       </div>
 
-      {/* ═══════════ Date Picker Modal ═══════════ */}
-      {showDatePicker && (
-        <Portal>
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col animate-modal-pop">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900">Choose Your Travel Date</h3>
-              <button onClick={() => setShowDatePicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-            {/* Price alert */}
-            <div className="bg-red-50 border-b border-red-100 px-5 py-2.5">
-              <p className="text-xs text-red-600 flex items-start gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                <span><span className="font-bold">Price Alert:</span> If available seats drop below 5, the price may increase by up to 25%.</span>
-              </p>
-            </div>
-            {/* Year */}
-            <div className="px-5 pt-4">
-              <div className="inline-flex items-center gap-2 text-sm">
-                <span className="text-gray-500">Select Year:</span>
-                <span className="inline-flex items-center gap-1.5 border border-orange-300 text-orange-600 font-bold px-3 py-1 rounded-lg">
-                  <Calendar className="w-3.5 h-3.5" /> {departureYear}
-                </span>
-              </div>
-            </div>
-            {/* Scrollable month sections */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
-              {Object.entries(byMonth).map(([month, dates]) => (
-                <div key={month}>
-                  <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-orange-500" />{month}
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {dates.map((d, i) => {
-                      const { total, ns, vus, soldOut } = seatInfo(d)
-                      const isSelected = selectedDate?.getTime() === d.getTime()
-                      return (
-                        <button key={i} type="button" disabled={soldOut}
-                          onClick={() => { setSelectedDate(d); setShowDatePicker(false) }}
-                          className={`p-3 rounded-xl border-2 text-center transition-all ${
-                            isSelected
-                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200'
-                              : soldOut
-                              ? 'border-red-100 bg-red-50/50 opacity-70 cursor-not-allowed'
-                              : 'border-green-300 hover:border-green-500 hover:bg-green-50'
-                          }`}>
-                          <p className={`text-sm font-bold mb-1.5 ${soldOut ? 'text-red-400' : 'text-gray-800'}`}>
-                            {d.getDate()}-{shortMonth(d)}
-                          </p>
-                          <div className="flex items-center justify-center gap-1 mb-1.5">
-                            <span className="bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">NS : {ns}</span>
-                            <span className="bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">VUS : {vus}</span>
-                          </div>
-                          <p className={`text-[10px] font-semibold ${soldOut ? 'text-red-500' : 'text-green-600'}`}>
-                            {soldOut ? 'Sold Out' : `${total} Seats Available`}
-                          </p>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        </Portal>
-      )}
+      {/* Content */}
+      <div className="flex-1 min-w-0 pb-7">
+        <h4 className="text-sm font-bold text-primary-600 mb-2.5">{day.title}</h4>
 
-      {/* ═══════════ Rooms + Hotel Modal ═══════════ */}
-      {showRoomPicker && (
-        <Portal>
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowRoomPicker(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col animate-modal-pop">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                <Hotel className="w-5 h-5 text-primary-600" />
-                Choose Rooms
-              </h3>
-              <button onClick={() => setShowRoomPicker(false)} className="p-1 hover:bg-gray-100 rounded-lg">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
+        {activities.length > 0 ? (
+          <ul className="space-y-1.5 mb-3">
+            {activities.map((a, j) => (
+              <li key={j} className="flex items-start gap-2.5 text-sm text-gray-600">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-400 mt-[7px] flex-shrink-0" />
+                <span className="leading-relaxed">{a}</span>
+              </li>
+            ))}
+          </ul>
+        ) : day.description ? (
+          <p className="text-sm text-gray-600 leading-relaxed mb-3">{day.description}</p>
+        ) : null}
 
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              {/* Step 1: Hotel category */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-5 h-5 rounded-full bg-primary-600 text-white text-[10px] font-bold flex items-center justify-center">1</span>
-                  <p className="text-sm font-bold text-gray-900">Hotel Category</p>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {HOTEL_CATEGORIES.map(hotel => {
-                    const isSelected = selectedHotel === hotel.key
-                    return (
-                      <button key={hotel.key}
-                        onClick={() => {
-                          if (selectedHotel !== hotel.key) {
-                            setSelectedHotel(hotel.key)
-                            setRoomSelections({ triple: 0, double: 0, single: 0 })
-                          }
-                        }}
-                        className={`p-3 rounded-xl border-2 text-center transition-all ${
-                          isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-primary-300'
-                        }`}>
-                        <Hotel className={`w-5 h-5 mx-auto mb-1.5 ${isSelected ? 'text-primary-600' : 'text-gray-400'}`} />
-                        <p className={`text-xs font-bold ${isSelected ? 'text-primary-700' : 'text-gray-700'}`}>{hotel.label}</p>
-                        <div className="flex justify-center gap-0.5 mt-1">
-                          {Array.from({ length: hotel.stars }).map((_, i) => (
-                            <Star key={i} className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
-                          ))}
-                        </div>
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Step 2: Room types */}
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center ${selectedHotel ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-400'}`}>2</span>
-                  <p className={`text-sm font-bold ${selectedHotel ? 'text-gray-900' : 'text-gray-400'}`}>Select Room Types</p>
-                </div>
-
-                {!selectedHotel ? (
-                  <div className="text-center py-8 px-4 border-2 border-dashed border-gray-200 rounded-xl">
-                    <Hotel className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                    <p className="text-xs text-gray-400">Choose a hotel category above first</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {ROOM_TYPES.map(rt => {
-                      const rtPrice = Math.round(p * rt.multiplier * hotelMultiplier)
-                      const count = roomSelections[rt.key]
-                      return (
-                        <div key={rt.key}
-                          className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all ${
-                            count > 0 ? 'border-primary-500 bg-primary-50' : 'border-gray-200'
-                          }`}>
-                          <div className="flex-1">
-                            <p className={`text-sm font-bold ${count > 0 ? 'text-primary-700' : 'text-gray-700'}`}>
-                              {rt.label}
-                              <span className="ml-1.5 text-[10px] font-normal text-gray-400">{rt.capacity}</span>
-                            </p>
-                            <p className={`text-xs ${count > 0 ? 'text-primary-600' : 'text-gray-500'}`}>
-                              ₹{rtPrice.toLocaleString('en-IN')}/room
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button type="button" onClick={() => updateRoomCount(rt.key, -1)} disabled={count === 0}
-                              className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-colors">−</button>
-                            <span className="w-5 text-center text-sm font-bold text-gray-900">{count}</span>
-                            <button type="button" onClick={() => updateRoomCount(rt.key, 1)}
-                              className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 font-bold transition-colors">+</button>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Footer with Done button */}
-            <div className="border-t border-gray-100 p-4">
-              <button onClick={() => setShowRoomPicker(false)}
-                className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-xl text-sm font-bold transition-colors">
-                {totalRooms > 0 ? `Done · ${totalRooms} room${totalRooms > 1 ? 's' : ''}` : 'Done'}
-              </button>
-            </div>
-          </div>
-        </div>
-        </Portal>
-      )}
-
-      <style jsx global>{`
-        @keyframes modal-pop {
-          from { transform: scale(0.95); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .animate-modal-pop {
-          animation: modal-pop 0.2s ease-out;
-        }
-      `}</style>
-
-      {/* Travelers - Compact Adults & Children */}
-      <div>
-        <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wide mb-1.5">Travelers</p>
-        
-        <div className="grid grid-cols-2 gap-2">
-          {/* Adults */}
-          <div>
-            <div className="text-[10px] text-gray-500 mb-1 flex items-center justify-between">
-              <span className="font-semibold">Adults</span>
-              <span>12+</span>
-            </div>
-            <div className="flex items-center border border-gray-200 rounded-lg px-2 py-1.5">
-              <button type="button" onClick={() => setAdults(a => Math.max(1, a - 1))}
-                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold">−</button>
-              <span className="flex-1 text-center text-xs font-bold text-gray-900">{adults}</span>
-              <button type="button" onClick={() => setAdults(a => Math.min(tour.maxGroupSize - children, a + 1))}
-                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold">+</button>
-            </div>
-          </div>
-          
-          {/* Children */}
-          <div>
-            <div className="text-[10px] text-gray-500 mb-1 flex items-center justify-between">
-              <span className="font-semibold">Children</span>
-              <span>2-11</span>
-            </div>
-            <div className="flex items-center border border-gray-200 rounded-lg px-2 py-1.5">
-              <button type="button" onClick={() => setChildren(c => Math.max(0, c - 1))}
-                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold">−</button>
-              <span className="flex-1 text-center text-xs font-bold text-gray-900">{children}</span>
-              <button type="button" onClick={() => setChildren(c => Math.min(tour.maxGroupSize - adults, c + 1))}
-                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-700 text-sm font-bold">+</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Price summary */}
-      <div className="bg-gray-50 rounded-xl p-3 space-y-1.5 text-xs">
-        {totalRooms > 0 ? (
-          <>
-            {ROOM_TYPES.map(room => {
-              const count = roomSelections[room.key]
-              if (count === 0) return null
-              const roomPrice = Math.round(p * room.multiplier)
-              return (
-                <div key={room.key} className="flex justify-between text-gray-500">
-                  <span>{room.label} × {count}</span>
-                  <span className="font-medium text-gray-700">₹{(roomPrice * count).toLocaleString('en-IN')}</span>
-                </div>
-              )
-            })}
-          </>
-        ) : (
-          <div className="flex justify-between text-gray-500">
-            <span>Base price × {totalTravelers} traveler{totalTravelers > 1 ? 's' : ''}</span>
-            <span className="font-medium text-gray-700">₹{displayPrice.toLocaleString('en-IN')}</span>
+        {meals.length > 0 && (
+          <div className="flex flex-wrap gap-2.5">
+            {meals.map(({ key, label, icon: Icon }) => (
+              <span key={key} className="inline-flex items-center gap-2 bg-white border border-gray-100 rounded-xl px-3 py-1.5 shadow-sm">
+                <Icon className="w-4 h-4 text-gray-400" />
+                <span className="text-xs font-semibold text-gray-700">{label}</span>
+              </span>
+            ))}
           </div>
         )}
-        <div className="flex justify-between text-gray-400">
-          <span>GST included</span>
-          <span className="text-green-600 font-medium">✓</span>
-        </div>
-        <div className="border-t border-gray-200 pt-1.5 flex justify-between font-bold text-gray-900 text-sm">
-          <span>Total</span>
-          <span>₹{displayPrice.toLocaleString('en-IN')}</span>
-        </div>
       </div>
-
-      {/* CTA buttons */}
-      <button type="button" onClick={() => onBook({ selectedDate, adults, children, selectedHotel, roomSelections })}
-        className="w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-bold transition-all shadow-sm hover:shadow-md">
-        <Calendar className="w-4 h-4" /> Book Now
-      </button>
-
-      <a href={`https://wa.me/${WHATSAPP}?text=Hi%2C%20I%20want%20to%20enquire%20about%20${encodeURIComponent(tour.title)}%20for%20${adults}%20adult${adults > 1 ? 's' : ''}${children > 0 ? `%20and%20${children}%20child${children > 1 ? 'ren' : ''}` : ''}%20on%20${selectedDate ? fmtDate(selectedDate) : 'a%20date%20TBD'}`}
-        target="_blank" rel="noopener noreferrer"
-        className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1ebe5d] text-white py-2.5 rounded-xl text-sm font-medium transition-colors">
-        <WhatsAppIcon size={16} className="text-white" /> Enquire on WhatsApp
-      </a>
-
-      <a href={`tel:+${WHATSAPP}`}
-        className="w-full flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-gray-700 py-2.5 rounded-xl text-sm font-medium transition-colors">
-        <Phone className="w-4 h-4 text-primary-600" /> Call Us
-      </a>
-
-      <p className="text-center text-xs text-gray-400">No payment now · Pay on confirmation</p>
     </div>
   )
 }
 
-// ── Activity pill with image tooltip ─────────────────────────────────────────
-function ActivityPill({ name, locationMap }: { name: string; locationMap: Record<string, LocationNode> }) {
-  const [show, setShow] = useState(false)
-  const loc = locationMap[name.toLowerCase()]
-  const img = loc?.image
+// Quick-fact stat card
+function FactCard({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2.5 bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm">
+      <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-primary-600" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] text-gray-400 uppercase tracking-wide leading-none mb-0.5">{label}</p>
+        <p className="text-[13px] font-bold text-gray-900 truncate capitalize leading-tight">{value}</p>
+      </div>
+    </div>
+  )
+}
+
+// Sticky section nav with scroll-spy
+function SectionNav({ available }: { available: string[] }) {
+  const [active, setActive] = useState(available[0] ?? 'overview')
+  const sections = NAV_SECTIONS.filter(s => available.includes(s.id))
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) setActive(entry.target.id)
+        })
+      },
+      { rootMargin: '-45% 0px -50% 0px', threshold: 0 }
+    )
+    sections.forEach(s => {
+      const el = document.getElementById(s.id)
+      if (el) observer.observe(el)
+    })
+    return () => observer.disconnect()
+  }, [sections])
+
+  const go = (id: string) => {
+    const el = document.getElementById(id)
+    if (!el) return
+    const headerOffset = window.innerWidth >= 768 ? 130 : 82  // fixed site header
+    const navHeight = 52                                        // this sticky tab bar
+    const offset = headerOffset + navHeight + 12
+    const lenis = (window as unknown as { __lenis?: { scrollTo: (t: Element, o?: { offset?: number }) => void } }).__lenis
+    if (lenis) {
+      lenis.scrollTo(el, { offset: -offset })
+    } else {
+      const y = el.getBoundingClientRect().top + window.scrollY - offset
+      window.scrollTo({ top: y, behavior: 'smooth' })
+    }
+  }
 
   return (
-    <div className="relative inline-block"
-      onMouseEnter={() => setShow(true)}
-      onMouseLeave={() => setShow(false)}
-    >
-      <span className="inline-flex items-center gap-1 text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full border border-primary-100 cursor-default">
-        <ChevronRight className="w-3 h-3" />{name}
-      </span>
-      {show && img && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
-          <div className="bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden w-40">
-            <img src={toWebP(img, 300)} alt={name} className="w-full h-24 object-cover" />
-            <p className="text-xs font-semibold text-gray-800 px-2 py-1.5 text-center">{name}</p>
-          </div>
-          <div className="w-2 h-2 bg-white border-r border-b border-gray-100 rotate-45 mx-auto -mt-1" />
-        </div>
-      )}
+    <div className="sticky top-[82px] md:top-[130px] z-30 bg-white/95 backdrop-blur-md border border-gray-100 rounded-xl shadow-sm">
+      <div className="flex gap-1 overflow-x-auto scrollbar-hide px-2">
+        {sections.map(s => (
+          <button key={s.id} onClick={() => go(s.id)}
+            className={`relative py-3 px-3.5 text-sm font-medium whitespace-nowrap transition-colors ${
+              active === s.id ? 'text-primary-600' : 'text-gray-500 hover:text-gray-800'
+            }`}>
+            {s.label}
+            {active === s.id && <span className="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-600 rounded-full" />}
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
+
+// Highlights — splits a leading emoji from the text; falls back to a rotating set
+const HL_FALLBACK_EMOJIS = ['✨', '🏔️', '🌅', '🛶', '🏛️', '🎉', '📸', '🌿', '⭐', '🧭']
+
+function splitEmoji(text: string, index: number): { emoji: string; rest: string } {
+  const m = text.match(/^\s*(\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic}|\uFE0F)*)\s*(.*)$/u)
+  if (m && m[2].trim()) return { emoji: m[1], rest: m[2].trim() }
+  return { emoji: HL_FALLBACK_EMOJIS[index % HL_FALLBACK_EMOJIS.length], rest: text.trim() }
+}
+
+function HighlightCard({ text, index }: { text: string; index: number }) {
+  const { emoji, rest } = splitEmoji(text, index)
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="text-base leading-none flex-shrink-0 mt-0.5">{emoji}</span>
+      <p className="text-sm text-gray-600 leading-relaxed">{rest}</p>
+    </div>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Page
+// ════════════════════════════════════════════════════════════════════════════
 
 export default function TourDetailPage() {
   const { id }  = useParams<{ id: string }>()
   const router  = useRouter()
 
-  const [tour,          setTour]          = useState<Tour | null>(null)
-  const [loading,       setLoading]       = useState(true)
-  const [error,         setError]         = useState('')
-  const [selectedImage, setSelectedImage] = useState(0)
-  const [showBooking,   setShowBooking]   = useState(false)
-  const [bookingData,   setBookingData]   = useState<BookingData | null>(null)
-  const [locationMap,   setLocationMap]   = useState<Record<string, LocationNode>>({})
+  const [tour,        setTour]        = useState<Tour | null>(null)
+  const [loading,     setLoading]     = useState(true)
+  const [error,       setError]       = useState('')
+  const [locationMap, setLocationMap] = useState<Record<string, LocationNode>>({})
+  const bookingRef = useRef<HTMLDivElement>(null)
+
+  // Navigate to the full booking page with the current selection
+  const goToBooking = (data: any) => {
+    if (!tour) return
+    const params = new URLSearchParams({
+      tourId: String(tour.id),
+      date:   data?.selectedDate ? new Date(data.selectedDate).toISOString() : '',
+      from:   data?.departureCity ?? '',
+      adults: String(data?.adults ?? 0),
+      kids:   String(data?.children ?? 0),
+      rooms:  String(data?.roomsNeeded ?? 1),
+      going:  data?.goingTravel ?? 'self',
+      ret:    data?.returnTravel ?? 'self',
+      total:  String(data?.total ?? 0),
+      addons: JSON.stringify(data?.addons ?? {}),
+    })
+    router.push(`/tour-booking?${params.toString()}`)
+  }
 
   const fetchTour = useCallback(async () => {
     setLoading(true); setError('')
@@ -687,7 +318,7 @@ export default function TourDetailPage() {
 
   useEffect(() => { fetchTour() }, [fetchTour])
 
-  // Load all locations to get images for activity pills
+  // Load all locations to get images for activity pills + route map
   useEffect(() => {
     locationAdminService.getAll().then(locs => {
       const map: Record<string, LocationNode> = {}
@@ -696,7 +327,19 @@ export default function TourDetailPage() {
     }).catch(() => {})
   }, [])
 
-  useEffect(() => { fetchTour() }, [fetchTour])
+  const scrollToBooking = () => {
+    if (window.innerWidth >= 1024 && bookingRef.current) {
+      const y = bookingRef.current.getBoundingClientRect().top + window.scrollY - 150
+      window.scrollTo({ top: y, behavior: 'smooth' })
+    } else {
+      // On mobile the booking calculator is rendered inline near the bottom
+      const el = document.getElementById('booking')
+      if (el) {
+        const y = el.getBoundingClientRect().top + window.scrollY - 150
+        window.scrollTo({ top: y, behavior: 'smooth' })
+      }
+    }
+  }
 
   if (loading) return <DetailSkeleton />
 
@@ -725,7 +368,8 @@ export default function TourDetailPage() {
   const p      = priceNum(tour.price)
   const rating = tour.rating ? Number(tour.rating) : null
   const images = tour.images?.length ? tour.images : [FALLBACK]
-  const main   = toWebP(images[selectedImage] ?? FALLBACK, 1200)
+  const nights = tour.duration > 1 ? tour.duration - 1 : 0
+  const destinations = tour.destinations ?? []
 
   // Detect package includes from included array
   const pkgIcons = [
@@ -735,163 +379,156 @@ export default function TourDetailPage() {
     { key: 'sightseeing',icon: Binoculars,     label: 'Sightseeing', match: /sightseeing|visit|tour guide|guide/i },
     { key: 'camera',     icon: Camera,         label: 'Photography', match: /photo|camera|photography/i },
   ]
-  const detectedPkg = pkgIcons.filter(p => (tour.included ?? []).some(inc => p.match.test(inc)))
+  const detectedPkg = pkgIcons.filter(pk => (tour.included ?? []).some(inc => pk.match.test(inc)))
+
+  // Build route map locations
+  const routeLocations = (tour.itinerary ?? [])
+    .map(day => day.locationId
+      ? Object.values(locationMap).find(l => l.id === day.locationId)
+      : Object.values(locationMap).find(l => l.name.toLowerCase() === day.title.toLowerCase())
+    )
+    .filter((l): l is LocationNode => !!l && !!l.lat && !!l.lng)
+  const uniqueRoute = routeLocations.filter((l, i) => i === 0 || l.id !== routeLocations[i - 1].id)
+
+  // Which nav sections are present
+  const availableSections = [
+    'overview',
+    (tour.itinerary ?? []).length > 0 ? 'itinerary' : '',
+    ((tour.included ?? []).length > 0 || (tour.excluded ?? []).length > 0) ? 'inclusions' : '',
+    'policies',
+    'reviews',
+  ].filter(Boolean)
+
+  const shareTour = async () => {
+    const shareData = { title: tour.title, text: tour.description, url: window.location.href }
+    try {
+      if (navigator.share) await navigator.share(shareData)
+      else { await navigator.clipboard.writeText(window.location.href) }
+    } catch { /* user cancelled */ }
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24 lg:pb-0">
 
-      {/* Hero */}
-      <div className="relative h-[380px] md:h-[460px] bg-gray-900 overflow-hidden">
-        <Image src={main} alt={tour.title} fill className="object-cover opacity-90" priority sizes="100vw" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+      <div className="container-custom pt-6">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-xs text-gray-400 mb-4">
+          <Link href="/" className="hover:text-primary-600 transition-colors">Home</Link>
+          <ChevronRight className="w-3 h-3" />
+          <Link href="/tours" className="hover:text-primary-600 transition-colors">Tours</Link>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-gray-600 font-medium truncate max-w-[200px]">{tour.title}</span>
+        </nav>
 
-        <button onClick={() => router.back()}
-          className="absolute top-5 left-5 flex items-center gap-1.5 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white px-3 py-2 rounded-xl text-sm font-medium transition-colors border border-white/20">
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-
-        {images.length > 1 && (
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-2">
-            {images.slice(0, 6).map((img, i) => (
-              <button key={i} onClick={() => setSelectedImage(i)}
-                className={`relative w-12 h-9 rounded-lg overflow-hidden border-2 transition-all ${i === selectedImage ? 'border-white scale-110' : 'border-white/40 hover:border-white/70'}`}>
-                <Image src={toWebP(img, 100)} alt="" fill className="object-cover" sizes="48px" />
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className="absolute bottom-5 left-0 right-0 px-5">
-          <div className="container-custom">
-            <div className="flex flex-wrap gap-2 mb-2.5">
-              <span className="bg-primary-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full capitalize shadow-sm">{tour.category}</span>
-              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${DIFF[tour.difficulty] ?? 'bg-gray-100 text-gray-700'}`}>{tour.difficulty}</span>
-              {tour.isFeatured && <span className="bg-yellow-400 text-yellow-900 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><Star className="w-3 h-3 fill-yellow-900" /> Featured</span>}
-            </div>
-            <h1 className="text-2xl md:text-4xl font-bold text-white drop-shadow-lg tracking-tight">{tour.title}</h1>
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              <span className="flex items-center gap-1.5 text-white text-xs font-medium bg-white/15 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-white/20"><Clock className="w-3.5 h-3.5" />{tour.duration} Days</span>
-              <span className="flex items-center gap-1.5 text-white text-xs font-medium bg-white/15 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-white/20"><Users className="w-3.5 h-3.5" />Max {tour.maxGroupSize} pax</span>
-              {(tour.destinations ?? []).length > 0 && (
-                <span className="flex items-center gap-1.5 text-white text-xs font-medium bg-white/15 backdrop-blur-sm px-2.5 py-1.5 rounded-lg border border-white/20"><MapPin className="w-3.5 h-3.5" />{(tour.destinations ?? []).join(' · ')}</span>
+        {/* Title header */}
+        <div className="mb-5">
+          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-tight leading-tight">{tour.title}</h1>
+          <div className="flex items-center justify-between gap-4 mt-1">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500 min-w-0">
+              {destinations.length > 0 && (
+                <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4 text-primary-500" />{destinations.join(' · ')}</span>
               )}
               {rating && (
-                <span className="flex items-center gap-1 text-yellow-900 text-xs font-bold bg-yellow-300 px-2.5 py-1.5 rounded-lg shadow-sm">
-                  <Star className="w-3.5 h-3.5 fill-yellow-900" />{rating.toFixed(1)}
-                  {(tour.reviewCount ?? 0) > 0 && <span className="font-medium opacity-70">({tour.reviewCount})</span>}
+                <span className="flex items-center gap-1.5">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="font-bold text-gray-900">{rating.toFixed(1)}</span>
+                  {(tour.reviewCount ?? 0) > 0 && <span className="text-gray-400">({tour.reviewCount} reviews)</span>}
                 </span>
               )}
             </div>
+
+            <button onClick={shareTour}
+              className="flex items-center gap-1.5 px-3.5 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors flex-shrink-0">
+              <Share2 className="w-4 h-4" /> Share
+            </button>
           </div>
+        </div>
+
+        {/* Gallery */}
+        <TourGallery images={images} title={tour.title} />
+
+        {/* Quick facts */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-4">
+          <FactCard icon={Clock}    label="Duration"   value={`${tour.duration} Days${nights > 0 ? ` / ${nights} Nights` : ''}`} />
+          <FactCard icon={Users}    label="Group Size" value={`Max ${tour.maxGroupSize}`} />
+          <FactCard icon={Mountain} label="Difficulty" value={tour.difficulty} />
+          <FactCard icon={Tag}      label="Category"   value={tour.category} />
         </div>
       </div>
 
       {/* Body */}
-      <div className="container-custom py-8">
+      <div className="container-custom mt-5">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
           {/* ── Left column ─────────────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-5">
 
+            {/* Section nav — sits above the About card, scrolls with content */}
+            <SectionNav available={availableSections} />
+
             {/* About */}
-            <Section title="About This Tour">
+            <Section id="overview" title="About This Tour">
               <p className="text-gray-600 text-sm leading-relaxed">{tour.description}</p>
               {tour.longDescription && <p className="text-gray-600 text-sm leading-relaxed mt-3">{tour.longDescription}</p>}
+
+              {/* Package Includes icons */}
+              {detectedPkg.length > 0 && (
+                <div className="mt-6 pt-5 border-t border-gray-100">
+                  <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">This Package Includes</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {detectedPkg.map(({ key, icon: Icon, label }) => (
+                      <div key={key} className="flex items-center gap-2.5 bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100">
+                        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                          <Icon className="w-4 h-4 text-primary-600" />
+                        </div>
+                        <span className="text-sm font-semibold text-gray-700">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </Section>
 
-            {/* Package Includes icons */}
-            {detectedPkg.length > 0 && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-5">Package Includes</h2>
-                <div className="flex flex-wrap gap-4">
-                  {detectedPkg.map(({ key, icon: Icon, label }) => (
-                    <div key={key} className="flex flex-col items-center gap-2 bg-gradient-to-b from-gray-50 to-white rounded-2xl px-6 py-4 min-w-[90px] border border-gray-100 hover:border-primary-200 hover:-translate-y-0.5 transition-all duration-300">
-                      <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-primary-600" />
-                      </div>
-                      <span className="text-xs font-semibold text-gray-700">{label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Highlights */}
-            {(tour.highlights ?? []).length > 0 && (
-              <Section title="Tour Highlights">
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {(tour.highlights ?? []).map((h, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                      <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />{h}
-                    </li>
-                  ))}
-                </ul>
-              </Section>
-            )}
-
-            {/* Itinerary — MOVED BEFORE included/excluded */}
+            {/* Itinerary */}
             {(tour.itinerary ?? []).length > 0 && (
-              <Section title={`Itinerary — ${(tour.itinerary ?? []).length} Days`}>
-                <div className="space-y-0">
+              <Section id="itinerary" title="Day-by-Day Itinerary" icon={<span className="w-1.5 h-6 bg-primary-600 rounded-full" />}>
+                <p className="text-sm text-gray-400 -mt-2 mb-6">{(tour.itinerary ?? []).length} days of curated experiences</p>
+                <div>
                   {(tour.itinerary ?? []).map((day, i) => (
-                    <div key={i} className="flex gap-4 group">
-                      <div className="flex flex-col items-center flex-shrink-0">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center text-sm font-bold z-10 shadow-md ring-4 ring-primary-50 group-hover:scale-110 transition-transform">{day.day}</div>
-                        {i < (tour.itinerary ?? []).length - 1 && <div className="w-0.5 flex-1 bg-gradient-to-b from-primary-200 to-primary-50 my-1" />}
-                      </div>
-                      <div className="flex-1 pb-5">
-                        <div className="rounded-xl p-3 -mt-1 group-hover:bg-gray-50 transition-colors">
-                          <h4 className="font-semibold text-gray-900 text-sm mb-1 flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-primary-500 uppercase tracking-wider">Day {day.day}</span>
-                            {day.title}
-                          </h4>
-                          <p className="text-gray-500 text-sm mb-2">{day.description}</p>
-                          {(day.activities ?? []).length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                              {(day.activities ?? []).map((a, j) => (
-                                <ActivityPill key={j} name={a} locationMap={locationMap} />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    <ItineraryDay key={i} day={day} isLast={i === (tour.itinerary ?? []).length - 1} />
                   ))}
                 </div>
               </Section>
             )}
 
-            {/* Tour Route Map — Highway route with real roads */}
-            {(() => {
-              const routeLocations = (tour.itinerary ?? [])
-                .map(day => day.locationId
-                  ? Object.values(locationMap).find(l => l.id === day.locationId)
-                  : Object.values(locationMap).find(l => l.name.toLowerCase() === day.title.toLowerCase())
-                )
-                .filter((l): l is LocationNode => !!l && !!l.lat && !!l.lng)
-              // Deduplicate consecutive same locations
-              const unique = routeLocations.filter((l, i) => i === 0 || l.id !== routeLocations[i - 1].id)
-              return unique.length >= 2 ? (
-                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                  <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-orange-600" />
-                    Tour Route Map
-                  </h2>
-                  <TourRouteMap locations={unique} height="460px" />
+            {/* Highlights — after itinerary, emoji point cards */}
+            {(tour.highlights ?? []).length > 0 && (
+              <Section title="Tour Highlights" icon={<Sparkles className="w-5 h-5 text-primary-500" />}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(tour.highlights ?? []).map((h, i) => (
+                    <HighlightCard key={i} text={h} index={i} />
+                  ))}
                 </div>
-              ) : null
-            })()}
+              </Section>
+            )}
+
+            {/* Tour Route Map */}
+            {uniqueRoute.length >= 2 && (
+              <Section title="Tour Route Map" icon={<MapPin className="w-5 h-5 text-orange-600" />}>
+                <TourRouteMap locations={uniqueRoute} height="460px" />
+              </Section>
+            )}
 
             {/* Included / Excluded */}
             {((tour.included ?? []).length > 0 || (tour.excluded ?? []).length > 0) && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div id="inclusions" className="scroll-mt-40 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {(tour.included ?? []).length > 0 && (
                   <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
                     <h3 className="text-sm font-bold text-green-700 mb-3 flex items-center gap-2">
                       <span className="w-6 h-6 rounded-lg bg-green-100 flex items-center justify-center"><Check className="w-3.5 h-3.5" /></span>
-                      What's Included
+                      What&apos;s Included
                     </h3>
-                    <ul className="space-y-2">
+                    <ul className="space-y-2.5">
                       {(tour.included ?? []).map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
                           <Check className="w-3.5 h-3.5 text-green-500 flex-shrink-0 mt-0.5" />{item}
@@ -906,7 +543,7 @@ export default function TourDetailPage() {
                       <span className="w-6 h-6 rounded-lg bg-red-100 flex items-center justify-center"><X className="w-3.5 h-3.5" /></span>
                       Not Included
                     </h3>
-                    <ul className="space-y-2">
+                    <ul className="space-y-2.5">
                       {(tour.excluded ?? []).map((item, i) => (
                         <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
                           <X className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />{item}
@@ -918,101 +555,103 @@ export default function TourDetailPage() {
               </div>
             )}
 
-            {/* Cancellation Policy */}
-            <Accordion title="🚫 Cancellation Policy" defaultOpen>
-              <div className="pt-4 space-y-3">
-                {CANCELLATION_POLICY.map((item, i) => (
-                  <div key={i} className="flex gap-3 p-3 bg-red-50 rounded-xl border border-red-100">
-                    <div className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0 mt-1.5" />
-                    <div>
-                      <p className="text-xs font-bold text-red-700">{item.days}</p>
-                      <p className="text-xs text-red-600 mt-0.5">{item.rule}</p>
+            {/* Policies */}
+            <div id="policies" className="scroll-mt-40 space-y-4">
+              <Accordion title={<><Ban className="w-4 h-4 text-red-500" /> Cancellation Policy</>} defaultOpen>
+                <div className="pt-4 divide-y divide-gray-100">
+                  {CANCELLATION_POLICY.map((item, i) => (
+                    <div key={i} className="flex items-start gap-3 py-2.5 first:pt-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0 mt-1.5" />
+                      <div>
+                        <p className="text-xs font-semibold text-gray-800">{item.days}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{item.rule}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </Accordion>
+                  ))}
+                </div>
+              </Accordion>
 
-            {/* Terms & Conditions */}
-            <Accordion title="📋 Terms & Conditions">
-              <div className="pt-4 space-y-2">
-                {TERMS.map((term, i) => (
-                  <div key={i} className="flex gap-2.5 text-sm text-gray-600">
-                    <span className="text-primary-500 font-bold flex-shrink-0 text-xs mt-0.5">{i + 1}.</span>
-                    <p className="leading-relaxed">{term}</p>
-                  </div>
-                ))}
-              </div>
-            </Accordion>
-
-            {/* Why choose */}
-            <div className="bg-gradient-to-br from-primary-50 to-green-50 rounded-2xl border border-primary-100 p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
-                <Award className="w-5 h-5 text-primary-600" /> Why Choose This Tour?
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { icon: '🏆', title: 'Expert Local Guides', desc: 'Certified guides with 10+ years experience' },
-                  { icon: '💰', title: 'Best Price Guarantee', desc: 'We match any lower price you find' },
-                  { icon: '🔒', title: 'Secure Booking', desc: 'Your data and payment are fully protected' },
-                  { icon: '📞', title: '24/7 Support', desc: "We're available before, during & after your trip" },
-                  { icon: '🚌', title: 'All Transfers Included', desc: 'Airport pickup, hotel drops, sightseeing' },
-                  { icon: '⭐', title: 'Trusted by 1000+ Travelers', desc: 'Verified reviews from real customers' },
-                ].map(({ icon, title, desc }) => (
-                  <div key={title} className="flex items-start gap-3 bg-white/70 rounded-xl p-3 border border-white">
-                    <span className="text-xl flex-shrink-0">{icon}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{title}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
+              <Accordion title={<><FileText className="w-4 h-4 text-primary-500" /> Terms &amp; Conditions</>}>
+                <div className="pt-4 space-y-2.5">
+                  {TERMS.map((term, i) => (
+                    <div key={i} className="flex gap-2.5 text-sm text-gray-600">
+                      <span className="text-gray-300 font-bold flex-shrink-0 text-xs mt-0.5 tabular-nums">{String(i + 1).padStart(2, '0')}</span>
+                      <p className="leading-relaxed">{term}</p>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </Accordion>
             </div>
 
+            {/* Why choose */}
+            <Section title="Why Book With Us?" icon={<Award className="w-5 h-5 text-primary-600" />}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                {[
+                  { icon: Award,       title: 'Expert Local Guides',  desc: 'Certified guides with 10+ years experience' },
+                  { icon: Wallet,      title: 'Best Price Guarantee', desc: 'We match any lower price you find' },
+                  { icon: ShieldCheck, title: 'Secure Booking',       desc: 'Your data and payment are fully protected' },
+                  { icon: Headphones,  title: '24/7 Support',         desc: "We're with you before, during & after" },
+                  { icon: Bus,         title: 'All Transfers Included',desc: 'Airport pickup, hotel drops, sightseeing' },
+                  { icon: Star,        title: 'Trusted by 1000+',     desc: 'Verified reviews from real travelers' },
+                ].map(({ icon: Icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
+                      <Icon className="w-4 h-4 text-primary-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{title}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
             {/* Reviews */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-6">
-              <h2 className="text-base font-bold text-gray-900 mb-1">Traveler Reviews</h2>
+            <Section id="reviews" title="Traveler Reviews" icon={<Star className="w-5 h-5 text-yellow-500" />}>
               {(tour.reviewCount ?? 0) > 0 && rating ? (
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="flex">{[1,2,3,4,5].map(s => <Star key={s} className={`w-4 h-4 ${s <= Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`} />)}</div>
-                  <span className="text-sm font-bold text-gray-900">{Number(rating).toFixed(1)}</span>
-                  <span className="text-sm text-gray-400">({tour.reviewCount} reviews)</span>
+                <div className="flex items-center gap-4">
+                  <div className="text-center">
+                    <p className="text-4xl font-extrabold text-gray-900">{Number(rating).toFixed(1)}</p>
+                    <div className="flex justify-center mt-1">{[1,2,3,4,5].map(s => <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200'}`} />)}</div>
+                    <p className="text-xs text-gray-400 mt-1">{tour.reviewCount} reviews</p>
+                  </div>
+                  <p className="text-sm text-gray-500 border-l border-gray-100 pl-4">
+                    Rated <span className="font-semibold text-gray-700">{Number(rating) >= 4.5 ? 'Excellent' : Number(rating) >= 4 ? 'Very Good' : 'Good'}</span> by travelers who booked this tour.
+                  </p>
                 </div>
               ) : (
-                <div className="text-center py-8">
+                <div className="text-center py-10">
                   <div className="flex justify-center mb-2">{[1,2,3,4,5].map(s => <Star key={s} className="w-6 h-6 text-gray-200" />)}</div>
                   <p className="text-sm text-gray-500">No reviews yet — be the first to review!</p>
                 </div>
               )}
-            </div>
+            </Section>
 
           </div>
 
           {/* ── Sidebar ─────────────────────────────────────────────── */}
-          <div>
-            <div className="sticky top-24 space-y-4">
+          <div className="lg:col-span-1" id="booking">
+            <div ref={bookingRef} className="lg:sticky lg:top-[150px] space-y-4">
 
               {/* Booking card */}
-              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                {/* Price header */}
-                <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-5 py-4">
-                  <p className="text-primary-100 text-xs mb-0.5">Price per person</p>
-                  <div className="flex items-end gap-2">
-                    <p className="text-3xl font-extrabold text-white">₹{p.toLocaleString('en-IN')}</p>
-                    <p className="text-primary-200 text-sm mb-1">/ person</p>
-                  </div>
+              <div data-booking-card className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-5 py-3 flex items-center justify-between gap-2">
+                  <p className="text-white whitespace-nowrap">
+                    <span className="text-primary-100 text-xs">From</span>{' '}
+                    <span className="text-xl font-extrabold align-middle">₹{p.toLocaleString('en-IN')}</span>{' '}
+                    <span className="text-primary-200 text-xs">/ person</span>
+                  </p>
                   {rating && (
-                    <div className="flex items-center gap-1 mt-1">
+                    <span className="flex items-center gap-1 bg-white/15 rounded-full px-2 py-0.5 flex-shrink-0">
                       <Star className="w-3.5 h-3.5 fill-yellow-300 text-yellow-300" />
-                      <span className="text-sm font-semibold text-white">{rating.toFixed(1)}</span>
-                      {(tour.reviewCount ?? 0) > 0 && <span className="text-xs text-primary-200">({tour.reviewCount} reviews)</span>}
-                    </div>
+                      <span className="text-xs font-semibold text-white">{rating.toFixed(1)}</span>
+                    </span>
                   )}
                 </div>
 
-                <div className="p-5 space-y-4">
-                  <BookingSidebar tour={tour} onBook={(data) => { setBookingData(data); setShowBooking(true) }} />
+                <div className="p-5">
+                  <BookingCalculator tour={tour} onBook={goToBooking} />
                 </div>
               </div>
 
@@ -1053,45 +692,42 @@ export default function TourDetailPage() {
                 </ul>
               </div>
 
+              {/* Need help card — moved to bottom */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-5">
+                <p className="text-sm font-bold text-gray-900 mb-1">Need help planning?</p>
+                <p className="text-xs text-gray-500 mb-4">Talk to our travel experts for free.</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Hi, I'm interested in "${tour.title}"`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1.5 bg-green-50 hover:bg-green-100 text-green-700 py-2.5 rounded-xl text-xs font-semibold transition-colors">
+                    <WhatsAppIcon size={16} /> WhatsApp
+                  </a>
+                  <a href={`tel:+${WHATSAPP}`}
+                    className="flex items-center justify-center gap-1.5 bg-primary-50 hover:bg-primary-100 text-primary-700 py-2.5 rounded-xl text-xs font-semibold transition-colors">
+                    <Phone className="w-4 h-4" /> Call Us
+                  </a>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
+
+        {/* Featured / related tours */}
+        <FeaturedTours excludeId={tour.id} />
       </div>
 
-      {showBooking && (
-        <BookingModal 
-          tour={tour} 
-          onClose={() => setShowBooking(false)}
-          selectedDate={bookingData?.selectedDate}
-          adults={bookingData?.adults}
-          children={bookingData?.children}
-          selectedHotel={bookingData?.selectedHotel}
-          roomSelections={bookingData?.roomSelections}
-        />
-      )}
-    </div>
-  )
-}
-
-function Stat({ icon: Icon, label, value, highlight }: { icon: React.ElementType; label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className="flex items-center gap-2.5">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${highlight ? 'bg-yellow-50' : 'bg-primary-50'}`}>
-        <Icon className={`w-4 h-4 ${highlight ? 'text-yellow-500' : 'text-primary-600'}`} />
+      {/* ── Mobile sticky booking bar ──────────────────────────────── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 flex items-center justify-between gap-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div>
+          <p className="text-[11px] text-gray-400 leading-none">Starting from</p>
+          <p className="text-xl font-extrabold text-gray-900">₹{p.toLocaleString('en-IN')}<span className="text-xs font-medium text-gray-400"> /person</span></p>
+        </div>
+        <button onClick={scrollToBooking}
+          className="flex-1 max-w-[180px] bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-xl text-sm font-bold transition-colors shadow-md">
+          Check Availability
+        </button>
       </div>
-      <div>
-        <p className="text-xs text-gray-400">{label}</p>
-        <p className="text-sm font-semibold text-gray-900">{value}</p>
-      </div>
-    </div>
-  )
-}
-
-function Row({ label, value, cap }: { label: string; value: string; cap?: boolean }) {
-  return (
-    <div className="flex items-center justify-between py-2.5">
-      <span className="text-gray-500">{label}</span>
-      <span className={`font-medium text-gray-900 ${cap ? 'capitalize' : ''}`}>{value}</span>
     </div>
   )
 }

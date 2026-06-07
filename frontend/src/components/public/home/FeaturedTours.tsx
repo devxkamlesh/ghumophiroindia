@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, Calendar, Clock } from 'lucide-react'
+import { MapPin, Clock, Star, Users, ArrowRight, Phone } from 'lucide-react'
 import Link from 'next/link'
 import type { Tour } from '@/types'
 import { toWebP } from '@/lib/image'
@@ -11,6 +11,8 @@ const FALLBACK_IMAGES = [
   'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800&q=80',
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80',
 ]
+
+const CALLBACK_PHONE = process.env.NEXT_PUBLIC_PHONE?.replace(/\s/g, '') || '8287828267'
 
 function priceNum(p: string | number | null | undefined) {
   if (!p) return 0
@@ -34,110 +36,141 @@ export default function FeaturedTours({ tours }: Props) {
             Most <span className="text-blue-600">Popular</span> Tour
           </h2>
           <p className="mx-auto mt-4 max-w-3xl text-sm text-gray-600 md:text-base">
-            Discover the world's most popular tours with unforgettable experiences. Your best place
+            Discover the world&apos;s most popular tours with unforgettable experiences. Your best place
             for adventure, culture, and memories that last a lifetime starts here.
           </p>
         </div>
 
         {/* Tour Cards Grid */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {tours.slice(0, 4).map((tour, i) => {
-            const imageUrl = toWebP(
-              (tour.images ?? [])[0] || FALLBACK_IMAGES[i % FALLBACK_IMAGES.length],
-              800
-            )
-            const price = priceNum(tour.price)
+          {tours.slice(0, 4).map((tour, i) => (
+            <TourCard key={tour.id} tour={tour} fallback={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]} />
+          ))}
+        </div>
 
-            // Get start/end locations from destinations array
-            const destinations = tour.destinations || []
-            const startLocation = destinations[0] || 'Delhi'
-            const endLocation = destinations[destinations.length - 1] || 'Delhi'
-            const locationText = startLocation === endLocation 
-              ? `${startLocation} To ${endLocation}` 
-              : `${startLocation} - ${endLocation}`
-
-            // Generate upcoming dates (placeholder - would come from booking system)
-            const upcomingDates = generateUpcomingDates(4)
-
-            return (
-              <div
-                key={tour.id}
-                className="group overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-              >
-                {/* Image with badges */}
-                <div className="relative h-56 overflow-hidden">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-                    style={{ backgroundImage: `url('${imageUrl}')` }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-
-                  {/* Start-End Badge */}
-                  <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow backdrop-blur-sm">
-                    <MapPin className="h-3.5 w-3.5 text-green-600" />
-                    {locationText}
-                  </div>
-
-                  {/* Duration Badge */}
-                  <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow backdrop-blur-sm">
-                    <Clock className="h-3.5 w-3.5 text-orange-600" />
-                    {tour.duration}D
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-4">
-                  <h3 className="mb-2 text-base font-bold leading-tight text-gray-800 line-clamp-2 group-hover:text-[#f97316]">
-                    {tour.title}
-                  </h3>
-
-                  {/* Dates */}
-                  <div className="mb-3 flex items-center gap-1.5 text-xs text-gray-600">
-                    <Calendar className="h-3.5 w-3.5 text-gray-400" />
-                    <span className="line-clamp-1">{upcomingDates}</span>
-                  </div>
-
-                  {/* Price */}
-                  <div className="mb-3 text-lg font-bold text-[#f97316]">
-                    ₹{price.toLocaleString('en-IN')} <span className="text-sm font-normal text-gray-500">/Person</span>
-                  </div>
-
-                  {/* Request CallBack Button */}
-                  <Link
-                    href={`tel:8287828267`}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-2.5 text-sm font-semibold text-gray-700 transition-all hover:border-[#f97316] hover:bg-[#f97316] hover:text-white"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                    Request CallBack
-                  </Link>
-                </div>
-              </div>
-            )
-          })}
+        {/* View all */}
+        <div className="mt-10 text-center">
+          <Link
+            href="/tours"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-[#f97316] px-7 py-3 text-sm font-semibold text-[#f97316] transition-all hover:bg-[#f97316] hover:text-white"
+          >
+            View All Tours <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>
   )
 }
 
-// Helper function to generate upcoming dates
-function generateUpcomingDates(count: number): string {
-  const dates: string[] = []
-  const today = new Date()
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-  
-  for (let i = 0; i < count; i++) {
-    const futureDate = new Date(today)
-    futureDate.setDate(today.getDate() + (i * 7)) // Weekly dates
-    dates.push(`${futureDate.getDate()} ${months[futureDate.getMonth()]}`)
-  }
-  
-  return dates.join(', ') + ', ...'
+function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
+  const href = `/tours/${tour.id}`
+  const imageUrl = toWebP((tour.images ?? [])[0] || fallback, 800)
+  const price = priceNum(tour.price)
+  const original = Math.round((price * 1.2) / 100) * 100
+  const discount = original > price ? Math.round(((original - price) / original) * 100) : 0
+  const rating = tour.rating ? Number(tour.rating) : null
+  const nights = tour.duration > 1 ? tour.duration - 1 : 0
+
+  const destinations = tour.destinations || []
+  const startLocation = destinations[0] || 'Delhi'
+  const endLocation = destinations[destinations.length - 1] || startLocation
+  const locationText = startLocation === endLocation ? startLocation : `${startLocation} – ${endLocation}`
+
+  return (
+    <div className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+      {/* Image (clickable) */}
+      <Link href={href} className="relative block h-52 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+          style={{ backgroundImage: `url('${imageUrl}')` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />
+
+        {/* Top badges */}
+        <div className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur-sm">
+          <MapPin className="h-3.5 w-3.5 text-green-600" />
+          {locationText}
+        </div>
+        <div className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur-sm">
+          <Clock className="h-3.5 w-3.5 text-orange-600" />
+          {tour.duration}D
+        </div>
+
+        {/* Bottom-left: category + featured */}
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
+          <span className="rounded-full bg-[#f97316] px-2.5 py-1 text-[11px] font-bold capitalize text-white shadow">
+            {tour.category}
+          </span>
+          {tour.isFeatured && (
+            <span className="flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-1 text-[11px] font-bold text-yellow-900 shadow">
+              <Star className="h-3 w-3 fill-yellow-900" /> Featured
+            </span>
+          )}
+        </div>
+
+        {/* Discount ribbon */}
+        {discount > 0 && (
+          <span className="absolute bottom-3 right-3 rounded-full bg-green-600 px-2.5 py-1 text-[11px] font-bold text-white shadow">
+            {discount}% OFF
+          </span>
+        )}
+      </Link>
+
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-4">
+        <Link href={href}>
+          <h3 className="mb-2 line-clamp-2 text-base font-bold leading-tight text-gray-800 transition-colors group-hover:text-[#f97316]">
+            {tour.title}
+          </h3>
+        </Link>
+
+        {/* Meta row: rating + group */}
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+          {rating && (
+            <span className="flex items-center gap-1 font-medium text-gray-700">
+              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+              {rating.toFixed(1)}
+              {(tour.reviewCount ?? 0) > 0 && <span className="text-gray-400">({tour.reviewCount})</span>}
+            </span>
+          )}
+          <span className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5 text-gray-400" />
+            {tour.duration}D{nights > 0 ? `/${nights}N` : ''}
+          </span>
+          <span className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5 text-gray-400" />
+            Max {tour.maxGroupSize}
+          </span>
+        </div>
+
+        {/* Price */}
+        <div className="mb-4 mt-auto">
+          <div className="flex items-end gap-2">
+            <span className="text-xl font-extrabold text-gray-900">₹{price.toLocaleString('en-IN')}</span>
+            {discount > 0 && (
+              <span className="mb-0.5 text-sm text-gray-400 line-through">₹{original.toLocaleString('en-IN')}</span>
+            )}
+          </div>
+          <span className="text-xs text-gray-500">per person</span>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <Link
+            href={href}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#f97316] py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#ea670c]"
+          >
+            View Details <ArrowRight className="h-4 w-4" />
+          </Link>
+          <a
+            href={`tel:${CALLBACK_PHONE}`}
+            aria-label="Request callback"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition-all hover:border-[#f97316] hover:bg-[#f97316] hover:text-white"
+          >
+            <Phone className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+    </div>
+  )
 }
