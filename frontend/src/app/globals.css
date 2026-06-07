@@ -46,6 +46,21 @@
     scroll-behavior: smooth;
   }
 
+  /* Lenis smooth scroll — let the library drive scrolling */
+  html.lenis,
+  html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+
   body {
     @apply text-gray-900 antialiased;
   }
@@ -100,6 +115,7 @@
 /* Custom scrollbar for destination grids */
 .scrollbar-thin::-webkit-scrollbar {
   height: 4px;
+  width: 6px;
 }
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;

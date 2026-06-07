@@ -7,6 +7,13 @@ import events from '../../core/events'
 import logger from '../../core/logger'
 import type { CreateBookingInput, UpdateBookingStatusInput, UpdatePaymentStatusInput, BookingQueryInput } from './booking.validator'
 
+// Server-side add-on price catalogue (source of truth for pricing)
+const ADDON_PRICES: Record<string, number> = {
+  honeymoon: 750,
+  rafting: 600,
+}
+const GST_RATE = 0.05
+
 export class BookingService {
   /**
    * Create new booking
@@ -24,21 +31,48 @@ export class BookingService {
 
     const startDate = new Date(data.startDate)
     const endDate = new Date(startDate)
-    endDate.setDate(endDate.getDate() + tour.duration)
+    endDate.setDate(endDate.getDate() + Math.max(0, tour.duration - 1))
 
-    const totalPrice = parseFloat(tour.price) * data.numberOfTravelers
+    // Resolve traveller counts
+    const adults = data.numberOfAdults ?? data.numberOfTravelers
+    const children = data.numberOfChildren ?? 0
+    const travelers = data.numberOfChildren !== undefined || data.numberOfAdults !== undefined
+      ? adults + children
+      : data.numberOfTravelers
+
+    // Compute price server-side (never trust the client for money)
+    const base = parseFloat(tour.price)
+    const addonsTotal = Object.entries(data.addons ?? {})
+      .reduce((sum, [key, qty]) => sum + (ADDON_PRICES[key] ?? 0) * (qty || 0), 0)
+    const subtotal = base * adults + base * 0.7 * children + addonsTotal
+    const tax = Math.round(subtotal * GST_RATE)
+    const totalPrice = Math.round(subtotal + tax)
 
     const [booking] = await db.insert(bookings).values({
-      ...data,
+      tourId:            data.tourId,
       userId,
+      customerName:      data.customerName,
+      customerEmail:     data.customerEmail,
+      customerPhone:     data.customerPhone,
+      customerCountry:   data.customerCountry,
+      numberOfTravelers: travelers,
+      numberOfAdults:    adults,
+      numberOfChildren:  children,
       startDate,
       endDate,
-      totalPrice: totalPrice.toString(),
-      status: 'pending',
-      paymentStatus: 'pending',
+      departureCity:     data.departureCity ?? null,
+      roomsCount:        data.roomsCount ?? null,
+      travelGoing:       data.travelGoing ?? null,
+      travelReturn:      data.travelReturn ?? null,
+      addons:            data.addons ?? null,
+      passengers:        data.passengers ?? null,
+      totalPrice:        totalPrice.toString(),
+      specialRequests:   data.specialRequests,
+      status:            'pending',
+      paymentStatus:     'pending',
     }).returning()
 
-    logger.info(`Booking ${booking.id} created for tour ${data.tourId}`)
+    logger.info(`Booking ${booking.id} created for tour ${data.tourId} (₹${totalPrice}, ${travelers} pax)`)
     events.emitBookingCreated({ tourId: data.tourId })
 
     // Send confirmation email (non-blocking — don't fail booking if email fails)

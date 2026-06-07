@@ -9,7 +9,7 @@ if (!config.database.url) {
 
 // Create postgres client with connection pooling
 const client = postgres(config.database.url, {
-  ssl: 'require',
+  ssl: config.database.ssl ? 'require' : false,
   max: 10,
   idle_timeout: 20,
   connect_timeout: 10,
