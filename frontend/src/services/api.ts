@@ -109,7 +109,12 @@ api.interceptors.response.use(
       error.response?.data?.message ||
       error.message ||
       'Something went wrong'
-    return Promise.reject(new Error(message))
+    const wrapped = new Error(message)
+    // Surface field-level validation errors (Record<field, string[]>) so
+    // callers can map them onto individual form fields.
+    const fieldErrors = error.response?.data?.errors
+    if (fieldErrors) (wrapped as any).fieldErrors = fieldErrors
+    return Promise.reject(wrapped)
   }
 )
 

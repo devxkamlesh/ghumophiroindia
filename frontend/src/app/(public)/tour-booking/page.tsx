@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  User, Mail, Phone, MapPin, Calendar, Users, ArrowRight,
-  Loader2, CheckCircle2, ChevronLeft,
+  User, Mail, Phone, MapPin, Users, ArrowRight, AlertCircle,
+  Loader2, CheckCircle2, ChevronLeft, UserPlus, Baby, MessageSquare, ReceiptText, Shield,
 } from 'lucide-react'
 import { tourService, bookingService } from '@/services/api'
 import type { Tour } from '@/types'
@@ -30,6 +30,10 @@ const ADDONS_CATALOGUE: Record<string, { label: string; price: number }> = {
 }
 
 interface PaxRow { name: string; mobile: string; gender: string; age: string }
+type Errors = Record<string, string>
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const NAME_RE = /^[\p{L}\p{M}.'\- ]+$/u
 
 function BookingContent() {
   const sp = useSearchParams()
@@ -53,6 +57,7 @@ function BookingContent() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState<Errors>({})
 
   // Primary passenger
   const [name, setName] = useState('')
@@ -98,24 +103,79 @@ function BookingContent() {
   const tax = Math.round((roomCharge + addonsTotal + travelCharge) * 0.05)
   const grandTotal = Math.round(roomCharge + addonsTotal + travelCharge + tax)
 
-  const updateOther = (i: number, k: keyof PaxRow, v: string) =>
+  const clearErr = (key: string) =>
+    setErrors(prev => (prev[key] ? { ...prev, [key]: '' } : prev))
+
+  const updateOther = (i: number, k: keyof PaxRow, v: string) => {
     setOthers(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r))
-  const updateKid = (i: number, k: keyof PaxRow, v: string) =>
+    clearErr(`other-${i}-${k}`)
+  }
+  const updateKid = (i: number, k: keyof PaxRow, v: string) => {
     setKidRows(p => p.map((r, idx) => idx === i ? { ...r, [k]: v } : r))
+    clearErr(`kid-${i}-${k}`)
+  }
+
+  // ── Validation ──────────────────────────────────────────────────────────────
+  const validate = (): Errors => {
+    const e: Errors = {}
+
+    // Primary passenger (mandatory)
+    if (!name.trim()) e.name = 'Full name is required'
+    else if (name.trim().length < 2) e.name = 'Name must be at least 2 characters'
+    else if (!NAME_RE.test(name.trim())) e.name = 'Name can only contain letters and spaces'
+
+    if (!email.trim()) e.email = 'Email is required'
+    else if (!EMAIL_RE.test(email.trim())) e.email = 'Enter a valid email address'
+
+    const digits = phone.replace(/\D/g, '')
+    if (!digits) e.phone = 'Phone number is required'
+    else if (digits.length < 10 || digits.length > 15) e.phone = 'Enter a valid 10-digit mobile number'
+
+    if (!gender) e.gender = 'Please select a gender'
+
+    if (age) {
+      const n = Number(age)
+      if (!/^\d{1,3}$/.test(age) || n < 1 || n > 120) e.age = 'Enter a valid age (1–120)'
+    }
+
+    // Other passengers — required because the booking is for this many people
+    others.forEach((o, i) => {
+      if (!o.name.trim()) e[`other-${i}-name`] = 'Required'
+      else if (o.name.trim().length < 2) e[`other-${i}-name`] = 'Too short'
+      if (o.age) {
+        const n = Number(o.age)
+        if (!/^\d{1,3}$/.test(o.age) || n < 1 || n > 120) e[`other-${i}-age`] = 'Invalid'
+      }
+    })
+
+    // Kids
+    kidRows.forEach((k, i) => {
+      if (!k.name.trim()) e[`kid-${i}-name`] = 'Required'
+      if (k.age) {
+        const n = Number(k.age)
+        if (!/^\d{1,3}$/.test(k.age) || n < 1 || n > 18) e[`kid-${i}-age`] = 'Invalid'
+      }
+    })
+
+    return e
+  }
+
+  const scrollToError = () => {
+    const el = document.querySelector('[data-error="true"]')
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    else window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const submit = async () => {
     if (!tour) return
-    // ── Client-side validation (important fields) ──
-    const errs: string[] = []
-    if (name.trim().length < 2) errs.push('a valid full name')
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errs.push('a valid email')
-    if (phone.replace(/\D/g, '').length < 10) errs.push('a valid phone number (min 10 digits)')
-    if (age && (Number(age) < 1 || Number(age) > 120)) errs.push('a valid age')
-    if (errs.length) {
-      setError(`Please enter ${errs.join(', ')}.`)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    const e = validate()
+    setErrors(e)
+    if (Object.keys(e).length) {
+      setError('Please fix the highlighted fields before continuing.')
+      setTimeout(scrollToError, 50)
       return
     }
+
     setSubmitting(true); setError('')
     try {
       const passengers = [
@@ -145,8 +205,23 @@ function BookingContent() {
       })
       setDone(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (e: any) {
-      setError(e?.message || 'Could not submit booking. Please try again.')
+    } catch (err: any) {
+      // Map server-side field errors back onto the form
+      const fieldErrors = err?.fieldErrors as Record<string, string[]> | undefined
+      if (fieldErrors) {
+        const map: Record<string, string> = {
+          customerName: 'name', customerEmail: 'email',
+          customerPhone: 'phone', customerCountry: 'location',
+        }
+        const mapped: Errors = {}
+        Object.entries(fieldErrors).forEach(([k, msgs]) => {
+          const localKey = map[k] ?? k
+          mapped[localKey] = msgs?.[0] ?? 'Invalid value'
+        })
+        setErrors(prev => ({ ...prev, ...mapped }))
+        setTimeout(scrollToError, 50)
+      }
+      setError(err?.message || 'Could not submit booking. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -169,7 +244,7 @@ function BookingContent() {
 
   if (done) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center px-4">
+      <div className="min-h-[60vh] flex items-center justify-center px-4 font-poppins">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-9 h-9 text-green-600" />
@@ -184,92 +259,119 @@ function BookingContent() {
     )
   }
 
+  const errorCount = Object.values(errors).filter(Boolean).length
+
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen font-poppins">
       <div className="container-custom py-6">
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 mb-4">
+        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-600 mb-4 transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* ── Left: Person Information ───────────────────────────── */}
-          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-lg font-bold text-gray-900 pb-4 border-b border-gray-100">Person Information</h2>
-
-            {/* Primary passenger */}
-            <h3 className="text-sm font-bold text-gray-800 mt-5 mb-4">Primary Passenger Details</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Full Name" required icon={User}>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name" className={inputCls} />
-              </Field>
-              <Field label="Email" required icon={Mail}>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Enter your email address" className={inputCls} />
-              </Field>
-              <Field label="Phone Number" required icon={Phone}>
-                <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="Enter your mobile number" className={inputCls} />
-              </Field>
-              <Field label="Gender">
-                <Select value={gender} onChange={setGender} placeholder="Select" options={GENDERS} />
-              </Field>
-              <Field label="Source">
-                <Select value={source} onChange={setSource} placeholder="Select source" options={SOURCES} />
-              </Field>
-              <Field label="Age">
-                <input value={age} onChange={e => setAge(e.target.value)} placeholder="Enter your age" className={inputCls} />
-              </Field>
-              <Field label="Location" icon={MapPin}>
-                <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Enter your location" className={inputCls} />
-              </Field>
-              <Field label="Food Preference">
-                <Select value={food} onChange={setFood} placeholder="Select" options={FOOD} />
-              </Field>
-              <Field label="Special Day During Trip">
-                <input value={specialDay} onChange={e => setSpecialDay(e.target.value)} placeholder="Birthday, anniversary…" className={inputCls} />
-              </Field>
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            {/* Header band */}
+            <div className="px-6 py-5 bg-gradient-to-r from-primary-600 to-orange-500 text-white">
+              <h2 className="text-lg font-bold tracking-tight">Traveller Details</h2>
+              <p className="text-xs text-white/80 mt-0.5">Fill in the lead traveller&apos;s details. Fields marked <span className="font-semibold">*</span> are required.</p>
             </div>
-            <p className="text-xs text-gray-400 mt-3">
-              <span className="font-semibold text-gray-500">Note:</span> Please enter a correct &amp; valid mobile number as all future communication will be done via the Family Head guest&apos;s mobile number only.
-            </p>
 
-            {/* Other passengers */}
-            {others.length > 0 && (
-              <>
-                <h3 className="text-sm font-bold text-gray-800 mt-7 mb-4">Other Passenger Details</h3>
-                <div className="space-y-3">
-                  {others.map((r, i) => (
-                    <div key={i} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <input value={r.name} onChange={e => updateOther(i, 'name', e.target.value)} placeholder="Enter Name" className={inputCls} />
-                      <input value={r.mobile} onChange={e => updateOther(i, 'mobile', e.target.value)} placeholder="Enter Mobile" className={inputCls} />
-                      <Select value={r.gender} onChange={v => updateOther(i, 'gender', v)} placeholder="Select" options={GENDERS} />
-                      <input value={r.age} onChange={e => updateOther(i, 'age', e.target.value)} placeholder="Enter Age" className={inputCls} />
-                    </div>
-                  ))}
+            <div className="p-6">
+              {/* Top-level error banner */}
+              {errorCount > 0 && (
+                <div className="mb-5 flex items-start gap-2.5 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+                  <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-600 font-medium">
+                    {errorCount} field{errorCount !== 1 ? 's' : ''} need{errorCount === 1 ? 's' : ''} your attention. Please review the highlighted inputs below.
+                  </p>
                 </div>
-              </>
-            )}
+              )}
 
-            {/* Kids */}
-            {kidRows.length > 0 && (
-              <>
-                <h3 className="text-sm font-bold text-gray-800 mt-7 mb-4">Kids Details</h3>
-                <div className="space-y-3">
-                  {kidRows.map((r, i) => (
-                    <div key={i} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <input value={r.name} onChange={e => updateKid(i, 'name', e.target.value)} placeholder="Enter Name" className={inputCls} />
-                      <input value={r.mobile} onChange={e => updateKid(i, 'mobile', e.target.value)} placeholder="Guardian Mobile" className={inputCls} />
-                      <Select value={r.gender} onChange={v => updateKid(i, 'gender', v)} placeholder="Select" options={GENDERS} />
-                      <input value={r.age} onChange={e => updateKid(i, 'age', e.target.value)} placeholder="Enter Age" className={inputCls} />
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+              {/* Primary passenger */}
+              <SectionHeading icon={User} title="Primary Passenger Details" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-4">
+                <Field label="Full Name" required icon={User} error={errors.name}>
+                  <input value={name} onChange={e => { setName(e.target.value); clearErr('name') }}
+                    placeholder="Enter your name" className={inputCls(!!errors.name)} />
+                </Field>
+                <Field label="Email" required icon={Mail} error={errors.email}>
+                  <input type="email" value={email} onChange={e => { setEmail(e.target.value); clearErr('email') }}
+                    placeholder="Enter your email address" className={inputCls(!!errors.email)} />
+                </Field>
+                <Field label="Phone Number" required icon={Phone} error={errors.phone}>
+                  <input inputMode="tel" value={phone} onChange={e => { setPhone(e.target.value); clearErr('phone') }}
+                    placeholder="Enter your mobile number" className={inputCls(!!errors.phone)} />
+                </Field>
+                <Field label="Gender" required error={errors.gender}>
+                  <Select value={gender} onChange={v => { setGender(v); clearErr('gender') }} placeholder="Select" options={GENDERS} error={!!errors.gender} />
+                </Field>
+                <Field label="Source">
+                  <Select value={source} onChange={setSource} placeholder="Select source" options={SOURCES} />
+                </Field>
+                <Field label="Age" error={errors.age}>
+                  <input inputMode="numeric" value={age} onChange={e => { setAge(e.target.value); clearErr('age') }}
+                    placeholder="Enter your age" className={inputCls(!!errors.age)} />
+                </Field>
+                <Field label="Location" icon={MapPin} error={errors.location}>
+                  <input value={location} onChange={e => { setLocation(e.target.value); clearErr('location') }}
+                    placeholder="Enter your location" className={inputCls(!!errors.location)} />
+                </Field>
+                <Field label="Food Preference">
+                  <Select value={food} onChange={setFood} placeholder="Select" options={FOOD} />
+                </Field>
+                <Field label="Special Day During Trip">
+                  <input value={specialDay} onChange={e => setSpecialDay(e.target.value)} placeholder="Birthday, anniversary…" className={inputCls(false)} />
+                </Field>
+              </div>
+              <p className="text-xs text-gray-400 mt-3 leading-relaxed">
+                <span className="font-semibold text-gray-500">Note:</span> Please enter a correct &amp; valid mobile number as all future communication will be done via the Family Head guest&apos;s mobile number only.
+              </p>
 
-            {/* Special requests */}
-            <h3 className="text-sm font-bold text-gray-800 mt-7 mb-2">Special Requests <span className="text-gray-400 font-normal">(optional)</span></h3>
-            <textarea value={requests} onChange={e => setRequests(e.target.value)} rows={3}
-              placeholder="Dietary requirements, accessibility needs, etc." className={`${inputCls} resize-none`} />
+              {/* Other passengers */}
+              {others.length > 0 && (
+                <>
+                  <SectionHeading icon={UserPlus} title="Other Passenger Details" className="mt-7" />
+                  <div className="space-y-4">
+                    {others.map((r, i) => (
+                      <PaxGroup key={i} index={i} label={`Adult ${i + 2}`}>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <CellInput value={r.name} onChange={v => updateOther(i, 'name', v)} placeholder="Full name *" error={errors[`other-${i}-name`]} />
+                          <CellInput value={r.mobile} onChange={v => updateOther(i, 'mobile', v)} placeholder="Mobile" inputMode="tel" />
+                          <Select value={r.gender} onChange={v => updateOther(i, 'gender', v)} placeholder="Gender" options={GENDERS} />
+                          <CellInput value={r.age} onChange={v => updateOther(i, 'age', v)} placeholder="Age" inputMode="numeric" error={errors[`other-${i}-age`]} />
+                        </div>
+                      </PaxGroup>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Kids */}
+              {kidRows.length > 0 && (
+                <>
+                  <SectionHeading icon={Baby} title="Kids Details" className="mt-7" />
+                  <div className="space-y-4">
+                    {kidRows.map((r, i) => (
+                      <PaxGroup key={i} index={i} label={`Child ${i + 1}`}>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <CellInput value={r.name} onChange={v => updateKid(i, 'name', v)} placeholder="Full name *" error={errors[`kid-${i}-name`]} />
+                          <CellInput value={r.mobile} onChange={v => updateKid(i, 'mobile', v)} placeholder="Guardian mobile" inputMode="tel" />
+                          <Select value={r.gender} onChange={v => updateKid(i, 'gender', v)} placeholder="Gender" options={GENDERS} />
+                          <CellInput value={r.age} onChange={v => updateKid(i, 'age', v)} placeholder="Age" inputMode="numeric" error={errors[`kid-${i}-age`]} />
+                        </div>
+                      </PaxGroup>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Special requests */}
+              <SectionHeading icon={MessageSquare} title="Special Requests" optional className="mt-7" />
+              <textarea value={requests} onChange={e => setRequests(e.target.value)} rows={3}
+                placeholder="Dietary requirements, accessibility needs, etc." className={`${inputCls(false)} h-auto py-2.5 resize-none`} />
+            </div>
           </div>
 
           {/* ── Right: Tour Summary ────────────────────────────────── */}
@@ -304,14 +406,20 @@ function BookingContent() {
               </div>
 
               <button onClick={submit} disabled={submitting}
-                className="mt-4 w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white py-3 rounded-xl text-sm font-bold transition-colors">
-                {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : 'Continue'}
+                className="mt-4 w-full flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-60 text-white py-3 rounded-xl text-sm font-bold transition-colors shadow-md shadow-primary-600/20">
+                {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting…</> : <>Continue <ArrowRight className="w-4 h-4" /></>}
               </button>
+
+              <p className="text-[11px] text-gray-400 mt-3 flex items-center justify-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-emerald-500" /> Your details are safe & secure
+              </p>
             </div>
 
             {/* Charges */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h2 className="text-base font-bold text-gray-900 pb-3 border-b border-gray-100">Tour Charges Summary</h2>
+              <h2 className="text-base font-bold text-gray-900 pb-3 border-b border-gray-100 flex items-center gap-2">
+                <ReceiptText className="w-4 h-4 text-primary-600" /> Tour Charges Summary
+              </h2>
               <div className="mt-3 space-y-2.5 text-sm">
                 <ChargeRow label="Room Charge" value={roomCharge} />
                 {addonsTotal > 0 && <ChargeRow label="Add-ons" value={addonsTotal} />}
@@ -327,7 +435,12 @@ function BookingContent() {
               </p>
             </div>
 
-            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+            {error && (
+              <div className="flex items-start gap-2 rounded-xl bg-red-50 border border-red-200 px-3 py-2.5">
+                <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
             </div>
           </div>
         </div>
@@ -337,26 +450,63 @@ function BookingContent() {
 }
 
 // ── Small presentational helpers ──────────────────────────────────────────────
-const inputCls = 'w-full h-11 px-3 rounded-lg border border-gray-200 text-sm text-gray-800 placeholder:text-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none'
+const inputCls = (hasError: boolean) =>
+  `w-full h-11 px-3 rounded-lg border text-sm text-gray-800 placeholder:text-gray-400 outline-none transition-colors ${
+    hasError
+      ? 'border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/40'
+      : 'border-gray-200 focus:border-primary-500 focus:ring-1 focus:ring-primary-500'
+  }`
 
-function Field({ label, required, icon: Icon, children }: { label: string; required?: boolean; icon?: React.ElementType; children: React.ReactNode }) {
+function SectionHeading({ icon: Icon, title, optional, className = '' }: { icon: React.ElementType; title: string; optional?: boolean; className?: string }) {
   return (
-    <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <div className="relative">
-        {Icon && <Icon className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />}
-        <div className={Icon ? '[&>input]:pl-9' : ''}>{children}</div>
-      </div>
+    <div className={`flex items-center gap-2 mb-4 ${className}`}>
+      <span className="w-7 h-7 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+        <Icon className="w-4 h-4" />
+      </span>
+      <h3 className="text-sm font-bold text-gray-800">
+        {title} {optional && <span className="text-gray-400 font-normal">(optional)</span>}
+      </h3>
     </div>
   )
 }
 
-function Select({ value, onChange, options, placeholder }: { value: string; onChange: (v: string) => void; options: string[]; placeholder: string }) {
+function Field({ label, required, icon: Icon, error, children }: { label: string; required?: boolean; icon?: React.ElementType; error?: string; children: React.ReactNode }) {
+  return (
+    <div data-error={error ? 'true' : undefined}>
+      <label className="block text-xs font-medium text-gray-600 mb-1.5">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className="relative">
+        {Icon && <Icon className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 ${error ? 'text-red-400' : 'text-gray-300'}`} />}
+        <div className={Icon ? '[&>input]:pl-9' : ''}>{children}</div>
+      </div>
+      {error && <p className="mt-1 text-[11px] text-red-500 font-medium flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {error}</p>}
+    </div>
+  )
+}
+
+function CellInput({ value, onChange, placeholder, error, inputMode }: { value: string; onChange: (v: string) => void; placeholder: string; error?: string; inputMode?: 'tel' | 'numeric' | 'text' }) {
+  return (
+    <div data-error={error ? 'true' : undefined}>
+      <input value={value} inputMode={inputMode} onChange={e => onChange(e.target.value)} placeholder={placeholder} className={inputCls(!!error)} />
+      {error && <p className="mt-1 text-[11px] text-red-500 font-medium">{error}</p>}
+    </div>
+  )
+}
+
+function PaxGroup({ index, label, children }: { index: number; label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-gray-100 bg-gray-50/60 p-3">
+      <p className="text-[11px] font-semibold text-gray-500 mb-2">{label}</p>
+      {children}
+    </div>
+  )
+}
+
+function Select({ value, onChange, options, placeholder, error }: { value: string; onChange: (v: string) => void; options: string[]; placeholder: string; error?: boolean }) {
   return (
     <select value={value} onChange={e => onChange(e.target.value)}
-      className={`${inputCls} appearance-none bg-white ${value ? 'text-gray-800' : 'text-gray-400'}`}>
+      className={`${inputCls(!!error)} appearance-none bg-white ${value ? 'text-gray-800' : 'text-gray-400'}`}>
       <option value="">{placeholder}</option>
       {options.map(o => <option key={o} value={o} className="text-gray-800">{o}</option>)}
     </select>
