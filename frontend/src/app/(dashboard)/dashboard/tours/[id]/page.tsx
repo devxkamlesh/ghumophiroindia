@@ -340,10 +340,8 @@ export default function EditTourPage() {
                     </button>
                   )}
                 </div>
-                <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)} className={cls} placeholder="Day title" />
-                <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)} className={cls} placeholder="Day description…" />
 
-                {/* Location for this day */}
+                {/* Main Location for this day */}
                 <div>
                   <p className="text-xs font-medium text-gray-500 mb-1.5">📍 Main Location (auto-fills title)</p>
                   <LocationPicker
@@ -358,16 +356,17 @@ export default function EditTourPage() {
                   />
                 </div>
 
-                {/* Title editable */}
+                {/* Title */}
                 <div>
                   <p className="text-xs font-medium text-gray-500 mb-1.5">Title</p>
-                  <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)} className={cls} placeholder="e.g. Amber Fort & City Palace" />
+                  <input type="text" value={day.title} onChange={e => updateDay(i, 'title', e.target.value)} className={cls} placeholder="e.g. Arrival in Jaipur" />
                 </div>
 
-                {/* Description */}
+                {/* Description (activity bullets, one per line) */}
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">Description</p>
-                  <textarea rows={2} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)} className={cls} placeholder="What happens this day…" />
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">Description <span className="text-xs text-gray-400 font-normal">(one activity per line)</span></p>
+                  <textarea rows={4} value={day.description} onChange={e => updateDay(i, 'description', e.target.value)}
+                    className={cls} placeholder="Morning 9 AM approx Departure from Delhi to Shimla&#10;Enroute Lunch&#10;Evening reach at Shimla&#10;Check in & Rest in Leisure&#10;Dinner & Overnight stay at Hotel" />
                 </div>
 
                 {/* Activities = locations */}
