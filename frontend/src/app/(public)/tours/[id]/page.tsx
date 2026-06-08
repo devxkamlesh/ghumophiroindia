@@ -493,7 +493,7 @@ export default function TourDetailPage() {
 
             {/* Itinerary */}
             {(tour.itinerary ?? []).length > 0 && (
-              <Section id="itinerary" title="Day-by-Day Itinerary" icon={<span className="w-1.5 h-6 bg-primary-600 rounded-full" />}>
+              <Section id="itinerary" title="Itinerary" icon={<span className="w-1.5 h-6 bg-primary-600 rounded-full" />}>
                 <p className="text-sm text-gray-400 -mt-2 mb-6">{(tour.itinerary ?? []).length} days of curated experiences</p>
                 <div>
                   {(tour.itinerary ?? []).map((day, i) => (
