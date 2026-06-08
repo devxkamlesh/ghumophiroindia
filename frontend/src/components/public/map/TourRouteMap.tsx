@@ -58,28 +58,8 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
   const [loading, setLoading] = useState(true)
   const [routeLoading, setRouteLoading] = useState(false)
   const [totalKm, setTotalKm] = useState(0)
-  const [mapActive, setMapActive] = useState(false)
 
   const valid = locations.filter(l => l.lat && l.lng && !isNaN(Number(l.lat)) && !isNaN(Number(l.lng)))
-
-  // Toggle scroll-zoom based on whether user has clicked into the map
-  useEffect(() => {
-    const m = mapRef.current
-    if (!m) return
-    if (mapActive) m.scrollZoom.enable()
-    else m.scrollZoom.disable()
-  }, [mapActive])
-
-  // Click outside the map → deactivate scroll-zoom so page scrolling resumes
-  useEffect(() => {
-    const handleOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setMapActive(false)
-      }
-    }
-    document.addEventListener('mousedown', handleOutside)
-    return () => document.removeEventListener('mousedown', handleOutside)
-  }, [])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current || valid.length === 0) return
@@ -283,27 +263,11 @@ export default function TourRouteMap({ locations, height = '480px' }: Props) {
   const endName = valid[valid.length - 1]?.name
 
   return (
-    <div
-      className="relative w-full rounded-3xl overflow-hidden shadow-2xl ring-1 ring-black/5"
-      style={{ height }}
-      onClick={() => setMapActive(true)}
-    >
+    <div className="relative w-full rounded-3xl overflow-hidden shadow-2xl ring-1 ring-black/5" style={{ height }}>
       {loading && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-amber-100">
           <Loader2 className="w-10 h-10 animate-spin text-orange-600 mb-3" />
           <p className="text-sm font-medium text-orange-700">Loading route map...</p>
-        </div>
-      )}
-
-      {/* Click-to-activate overlay — shown while scroll-zoom is off */}
-      {!mapActive && !loading && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
-          <div className="bg-black/50 backdrop-blur-sm text-white text-sm font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-lg">
-            <svg className="w-4 h-4 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M5 12l7 7 7-7" />
-            </svg>
-            Click to interact with map
-          </div>
         </div>
       )}
 
