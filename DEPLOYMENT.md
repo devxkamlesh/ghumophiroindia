@@ -201,3 +201,47 @@ sudo systemctl status nginx
 | Frontend not updating | Must rebuild after `.env.local` changes — `npm run build` |
 | DB permission denied | Run `GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO your_user;` |
 | PM2 not starting frontend | Check `frontend/.next` exists — run `npm run build` first |
+
+---
+
+## CI/CD (GitHub Actions)
+
+Two workflows live in `.github/workflows/`:
+
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `ci.yml` | Pull requests to `main`, pushes to any non-`main` branch | `npm ci` → lint → typecheck → build (both workspaces). Acts as the merge gate. |
+| `deploy.yml` | Push to `main` (e.g. PR merge) or manual run | Verifies the build, then SSHes into the VPS and deploys: `git reset --hard origin/main` → install → build → `pm2 startOrReload` → health check. |
+
+### One-time setup
+
+**1. Create a deploy SSH key (on your machine or the server):**
+```bash
+ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/gha_deploy -N ""
+```
+
+**2. Authorize the public key on the VPS:**
+```bash
+# Copy the contents of ~/gha_deploy.pub into the server's authorized_keys
+cat ~/gha_deploy.pub >> /root/.ssh/authorized_keys   # or the deploy user's ~/.ssh/authorized_keys
+```
+
+**3. Add repository secrets** in GitHub → Settings → Secrets and variables → Actions → *New repository secret*:
+
+| Secret | Value |
+|--------|-------|
+| `VPS_HOST` | `161.118.176.26` (or `ghumofiroindia.com`) |
+| `VPS_USER` | `root` (or your deploy user) |
+| `VPS_SSH_KEY` | The **private** key — full contents of `~/gha_deploy` |
+| `VPS_PORT` | `22` |
+
+**4. (Recommended) Protect production:** Settings → Environments → create `production` and add required reviewers so deploys need approval.
+
+### Notes
+- The deploy does `git reset --hard origin/main`, so **do not keep local edits to tracked files on the server** — they'll be overwritten. `.env` / `.env.local` are git-ignored and are preserved.
+- **Database migrations are NOT run automatically** (they require table-owner privileges). After a deploy that adds a migration, run it manually as the DB owner:
+  ```bash
+  sudo -u postgres psql -d <dbname> -f backend/src/core/database/migrations/<file>.sql
+  ```
+- To deploy manually without merging, use the **Run workflow** button on the Deploy action (workflow_dispatch).
+- If the SSH step can't find `pm2`/`npm`, the runner shell isn't loading your Node install. Confirm Node was installed via nvm (`~/.nvm`) or system packages; the script sources nvm and falls back to standard PATHs.

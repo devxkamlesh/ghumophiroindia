@@ -1,0 +1,42 @@
+name: CI
+
+# Lint, type-check and build both workspaces on every PR and on pushes to
+# any branch other than main (main is handled by the Deploy workflow).
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint · Typecheck · Build
+    runs-on: ubuntu-latest
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      CI: 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (workspaces)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
