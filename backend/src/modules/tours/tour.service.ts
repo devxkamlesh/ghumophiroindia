@@ -27,6 +27,20 @@ interface TourStatsResponse {
   avgRating: number
 }
 
+interface TourCategory {
+  category: string
+  count: number
+  image: string | null
+}
+
+// Human-friendly labels for each category slug
+const CATEGORY_LABELS: Record<string, string> = {
+  city:     'City Tours',
+  heritage: 'Heritage Tours',
+  desert:   'Desert Safari',
+  custom:   'Custom Tours',
+}
+
 export class TourService {
   /**
    * Fetch location slugs for a tour (for cache invalidation events)
@@ -357,6 +371,51 @@ export class TourService {
     logger.info(`Tour ${id} deleted`)
 
     return { message: 'Tour deleted successfully' }
+  }
+
+  /**
+   * Get tour categories with counts and a representative image.
+   * Only active tours are counted. Sorted by tour count (desc).
+   */
+  async getCategories(): Promise<Array<TourCategory & { label: string }>> {
+    // Try cache first
+    const cached = await tourCache.getCategories()
+    if (cached) {
+      logger.info('Tour categories served from cache')
+      return cached
+    }
+
+    // Pull active tours ordered by rating so the representative image
+    // comes from the best-rated tour in each category.
+    const rows = await db
+      .select({
+        category: tours.category,
+        images:   tours.images,
+      })
+      .from(tours)
+      .where(eq(tours.isActive, true))
+      .orderBy(desc(tours.rating))
+
+    const map = new Map<string, TourCategory>()
+    for (const row of rows) {
+      const existing = map.get(row.category)
+      const firstImage = Array.isArray(row.images) ? row.images[0] ?? null : null
+      if (existing) {
+        existing.count += 1
+        if (!existing.image && firstImage) existing.image = firstImage
+      } else {
+        map.set(row.category, { category: row.category, count: 1, image: firstImage })
+      }
+    }
+
+    const result = [...map.values()]
+      .sort((a, b) => b.count - a.count)
+      .map(c => ({ ...c, label: CATEGORY_LABELS[c.category] ?? c.category }))
+
+    await tourCache.setCategories(result)
+    logger.info('Tour categories cached')
+
+    return result
   }
 
   /**

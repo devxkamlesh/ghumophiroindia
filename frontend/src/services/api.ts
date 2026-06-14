@@ -15,6 +15,7 @@ import type {
   MapTour,
   LocationNode,
   Banner,
+  TourCategory,
 } from '@/types'
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ||
@@ -138,6 +139,11 @@ export const tourService = {
   getFeatured: async (): Promise<Tour[]> => {
     const { data } = await api.get('/tours/featured')
     return data.data.tours ?? []
+  },
+
+  getCategories: async (): Promise<TourCategory[]> => {
+    const { data } = await api.get('/tours/categories')
+    return data.data.categories ?? []
   },
 
   getBySlug: async (slug: string): Promise<Tour> => {
@@ -441,12 +447,16 @@ export const locationAdminService = {
 // ─── Banners ──────────────────────────────────────────────────────────────────
 
 export const bannerService = {
-  getActive: async (): Promise<Banner[]> => {
-    const { data } = await api.get('/banners/active')
+  getActive: async (position?: 'hero' | 'category'): Promise<Banner[]> => {
+    const { data } = await api.get('/banners/active', {
+      params: position ? { position } : undefined,
+    })
     return data.data?.banners ?? []
   },
-  getAll: async (): Promise<Banner[]> => {
-    const { data } = await api.get('/banners')
+  getAll: async (position?: 'hero' | 'category'): Promise<Banner[]> => {
+    const { data } = await api.get('/banners', {
+      params: position ? { position } : undefined,
+    })
     return data.data?.banners ?? []
   },
   getById: async (id: number): Promise<Banner> => {

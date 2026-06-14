@@ -9,6 +9,7 @@ export const createBannerSchema = z.object({
   linkText: z.string().max(100).optional(),
   displayOrder: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
+  position: z.enum(['hero', 'category']).optional(),
 })
 
 export const updateBannerSchema = z.object({
@@ -20,6 +21,7 @@ export const updateBannerSchema = z.object({
   linkText: z.string().max(100).optional(),
   displayOrder: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
+  position: z.enum(['hero', 'category']).optional(),
 })
 
 export const reorderBannersSchema = z.object({

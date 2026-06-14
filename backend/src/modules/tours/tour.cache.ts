@@ -86,6 +86,22 @@ export class TourCache {
   }
 
   /**
+   * Get tour categories (with counts) from cache
+   */
+  async getCategories(): Promise<any[] | null> {
+    const key = generateCacheKey(CACHE_KEYS.TOURS, 'categories')
+    return getCache(key)
+  }
+
+  /**
+   * Set tour categories in cache
+   */
+  async setCategories(data: any[]): Promise<void> {
+    const key = generateCacheKey(CACHE_KEYS.TOURS, 'categories')
+    await setCache(key, data, CACHE_TTL.HOT)
+  }
+
+  /**
    * Invalidate single tour cache
    */
   async invalidateTour(id: number) {

@@ -25,6 +25,11 @@ router.get(
 )
 
 router.get(
+  '/categories',
+  tourController.getCategories
+)
+
+router.get(
   '/slug/:slug',
   tourController.getTourBySlug
 )
