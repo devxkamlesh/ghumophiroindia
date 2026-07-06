@@ -16,9 +16,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    # Bound to loopback only — for host-side admin/backups, never public.
-    ports:
-      - "127.0.0.1:5432:5432"
+    # No host port published: the backend reaches it over the Docker network as
+    # `postgres:5432`. This avoids colliding with any host Postgres on 5432.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
