@@ -98,25 +98,47 @@ jobs:
             set -e
             PROJECT_DIR="/var/www/ghumo-phiro"
             COMPOSE_DIR="$PROJECT_DIR/infrastructure/docker"
+            COMPOSE="docker compose -f docker-compose.production.yml"
 
             cd "$PROJECT_DIR"
             git fetch origin main
             git reset --hard origin/main
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-
             cd "$COMPOSE_DIR"
+
+            # Record currently-running images so we can roll back if the new ones fail.
+            PREV_BACKEND="$(docker inspect --format '{{.Config.Image}}' ghumo-backend 2>/dev/null || true)"
+            PREV_FRONTEND="$(docker inspect --format '{{.Config.Image}}' ghumo-frontend 2>/dev/null || true)"
+
             export BACKEND_IMAGE="ghcr.io/devxkamlesh/ghumo-backend:${{ github.sha }}"
             export FRONTEND_IMAGE="ghcr.io/devxkamlesh/ghumo-frontend:${{ github.sha }}"
-            docker compose -f docker-compose.production.yml pull
-            docker compose -f docker-compose.production.yml up -d
-            docker image prune -f
+            $COMPOSE pull
+            $COMPOSE up -d
 
-            echo "Waiting for backend health..."
-            for i in $(seq 1 15); do
-              if curl -fsS http://localhost:4000/api/v1/health >/dev/null 2>&1; then
-                echo "Backend healthy"; break
+            # Health-check backend AND frontend, with retries.
+            ok=0
+            for i in $(seq 1 20); do
+              if curl -fsS http://localhost:4000/api/v1/health >/dev/null 2>&1 \
+                 && curl -fsS http://localhost:3000/ >/dev/null 2>&1; then
+                ok=1; break
               fi
               sleep 3
             done
-            curl -fsS http://localhost:4000/api/v1/health
+
+            if [ "$ok" != "1" ]; then
+              echo "::error::Health check failed after deploy of ${{ github.sha }}"
+              if [ -n "$PREV_BACKEND" ] && [ -n "$PREV_FRONTEND" ]; then
+                echo "Rolling back to $PREV_BACKEND / $PREV_FRONTEND"
+                export BACKEND_IMAGE="$PREV_BACKEND"
+                export FRONTEND_IMAGE="$PREV_FRONTEND"
+                $COMPOSE up -d
+                echo "Rollback complete — site remains on the previous good version."
+              else
+                echo "No previous images to roll back to (first deploy)."
+              fi
+              exit 1
+            fi
+
+            echo "Deploy healthy: ${{ github.sha }}"
+            docker image prune -f
