@@ -1,53 +1,41 @@
-# Multi-stage build for production
-FROM node:24-alpine AS builder
-
+# syntax=docker/dockerfile:1
+# ---- Build stage: full deps (incl. TypeScript) + compile ----
+FROM node:22-alpine AS builder
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
-COPY tsconfig.json ./
+# Install ALL deps (dev included) — tsc lives in devDependencies.
+COPY package*.json tsconfig.json ./
+RUN npm ci
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
-
-# Copy source code
 COPY src ./src
-
-# Build TypeScript
 RUN npm run build
 
-# Production stage
-FROM node:24-alpine
+# Prune to production-only deps for the runtime image.
+RUN npm prune --omit=dev
 
+# ---- Runtime stage: minimal, non-root ----
+FROM node:22-alpine AS runner
 WORKDIR /app
+ENV NODE_ENV=production
 
-# Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init curl
 
-# Copy built files and dependencies
+# Copy pruned prod deps + compiled output.
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/package.json ./package.json
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 && \
-    mkdir -p logs uploads && \
-    chown -R nodejs:nodejs logs uploads
-
+# Non-root user; writable dirs the app expects.
+RUN addgroup -g 1001 -S nodejs \
+  && adduser -S nodejs -u 1001 \
+  && mkdir -p logs uploads \
+  && chown -R nodejs:nodejs /app
 USER nodejs
 
 EXPOSE 4000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:4000/health || exit 1
+  CMD curl -fsS http://localhost:4000/api/v1/health || exit 1
 
-# Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "dist/app.js"]
-
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
 CMD ["node", "dist/app.js"]

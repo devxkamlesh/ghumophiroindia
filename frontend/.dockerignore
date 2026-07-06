@@ -1,45 +1,12 @@
-# Dependencies
 node_modules
-npm-debug.log
-yarn-error.log
-package-lock.json
-yarn.lock
-
-# Environment files
-.env
-.env.local
-.env.*.local
-.env.vps.backup
-
-# Build output
 .next
-out
-dist
-build
-
-# Testing
+.git
+.env*
+!.env.production.example
+npm-debug.log*
+Dockerfile*
+.dockerignore
 coverage
-.nyc_output
-
-# IDE
+*.md
 .vscode
 .idea
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Git
-.git
-.gitignore
-.gitattributes
-
-# Documentation
-*.md
-!README.md
-
-# Public uploads (keep in image)
-# public/uploads

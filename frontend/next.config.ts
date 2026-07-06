@@ -40,6 +40,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Emit a self-contained server bundle (.next/standalone/server.js) for the
+  // Docker image — ships only the traced node_modules instead of the full tree.
+  output: 'standalone',
   // Removes the "X-Powered-By: Next.js" information-disclosure header.
   poweredByHeader: false,
   images: {
