@@ -20,6 +20,18 @@ export const errorHandler = (
     ip: req.ip,
   })
 
+  // Malformed JSON in the request body.
+  // express.json() (body-parser) throws a SyntaxError with `status: 400`, a
+  // `type` of 'entity.parse.failed', and a `body` property. Without this branch
+  // it would fall through to the generic handler and (wrongly) return 500.
+  if (
+    err instanceof SyntaxError &&
+    (err as any).status === 400 &&
+    'body' in err
+  ) {
+    return sendError(res, 'Malformed JSON in request body', 400)
+  }
+
   // Zod validation error
   if (err instanceof ZodError) {
     const errors: Record<string, string[]> = {}
