@@ -48,15 +48,37 @@ const poppins = Poppins({
   display: 'swap',
 })
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ghumofiroindia.com'
+
 export const metadata: Metadata = {
-  title: 'Ghumo Phiro India - Custom Tours from Jaipur | Explore Rajasthan',
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Ghumo Phiro India - Custom Tours from Jaipur | Explore Rajasthan',
+    template: '%s | Ghumo Phiro India',
+  },
   description: 'Discover the magic of Rajasthan with custom tours from Jaipur. Golden Triangle, city tours, and personalized itineraries across India.',
-  keywords: 'Rajasthan tours, Jaipur tours, Golden Triangle, India travel, custom tours, Ghumo Phiro India',
+  keywords: ['Rajasthan tours', 'Jaipur tours', 'Golden Triangle', 'India travel', 'custom tours', 'Ghumo Phiro India'],
+  applicationName: 'Ghumo Phiro India',
+  alternates: { canonical: '/' },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://ghumophiroindia.com',
+    url: SITE_URL,
     siteName: 'Ghumo Phiro India',
+    title: 'Ghumo Phiro India - Custom Tours from Jaipur | Explore Rajasthan',
+    description: 'Custom Rajasthan tours from Jaipur — Golden Triangle, heritage city tours, desert safaris and personalized itineraries.',
+    images: [{ url: '/images/og/default.jpg', width: 1200, height: 630, alt: 'Ghumo Phiro India' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ghumo Phiro India - Custom Tours from Jaipur',
+    description: 'Custom Rajasthan tours, Golden Triangle trips and desert safaris across Incredible India.',
+    images: ['/images/og/default.jpg'],
   },
 }
 

@@ -33,10 +33,26 @@ const apiRouter = Router()
 apiRouter.get('/health', async (req: any, res: any) => {
   const { checkDatabaseConnection } = await import('./core/database')
   const { checkRedisConnection } = await import('./core/redis')
-  const dbConnected = await checkDatabaseConnection()
-  const redisConnected = await checkRedisConnection()
+
+  // Never let the health endpoint itself throw a 500 — a dependency check that
+  // rejects should read as "down", not crash the probe.
+  const [dbConnected, redisConnected] = await Promise.all([
+    checkDatabaseConnection().catch(() => false),
+    checkRedisConnection().catch(() => false),
+  ])
+
+  // The database is a hard dependency; Redis is a best-effort cache (the cache
+  // helpers no-op when it's unavailable). So:
+  //   - DB down       -> "error"    + 503  (node is not usable)
+  //   - Redis down    -> "degraded" + 200  (still serving, but alert-worthy)
+  //   - all up        -> "ok"       + 200
+  // We keep 200 on a Redis-only outage so load balancers don't pull an
+  // otherwise-functional node; point uptime monitors at the `status` field
+  // (alert when status !== "ok") rather than HTTP code alone.
+  const status = !dbConnected ? 'error' : redisConnected ? 'ok' : 'degraded'
+
   res.status(dbConnected ? 200 : 503).json({
-    status: dbConnected ? 'ok' : 'error',
+    status,
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: config.env,

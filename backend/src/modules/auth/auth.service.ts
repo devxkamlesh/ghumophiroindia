@@ -6,6 +6,7 @@ import { hashPassword, comparePassword } from '../../shared/password'
 import { generateToken, generateRefreshToken } from '../../shared/jwt'
 import { ConflictError, UnauthorizedError, NotFoundError } from '../../shared/errors'
 import { setCache, getCache, deleteCache } from '../../core/redis'
+import { getTokenVersion, bumpTokenVersion } from '../../shared/tokenStore'
 import emailService from '../../shared/email'
 import logger from '../../core/logger'
 import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput, ForgotPasswordInput, ResetPasswordInput } from './auth.validator'
@@ -41,16 +42,19 @@ export class AuthService {
     }).returning()
 
     // Generate tokens
+    const tokenVersion = await getTokenVersion(newUser.id)
     const accessToken = await generateToken({
       userId: newUser.id,
       email: newUser.email,
       role: newUser.role,
+      tokenVersion,
     })
 
     const refreshToken = await generateRefreshToken({
       userId: newUser.id,
       email: newUser.email,
       role: newUser.role,
+      tokenVersion,
     })
 
     // Remove password from response
@@ -89,16 +93,19 @@ export class AuthService {
     }
 
     // Generate tokens
+    const tokenVersion = await getTokenVersion(user.id)
     const accessToken = await generateToken({
       userId: user.id,
       email: user.email,
       role: user.role,
+      tokenVersion,
     })
 
     const refreshToken = await generateRefreshToken({
       userId: user.id,
       email: user.email,
       role: user.role,
+      tokenVersion,
     })
 
     // Remove password from response
@@ -180,28 +187,48 @@ export class AuthService {
       })
       .where(eq(users.id, userId))
 
+    // Revoke all existing refresh tokens (force re-login elsewhere)
+    await bumpTokenVersion(userId)
+
     return { message: 'Password changed successfully' }
   }
 
   /**
-   * Refresh access token
+   * Refresh access token.
+   * Validates the refresh token's version against the current stored version —
+   * a mismatch means the session was revoked (logout, password change, role
+   * change, deactivation) and the refresh is rejected.
    */
-  async refreshToken(userId: number) {
+  async refreshToken(payload: { userId: number; tokenVersion?: number }) {
     const user = await db.query.users.findFirst({
-      where: eq(users.id, userId),
+      where: eq(users.id, payload.userId),
     })
 
     if (!user || !user.isActive) {
       throw new UnauthorizedError('Invalid refresh token')
     }
 
+    const currentVersion = await getTokenVersion(user.id)
+    if ((payload.tokenVersion ?? 0) !== currentVersion) {
+      throw new UnauthorizedError('Session expired. Please log in again.')
+    }
+
     const accessToken = await generateToken({
       userId: user.id,
       email: user.email,
       role: user.role,
+      tokenVersion: currentVersion,
     })
 
     return { accessToken }
+  }
+
+  /**
+   * Logout — revoke all refresh tokens for this user.
+   */
+  async logout(userId: number) {
+    await bumpTokenVersion(userId)
+    return { message: 'Logged out' }
   }
 
   /**
@@ -269,6 +296,9 @@ export class AuthService {
 
     // Invalidate the token so it can't be reused
     await deleteCache(cacheKey)
+
+    // Revoke all existing sessions for this user
+    await bumpTokenVersion(userId)
 
     logger.info(`Password reset successfully for user ${userId}`)
     return { message: 'Password reset successfully' }

@@ -50,10 +50,12 @@ router.get('/session', optionalAuth, authController.getSession)
 // Refresh token route (uses refresh token, not access token)
 router.post('/refresh', authenticateRefreshToken, authController.refreshToken)
 
+// Logout — optional auth so it still clears cookies when the access token has
+// already expired. Revokes refresh tokens when the user can be identified.
+router.post('/logout', optionalAuth, authController.logout)
+
 // Protected routes (require authentication)
 router.use(authenticate)
-
-router.post('/logout', authController.logout)
 
 router.get('/profile', authController.getProfile)
 

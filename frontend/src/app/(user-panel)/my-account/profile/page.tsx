@@ -5,7 +5,7 @@ import {
   User, Mail, Phone, MapPin, Globe, Loader2,
   CheckCircle, AlertCircle, Shield, Star, Calendar, Info, KeyRound,
 } from 'lucide-react'
-import { getUser, saveAuth, getToken } from '@/lib/auth'
+import { getUser, updateUser } from '@/lib/auth'
 import { authService } from '@/services/api'
 import type { AuthUser } from '@/types'
 
@@ -92,8 +92,8 @@ export default function ProfilePage() {
     try {
       const updated = await authService.updateProfile(form)
       setUser(updated)
-      const token = getToken(); const localUser = getUser()
-      if (token && localUser) saveAuth(token, { ...localUser, name: updated.name, id: updated.id })
+      const localUser = getUser()
+      if (localUser) updateUser({ ...localUser, name: updated.name, id: updated.id })
       setSuccess('Profile updated successfully')
     } catch (err: any) { setError(err.message) }
     finally { setSaving(false) }

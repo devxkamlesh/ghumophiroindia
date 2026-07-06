@@ -2,14 +2,18 @@ import { SignJWT, jwtVerify } from 'jose'
 import config from '../core/config'
 
 const secret = new TextEncoder().encode(config.jwt.secret)
-const refreshSecret = new TextEncoder().encode(
-  process.env.JWT_REFRESH_SECRET || config.jwt.secret
-)
+const refreshSecret = new TextEncoder().encode(config.jwt.refreshSecret)
+
+// Pin the signing/verification algorithm. Without this, jose will accept any
+// HMAC variant (HS256/384/512), widening the attack surface.
+const JWT_ALG = 'HS256'
 
 export interface JWTPayload {
   userId: number
   email: string
   role: string
+  /** Token revocation version — present on refresh tokens (and access tokens). */
+  tokenVersion?: number
 }
 
 /**
@@ -17,7 +21,7 @@ export interface JWTPayload {
  */
 export async function generateToken(payload: JWTPayload): Promise<string> {
   const token = await new SignJWT({ ...payload })
-    .setProtectedHeader({ alg: 'HS256' })
+    .setProtectedHeader({ alg: JWT_ALG })
     .setIssuedAt()
     .setExpirationTime(config.jwt.expiresIn)
     .sign(secret)
@@ -30,7 +34,7 @@ export async function generateToken(payload: JWTPayload): Promise<string> {
  */
 export async function generateRefreshToken(payload: JWTPayload): Promise<string> {
   const token = await new SignJWT({ ...payload })
-    .setProtectedHeader({ alg: 'HS256' })
+    .setProtectedHeader({ alg: JWT_ALG })
     .setIssuedAt()
     .setExpirationTime(config.jwt.refreshExpiresIn)
     .sign(refreshSecret)
@@ -43,7 +47,7 @@ export async function generateRefreshToken(payload: JWTPayload): Promise<string>
  */
 export async function verifyToken(token: string): Promise<JWTPayload> {
   try {
-    const { payload } = await jwtVerify(token, secret)
+    const { payload } = await jwtVerify(token, secret, { algorithms: [JWT_ALG] })
     return payload as unknown as JWTPayload
   } catch (_error) {
     throw new Error('Invalid or expired token')
@@ -55,7 +59,7 @@ export async function verifyToken(token: string): Promise<JWTPayload> {
  */
 export async function verifyRefreshToken(token: string): Promise<JWTPayload> {
   try {
-    const { payload } = await jwtVerify(token, refreshSecret)
+    const { payload } = await jwtVerify(token, refreshSecret, { algorithms: [JWT_ALG] })
     return payload as unknown as JWTPayload
   } catch (_error) {
     throw new Error('Invalid or expired refresh token')

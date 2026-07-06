@@ -1,15 +1,21 @@
 /**
- * Auth helpers — all localStorage access is SSR-safe (typeof window check).
+ * Auth helpers.
  *
- * Keys:
- *   gpi_token         — JWT access token
- *   gpi_refresh_token — JWT refresh token
- *   gpi_user          — serialised AuthUser object
+ * Tokens are NO LONGER stored in JavaScript — they live in httpOnly cookies set
+ * by the backend (`gpi_at` / `gpi_rt`), so they cannot be read or stolen by
+ * client-side scripts (XSS). The browser sends them automatically on every
+ * same-site request (axios uses `withCredentials`).
+ *
+ * We keep only the non-sensitive user profile in localStorage for instant UI
+ * (showing the name/role without a round-trip). It is NOT a source of trust —
+ * the server validates the cookie on every protected request.
  */
 
-const TOKEN_KEY   = 'gpi_token'
-const REFRESH_KEY = 'gpi_refresh_token'
-const USER_KEY    = 'gpi_user'
+const USER_KEY = 'gpi_user'
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== 'undefined' ? `${window.location.origin}/api/v1` : 'http://localhost:4000/api/v1')
 
 // AuthUser id is number (matches backend schema)
 export interface AuthUser {
@@ -22,34 +28,16 @@ export interface AuthUser {
 }
 
 /**
- * Persist tokens + user after login / register.
+ * Persist the user profile after login / register. Tokens are handled by the
+ * server via httpOnly cookies, so they are intentionally not passed here.
  */
-export function saveAuth(accessToken: string, user: AuthUser, refreshToken?: string) {
-  localStorage.setItem(TOKEN_KEY, accessToken)
+export function saveAuth(user: AuthUser) {
+  if (typeof window === 'undefined') return
   localStorage.setItem(USER_KEY, JSON.stringify(user))
-  if (refreshToken) {
-    localStorage.setItem(REFRESH_KEY, refreshToken)
-  }
 }
 
 /**
- * Get the current access token (null on server or if not logged in).
- */
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(TOKEN_KEY)
-}
-
-/**
- * Get the stored refresh token.
- */
-export function getRefreshToken(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(REFRESH_KEY)
-}
-
-/**
- * Get the stored user object.
+ * Get the stored user object (null on server or if not logged in).
  */
 export function getUser(): AuthUser | null {
   if (typeof window === 'undefined') return null
@@ -63,40 +51,41 @@ export function getUser(): AuthUser | null {
 }
 
 /**
- * Update only the access token (used after a token refresh).
+ * Update the stored user object (used when user data changes on the server).
  */
-export function updateAccessToken(accessToken: string) {
-  localStorage.setItem(TOKEN_KEY, accessToken)
+export function updateUser(user: AuthUser) {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
 }
 
 /**
- * Remove all auth data (logout).
+ * Clear local auth state. Also tells the server (best-effort) to clear the
+ * httpOnly cookies and revoke refresh tokens. Safe to call from sync handlers.
  */
 export function clearAuth() {
-  localStorage.removeItem(TOKEN_KEY)
-  localStorage.removeItem(REFRESH_KEY)
+  if (typeof window === 'undefined') return
   localStorage.removeItem(USER_KEY)
+  // Fire-and-forget: clears gpi_at/gpi_rt cookies + bumps the token version.
+  // The endpoint uses optional auth, so it works even if the access token expired.
+  try {
+    fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {})
+  } catch {
+    /* ignore */
+  }
 }
 
 /**
- * True if an access token exists in storage.
- * Does NOT validate expiry — that's the server's job.
+ * UI hint only — true if a user profile is cached locally. Real authentication
+ * is enforced server-side via the httpOnly cookie.
  */
 export function isAuthenticated(): boolean {
-  return !!getToken()
+  return !!getUser()
 }
 
 /**
- * True if the stored user has the admin role.
+ * True if the stored user has an admin-level role.
  */
 export function isAdmin(): boolean {
   const role = getUser()?.role
   return role === 'admin' || role === 'superadmin'
-}
-
-/**
- * Update the stored user object (used when user data changes on the server).
- */
-export function updateUser(user: AuthUser) {
-  localStorage.setItem(USER_KEY, JSON.stringify(user))
 }

@@ -2,17 +2,16 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser } from '@/lib/auth'
+import { getUser } from '@/lib/auth'
 import { Loader2 } from 'lucide-react'
 
 export default function AdminPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const token = getToken()
     const user = getUser()
 
-    if (!token || !user) {
+    if (!user) {
       router.replace('/login?redirect=/admin')
       return
     }

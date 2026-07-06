@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { bannerService } from '@/services/api'
@@ -90,11 +91,13 @@ export default function Hero() {
   const banner = banners[currentSlide]
 
   return (
-    <section className="relative bg-black">
+    <section className="relative bg-black" aria-label="Featured tours" aria-roledescription="carousel">
       <div
         className="relative w-full h-[320px] overflow-hidden"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
+        onFocus={() => setIsPaused(true)}
+        onBlur={() => setIsPaused(false)}
       >
         {/* Sliding track */}
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
@@ -107,10 +110,15 @@ export default function Hero() {
             exit="exit"
             className="absolute inset-0"
           >
-            {/* Background */}
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url('${banner.image}')` }}
+            {/* Background — next/image so the LCP element is optimized,
+                served as AVIF/WebP, and preloaded via `priority` on first paint. */}
+            <Image
+              src={banner.image}
+              alt={banner.title || 'Featured tour'}
+              fill
+              priority={currentSlide === 0}
+              sizes="100vw"
+              className="object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
 
@@ -158,6 +166,7 @@ export default function Hero() {
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30">
             <button
               onClick={() => paginate(-1)}
+              aria-label="Previous slide"
               className="w-8 h-8 bg-black/40 hover:bg-black/70 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors"
             >
               <ChevronLeft className="w-4 h-4 text-white" />
@@ -167,12 +176,15 @@ export default function Hero() {
                 <button
                   key={idx}
                   onClick={() => setSlide([idx, idx > currentSlide ? 1 : -1])}
+                  aria-label={`Go to slide ${idx + 1}`}
+                  aria-current={idx === currentSlide}
                   className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentSlide ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
                 />
               ))}
             </div>
             <button
               onClick={() => paginate(1)}
+              aria-label="Next slide"
               className="w-8 h-8 bg-black/40 hover:bg-black/70 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors"
             >
               <ChevronRight className="w-4 h-4 text-white" />

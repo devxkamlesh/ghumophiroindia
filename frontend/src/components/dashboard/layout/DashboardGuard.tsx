@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { getToken, getUser, clearAuth, updateUser } from '@/lib/auth'
+import { getUser, clearAuth, updateUser } from '@/lib/auth'
 import { authService } from '@/services/api'
 import { Loader2 } from 'lucide-react'
 
@@ -16,11 +16,10 @@ export default function DashboardGuard({ children }: { children: React.ReactNode
 
   useEffect(() => {
     async function verify() {
-      const token = getToken()
       const user  = getUser()
 
-      // 1. No token or user in storage → login
-      if (!token || !user) {
+      // 1. No cached user in storage → login (cookie is the real source of truth)
+      if (!user) {
         router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
         return
       }

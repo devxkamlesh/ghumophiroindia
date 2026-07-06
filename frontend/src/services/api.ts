@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { getToken, getRefreshToken, updateAccessToken, clearAuth } from '@/lib/auth'
+import { clearAuth } from '@/lib/auth'
 import type {
   Tour,
   Booking,
@@ -27,26 +27,19 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ||
 const api = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
+  // Send httpOnly auth cookies (gpi_at / gpi_rt) on every request.
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
-})
-
-// ── Request interceptor: attach Bearer token ──────────────────────────────────
-api.interceptors.request.use((config) => {
-  const token = getToken()
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
 })
 
 // ── Response interceptor: unwrap envelope + handle 401 ───────────────────────
 let isRefreshing = false
-let failedQueue: Array<{ resolve: (v: string) => void; reject: (e: unknown) => void }> = []
+let failedQueue: Array<{ resolve: () => void; reject: (e: unknown) => void }> = []
 
-function processQueue(error: unknown, token: string | null) {
+function processQueue(error: unknown) {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) reject(error)
-    else resolve(token!)
+    else resolve()
   })
   failedQueue = []
 }
@@ -56,12 +49,12 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    // Auto-refresh on 401, but only once per request (_retry flag)
+    // Auto-refresh on 401, but only once per request (_retry flag).
+    // The refresh token travels as an httpOnly cookie, so there is nothing to
+    // read or attach here — the browser sends it automatically.
     if (error.response?.status === 401 && !originalRequest._retry) {
-      const refreshToken = getRefreshToken()
-
-      if (!refreshToken) {
-        // No refresh token — clear auth and redirect to login
+      // Never try to refresh the refresh call itself.
+      if (typeof originalRequest.url === 'string' && originalRequest.url.includes('/auth/refresh')) {
         clearAuth()
         if (typeof window !== 'undefined') {
           window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`
@@ -70,31 +63,21 @@ api.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // Queue this request until the refresh completes
-        return new Promise((resolve, reject) => {
+        // Queue this request until the in-flight refresh completes.
+        return new Promise<void>((resolve, reject) => {
           failedQueue.push({ resolve, reject })
-        }).then((newToken) => {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`
-          return api(originalRequest)
-        })
+        }).then(() => api(originalRequest))
       }
 
       originalRequest._retry = true
       isRefreshing = true
 
       try {
-        const { data } = await axios.post(
-          `${BASE_URL}/auth/refresh`,
-          {},
-          { headers: { Authorization: `Bearer ${refreshToken}` } }
-        )
-        const newAccessToken: string = data.data.accessToken
-        updateAccessToken(newAccessToken)
-        processQueue(null, newAccessToken)
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
+        await axios.post(`${BASE_URL}/auth/refresh`, {}, { withCredentials: true })
+        processQueue(null)
         return api(originalRequest)
       } catch (refreshError) {
-        processQueue(refreshError, null)
+        processQueue(refreshError)
         clearAuth()
         if (typeof window !== 'undefined') {
           window.location.href = `/login?redirect=${encodeURIComponent(window.location.pathname)}`

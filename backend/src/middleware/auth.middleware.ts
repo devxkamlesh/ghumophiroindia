@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { verifyToken, verifyRefreshToken, JWTPayload } from '../shared/jwt'
 import { UnauthorizedError, ForbiddenError } from '../shared/errors'
+import { ACCESS_COOKIE, REFRESH_COOKIE } from '../shared/cookies'
 
 // Extend Express Request type
 declare global {
@@ -11,8 +12,18 @@ declare global {
   }
 }
 
+/** Pull a bearer token from the Authorization header, falling back to a cookie. */
+function extractToken(req: Request, cookieName: string): string | null {
+  const authHeader = req.headers.authorization
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7)
+  }
+  const cookieToken = (req as any).cookies?.[cookieName]
+  return typeof cookieToken === 'string' && cookieToken.length > 0 ? cookieToken : null
+}
+
 /**
- * Authenticate user from JWT token
+ * Authenticate user from JWT token (Authorization header or httpOnly cookie)
  */
 export const authenticate = async (
   req: Request,
@@ -20,14 +31,11 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
-    // Get token from header
-    const authHeader = req.headers.authorization
+    const token = extractToken(req, ACCESS_COOKIE)
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       throw new UnauthorizedError('No token provided')
     }
-
-    const token = authHeader.substring(7) // Remove 'Bearer ' prefix
 
     // Verify token
     const payload = await verifyToken(token)
@@ -75,10 +83,9 @@ export const optionalAuth = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization
+    const token = extractToken(req, ACCESS_COOKIE)
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7)
+    if (token) {
       const payload = await verifyToken(token)
       req.user = payload
     }
@@ -91,7 +98,8 @@ export const optionalAuth = async (
 }
 
 /**
- * Authenticate using refresh token (for /refresh endpoint only)
+ * Authenticate using refresh token (for /refresh endpoint only).
+ * Reads the refresh token from the Authorization header or the httpOnly cookie.
  */
 export const authenticateRefreshToken = async (
   req: Request,
@@ -99,13 +107,12 @@ export const authenticateRefreshToken = async (
   next: NextFunction
 ) => {
   try {
-    const authHeader = req.headers.authorization
+    const token = extractToken(req, REFRESH_COOKIE)
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       throw new UnauthorizedError('No refresh token provided')
     }
 
-    const token = authHeader.substring(7)
     const payload = await verifyRefreshToken(token)
     req.user = payload
 

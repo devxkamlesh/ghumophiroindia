@@ -22,6 +22,7 @@ interface Config {
   }
   jwt: {
     secret: string
+    refreshSecret: string
     expiresIn: string
     refreshExpiresIn: string
   }
@@ -72,7 +73,8 @@ const config: Config = {
   
   jwt: {
     secret: process.env.JWT_SECRET || '',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || '',
+    expiresIn: process.env.JWT_EXPIRES_IN || '15m',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   },
   
@@ -127,6 +129,15 @@ const validateConfig = () => {
   
   if (missing.length > 0) {
     throw new Error(`Missing required config: ${missing.join(', ')}`)
+  }
+
+  // Refresh token must use its own secret, distinct from the access-token secret.
+  // Sharing secrets means an access token is also a valid refresh token (and vice versa).
+  if (!config.jwt.refreshSecret) {
+    throw new Error('Missing required config: JWT_REFRESH_SECRET (must be set and differ from JWT_SECRET)')
+  }
+  if (config.jwt.refreshSecret === config.jwt.secret) {
+    throw new Error('JWT_REFRESH_SECRET must be different from JWT_SECRET')
   }
 }
 

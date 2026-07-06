@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Hero from '@/components/public/home/Hero'
 import AdsBanner from '@/components/public/home/AdsBanner'
 import FeaturedTours from '@/components/public/home/FeaturedTours'
@@ -9,7 +10,24 @@ import FAQ from '@/components/public/home/FAQ'
 import CTABand from '@/components/public/home/CTABand'
 import type { Tour, LocationNode, PlaceCard } from '@/types'
 
-export const dynamic = 'force-dynamic'
+// Statically render and refresh every 5 minutes (ISR). Individual fetches below
+// can override this with their own `revalidate`. This replaces `force-dynamic`,
+// which disabled all caching and forced a full re-render + 3 upstream calls per visit.
+export const revalidate = 300
+
+export const metadata: Metadata = {
+  title: 'Rajasthan & India Tour Packages | Ghumo Phiro India',
+  description:
+    'Book curated Rajasthan tours from Jaipur — Golden Triangle, heritage city tours, desert safaris and fully custom itineraries across Incredible India.',
+  alternates: { canonical: '/' },
+  openGraph: {
+    title: 'Rajasthan & India Tour Packages | Ghumo Phiro India',
+    description:
+      'Curated Rajasthan tours, Golden Triangle trips, desert safaris and custom itineraries across India.',
+    url: '/',
+    type: 'website',
+  },
+}
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'
 
@@ -49,6 +67,11 @@ export default async function Home() {
 
   return (
     <>
+      {/* Single, descriptive H1 for SEO + a11y. The Hero slider uses H2s, so the
+          page previously had no H1. Visually hidden to preserve the design. */}
+      <h1 className="sr-only">
+        Ghumo Phiro India — Rajasthan &amp; India Tour Packages, Golden Triangle, Desert Safaris &amp; Custom Trips
+      </h1>
       <Hero />
       <AdsBanner placeCards={placeCards} />
       <PopularDestinations locations={allLocations} />

@@ -23,12 +23,10 @@ function LoginForm() {
     setError('')
 
     try {
-      const { user, accessToken, refreshToken } = await authService.login(formData)
+      const { user } = await authService.login(formData)
 
       saveAuth(
-        accessToken,
         { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone, country: user.country },
-        refreshToken,
       )
 
       const defaultRedirect = (user.role === 'admin' || user.role === 'superadmin') ? '/dashboard' : '/my-account'

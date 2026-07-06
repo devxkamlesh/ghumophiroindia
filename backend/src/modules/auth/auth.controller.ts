@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import authService from './auth.service'
 import { sendSuccess } from '../../shared/response'
+import { setAuthCookies, setAccessCookie, clearAuthCookies } from '../../shared/cookies'
 import type { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput, ForgotPasswordInput, ResetPasswordInput } from './auth.validator'
 
 export class AuthController {
@@ -12,7 +13,8 @@ export class AuthController {
     try {
       const data: RegisterInput = req.body
       const result = await authService.register(data)
-      
+
+      setAuthCookies(res, result.accessToken, result.refreshToken)
       sendSuccess(res, result, 'Registration successful', 201)
     } catch (error) {
       next(error)
@@ -27,7 +29,8 @@ export class AuthController {
     try {
       const data: LoginInput = req.body
       const result = await authService.login(data)
-      
+
+      setAuthCookies(res, result.accessToken, result.refreshToken)
       sendSuccess(res, result, 'Login successful')
     } catch (error) {
       next(error)
@@ -57,8 +60,11 @@ export class AuthController {
    */
   async logout(req: Request, res: Response, next: NextFunction) {
     try {
-      // In a stateless JWT system, logout is handled client-side
-      // by removing the token. Server can optionally blacklist tokens.
+      // Revoke refresh tokens (if we know who the user is) and clear cookies.
+      if (req.user?.userId) {
+        await authService.logout(req.user.userId)
+      }
+      clearAuthCookies(res)
       sendSuccess(res, null, 'Logout successful')
     } catch (error) {
       next(error)
@@ -114,7 +120,8 @@ export class AuthController {
    */
   async refreshToken(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await authService.refreshToken(req.user!.userId)
+      const result = await authService.refreshToken(req.user!)
+      setAccessCookie(res, result.accessToken)
       sendSuccess(res, result, 'Token refreshed successfully')
     } catch (error) {
       next(error)

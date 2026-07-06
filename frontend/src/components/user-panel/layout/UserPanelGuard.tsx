@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { getToken, getUser, clearAuth, updateUser } from '@/lib/auth'
+import { getUser, clearAuth, updateUser } from '@/lib/auth'
 import { authService } from '@/services/api'
 import { Loader2 } from 'lucide-react'
 
@@ -16,17 +16,16 @@ export default function UserPanelGuard({ children }: { children: React.ReactNode
 
   useEffect(() => {
     async function verify() {
-      const token = getToken()
-      const user  = getUser()
+      const user = getUser()
 
-      // 1. No token → login
-      if (!token || !user) {
+      // 1. No cached user → login (real auth is the httpOnly cookie, verified below)
+      if (!user) {
         router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
         return
       }
 
-      // 2. Verify token is still valid with the server.
-      //    The 401 interceptor will auto-refresh if the access token expired.
+      // 2. Verify the session is still valid with the server.
+      //    The 401 interceptor will auto-refresh via the refresh cookie if needed.
       try {
         await authService.getProfile()
         setChecked(true)

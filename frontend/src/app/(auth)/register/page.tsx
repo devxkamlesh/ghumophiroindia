@@ -52,16 +52,14 @@ export default function RegisterPage() {
 
     setIsLoading(true)
     try {
-      const { user, accessToken, refreshToken } = await authService.register({
+      const { user } = await authService.register({
         name:     formData.name,
         email:    formData.email,
         phone:    formData.phone || undefined,
         password: formData.password,
       })
       saveAuth(
-        accessToken,
         { id: user.id, name: user.name, email: user.email, role: user.role, phone: user.phone },
-        refreshToken,
       )
       setSuccess(true)
       setTimeout(() => router.push('/my-account'), 1600)

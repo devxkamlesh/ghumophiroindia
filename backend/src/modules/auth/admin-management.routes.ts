@@ -10,6 +10,7 @@ import { users } from '../../core/database/schema'
 import { authenticate, requireSuperAdmin } from '../../middleware/auth.middleware'
 import { sendSuccess } from '../../shared/response'
 import { ForbiddenError, NotFoundError } from '../../shared/errors'
+import { bumpTokenVersion } from '../../shared/tokenStore'
 
 const router = Router()
 
@@ -62,6 +63,9 @@ router.patch('/users/:id/role', async (req, res, next) => {
       .where(eq(users.id, targetId))
       .returning({ id: users.id, name: users.name, email: users.email, role: users.role })
 
+    // Revoke the target's existing sessions so the new role takes effect promptly
+    await bumpTokenVersion(targetId)
+
     sendSuccess(res, { user: updated }, `User role updated to ${role}`)
   } catch (e) { next(e) }
 })
@@ -80,6 +84,8 @@ router.delete('/users/:id', async (req, res, next) => {
     if (target.role === 'superadmin') throw new ForbiddenError('Cannot deactivate superadmin')
 
     await db.update(users).set({ isActive: false }).where(eq(users.id, targetId))
+    // Revoke the deactivated user's sessions immediately
+    await bumpTokenVersion(targetId)
     sendSuccess(res, null, 'User deactivated')
   } catch (e) { next(e) }
 })
