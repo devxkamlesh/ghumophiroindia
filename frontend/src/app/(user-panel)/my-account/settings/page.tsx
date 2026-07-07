@@ -143,7 +143,7 @@ export default function SettingsPage() {
                 <p className="text-sm text-red-700">This is permanent and cannot be undone. Contact support to proceed.</p>
               </div>
               <div className="flex gap-2">
-                <a href="mailto:support@ghumophiroindia.com?subject=Account Deletion Request"
+                <a href="mailto:support@ghumofiroindia.com?subject=Account Deletion Request"
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors">
                   Contact Support
                 </a>
@@ -167,7 +167,7 @@ export default function SettingsPage() {
           <CardHeader icon={HelpCircle} label="Need Help?" />
           <div className="space-y-2">
             {[
-              { href: 'mailto:support@ghumophiroindia.com', icon: Mail,         label: 'Email Support', sub: 'support@ghumophiroindia.com' },
+              { href: 'mailto:support@ghumofiroindia.com', icon: Mail,         label: 'Email Support', sub: 'support@ghumofiroindia.com' },
               { href: 'tel:+919876543210',                  icon: Phone,        label: 'Call Us',       sub: '+91 98765 43210' },
               { href: '/contact',                           icon: MessageSquare,label: 'Contact Form',  sub: 'Send us a message' },
             ].map(({ href, icon: Icon, label, sub }) => (

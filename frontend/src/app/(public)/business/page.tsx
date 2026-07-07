@@ -249,14 +249,14 @@ export default function BusinessPage() {
                     <p className="text-sm font-semibold text-gray-800">{WHATSAPP_NUMBER}</p>
                   </div>
                 </a>
-                <a href="mailto:business@ghumophiroindia.com"
+                <a href="mailto:business@ghumofiroindia.com"
                   className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
                   <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
                     <Mail className="w-4 h-4 text-white" />
                   </div>
                   <div>
                     <p className="text-xs text-gray-400">Email</p>
-                    <p className="text-sm font-semibold text-gray-800">business@ghumophiroindia.com</p>
+                    <p className="text-sm font-semibold text-gray-800">business@ghumofiroindia.com</p>
                   </div>
                 </a>
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">

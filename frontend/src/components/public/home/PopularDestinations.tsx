@@ -153,7 +153,7 @@ function DestinationCard({ state, isFocused }: { state: LocationNode; isFocused:
     800
   )
 
-  const tourCount = state.children?.filter(c => c.type === 'city').length || 0
+  const tourCount = state.tourCount ?? 0
 
   return (
     <div

@@ -72,7 +72,6 @@ function buildJsonTemplate(locations: LocationNode[]): string {
     duration: 7,
     price: 28999,
     maxGroupSize: 16,
-    difficulty: 'easy',
     category: 'heritage',
     isFeatured: false,
     images: [
@@ -153,7 +152,7 @@ WRITING RULES (keep it simple, clear, and SEO-friendly):
 - highlights: 6–8 short points, EACH starting with a relevant emoji.
 - included / excluded: 6–10 specific items each.
 - price: per person INR (whole number). duration: total days. maxGroupSize: 8–25.
-- difficulty: "easy" | "moderate" | "challenging". category: "city" | "heritage" | "desert" | "custom".
+- category: "city" | "heritage" | "desert" | "custom".
 - images: 4–6 real Unsplash URLs.
 
 LOCATION RULES (CRITICAL — these link to real DB locations):
@@ -280,7 +279,6 @@ export default function NewTourPage() {
   const [form, setForm] = useState({
     title: '', slug: '', description: '', longDescription: '',
     duration: 1, price: 0, maxGroupSize: 10,
-    difficulty: 'easy' as 'easy' | 'moderate' | 'challenging',
     category: 'heritage' as 'city' | 'heritage' | 'desert' | 'custom',
     images: [''] as string[],
     highlights: [''] as string[],
@@ -337,7 +335,6 @@ export default function NewTourPage() {
       duration:        data.duration        ?? prev.duration,
       price:           data.price           ?? prev.price,
       maxGroupSize:    data.maxGroupSize     ?? prev.maxGroupSize,
-      difficulty:      data.difficulty      ?? prev.difficulty,
       category:        data.category        ?? prev.category,
       isFeatured:      data.isFeatured      ?? prev.isFeatured,
       images:          data.images?.length  ? data.images       : prev.images,
@@ -384,7 +381,6 @@ export default function NewTourPage() {
         duration:        form.duration,
         price:           form.price,
         maxGroupSize:    form.maxGroupSize,
-        difficulty:      form.difficulty,
         category:        form.category,
         images:          clean(form.images),
         highlights:      clean(form.highlights),
@@ -492,14 +488,6 @@ export default function NewTourPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Group Size <span className="text-red-500">*</span></label>
                 <input type="number" min="1" value={form.maxGroupSize} onChange={e => set('maxGroupSize')(parseInt(e.target.value) || 1)} className={cls} required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty</label>
-                <select value={form.difficulty} onChange={e => set('difficulty')(e.target.value)} className={cls}>
-                  <option value="easy">Easy</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="challenging">Challenging</option>
-                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>

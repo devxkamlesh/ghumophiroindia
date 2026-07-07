@@ -111,7 +111,7 @@ export default function DestinationsPage() {
 }
 
 function DestinationCard({ location }: { location: LocationNode }) {
-  const tourCount = location.children?.filter(c => c.type === 'city').length || 0
+  const tourCount = location.tourCount ?? 0
 
   return (
     <Link
@@ -132,7 +132,7 @@ function DestinationCard({ location }: { location: LocationNode }) {
           <h3 className="text-white font-bold text-2xl mb-1">{location.name}</h3>
           <div className="flex items-center justify-between">
             <span className="text-white/80 text-sm">
-              {tourCount > 0 ? `${tourCount} ${tourCount === 1 ? 'city' : 'cities'}` : 'Explore now'}
+              {tourCount > 0 ? `${tourCount} package${tourCount === 1 ? '' : 's'}` : 'Explore now'}
             </span>
             <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white transition-all group-hover:gap-2.5">
               Explore <ArrowRight className="w-4 h-4" />

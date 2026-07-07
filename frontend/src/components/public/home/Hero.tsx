@@ -1,197 +1,162 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion, AnimatePresence } from 'motion/react'
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowRight, Loader2 } from 'lucide-react'
 import { bannerService } from '@/services/api'
 import type { Banner } from '@/types'
 
-const EASE = [0.25, 0.46, 0.45, 0.94] as const
+const AUTOPLAY_MS = 6000
 
-const slideVariants = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? '100%' : '-100%',
-    opacity: 1,
-  }),
-  center: {
-    x: 0,
-    opacity: 1,
-    transition: { duration: 0.55, ease: EASE },
-  },
-  exit: (dir: number) => ({
-    x: dir > 0 ? '-100%' : '100%',
-    opacity: 1,
-    transition: { duration: 0.55, ease: EASE },
-  }),
-}
-
-const textVariants = {
-  hidden: (dir: number) => ({
-    opacity: 0,
-    x: dir > 0 ? 60 : -60,
-  }),
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.45, delay: 0.2, ease: EASE },
-  },
-}
+// Sized for 1920x600 banners (16:5). Height follows width, but stays readable on
+// phones (min) and never gets oversized on ultrawide (max).
+const BOX = 'relative w-full aspect-[16/5] min-h-[300px] max-h-[600px] overflow-hidden'
 
 export default function Hero() {
-  const [[currentSlide, direction], setSlide] = useState([0, 1])
   const [banners, setBanners] = useState<Banner[]>([])
   const [loading, setLoading] = useState(true)
-  const [isPaused, setIsPaused] = useState(false)
+  const [index, setIndex] = useState(0)
+  const [paused, setPaused] = useState(false)
 
   useEffect(() => {
     bannerService.getActive()
-      .then(data => setBanners(data))
+      .then(setBanners)
       .catch(err => console.error('Failed to fetch banners:', err))
       .finally(() => setLoading(false))
   }, [])
 
-  const paginate = (dir: number) => {
-    setSlide(([cur]) => {
-      const next = (cur + dir + banners.length) % banners.length
-      return [next, dir]
-    })
-  }
+  const count = banners.length
+  const go = useCallback((i: number) => {
+    setIndex(prev => (count ? ((i % count) + count) % count : prev))
+  }, [count])
 
+  // Autoplay — pure state tick, no animation library involved.
   useEffect(() => {
-    if (isPaused || banners.length <= 1) return
-    const t = setInterval(() => paginate(1), 4500)
+    if (paused || count <= 1) return
+    const t = setInterval(() => setIndex(i => (i + 1) % count), AUTOPLAY_MS)
     return () => clearInterval(t)
-  }, [isPaused, banners.length, currentSlide])
+  }, [paused, count])
 
   if (loading) {
     return (
-      <section className="relative bg-white">
-        <div className="w-full h-[320px] flex items-center justify-center bg-gray-100">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
-        </div>
+      <section className={`${BOX} bg-gray-100 flex items-center justify-center`}>
+        <Loader2 className="w-7 h-7 animate-spin text-primary-600" />
       </section>
     )
   }
 
-  if (banners.length === 0) {
+  if (count === 0) {
     return (
-      <section className="relative bg-white">
-        <div className="w-full h-[320px] flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Welcome to Ghumo Phiro India</h2>
-            <p className="text-gray-600">Explore the beauty of Rajasthan</p>
-          </div>
+      <section className={`${BOX} flex items-center justify-center bg-gradient-to-br from-primary-600 to-orange-500`}>
+        <div className="text-center text-white px-4">
+          <h2 className="text-2xl md:text-4xl font-extrabold drop-shadow">Ghumo Phiro India</h2>
+          <p className="mt-2 text-white/90 text-sm md:text-base">Custom Rajasthan tours from Jaipur</p>
+          <Link
+            href="/tours"
+            className="mt-5 inline-flex items-center gap-2 bg-white text-primary-700 hover:bg-primary-50 px-5 py-2.5 rounded-xl font-semibold text-sm transition-colors"
+          >
+            Explore Tours <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
     )
   }
-
-  const banner = banners[currentSlide]
 
   return (
-    <section className="relative bg-black" aria-label="Featured tours" aria-roledescription="carousel">
-      <div
-        className="relative w-full h-[320px] overflow-hidden"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-        onFocus={() => setIsPaused(true)}
-        onBlur={() => setIsPaused(false)}
-      >
-        {/* Sliding track */}
-        <AnimatePresence initial={false} custom={direction} mode="popLayout">
-          <motion.div
-            key={currentSlide}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            className="absolute inset-0"
+    <section
+      className={`group ${BOX} bg-gray-900`}
+      aria-roledescription="carousel"
+      aria-label="Featured tours"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Slides stacked once and crossfaded with a compositor-only opacity
+          transition — no scale/slide animation, so no scroll jank. */}
+      {banners.map((b, i) => {
+        const active = i === index
+        return (
+          <div
+            key={b.id ?? i}
+            aria-hidden={!active}
+            className={`absolute inset-0 transition-opacity duration-700 ease-out motion-reduce:transition-none ${active ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           >
-            {/* Background — next/image so the LCP element is optimized,
-                served as AVIF/WebP, and preloaded via `priority` on first paint. */}
             <Image
-              src={banner.image}
-              alt={banner.title || 'Featured tour'}
+              src={b.image}
+              alt={b.title || 'Featured tour'}
               fill
-              priority={currentSlide === 0}
+              priority={i === 0}
+              loading={i === 0 ? 'eager' : 'lazy'}
               sizes="100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-transparent" />
 
-            {/* Text */}
             <div className="absolute inset-0 flex items-center">
               <div className="container-custom w-full px-4 md:px-8 lg:px-12">
-                <motion.div
-                  custom={direction}
-                  variants={textVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="max-w-xl flex flex-col gap-2.5"
-                >
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg">
-                    {banner.title}
+                <div className="max-w-xl">
+                  <h2 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white leading-[1.05] tracking-tight drop-shadow-xl">
+                    {b.title}
                   </h2>
-                  {banner.subtitle && (
-                    <p className="text-white/95 text-base md:text-lg font-semibold drop-shadow">
-                      {banner.subtitle}
+                  {b.subtitle && (
+                    <p className="mt-2 text-white/95 text-sm md:text-lg font-semibold drop-shadow">{b.subtitle}</p>
+                  )}
+                  {b.description && (
+                    <p className="mt-1.5 hidden sm:block text-white/80 text-xs md:text-sm max-w-md line-clamp-2">
+                      {b.description}
                     </p>
                   )}
-                  {banner.description && (
-                    <p className="text-white/80 text-sm md:text-base">
-                      {banner.description}
-                    </p>
-                  )}
-                  {banner.linkUrl && (
-                    <div className="pt-1">
-                      <Link
-                        href={banner.linkUrl}
-                        className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-lg font-bold text-sm md:text-base transition-colors shadow-lg"
-                      >
-                        {banner.linkText || 'Book Now'}
-                      </Link>
-                    </div>
-                  )}
-                </motion.div>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Link
+                      href={b.linkUrl || '/tours'}
+                      className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors shadow-lg"
+                    >
+                      {b.linkText || 'Book Now'} <ArrowRight className="w-4 h-4" />
+                    </Link>
+                    <Link
+                      href="/tours"
+                      className="inline-flex items-center gap-2 text-white/90 hover:text-white px-4 py-2.5 rounded-xl font-semibold text-sm border border-white/30 hover:border-white/60 transition-colors"
+                    >
+                      Explore all tours
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Controls */}
-        {banners.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 z-30">
-            <button
-              onClick={() => paginate(-1)}
-              aria-label="Previous slide"
-              className="w-8 h-8 bg-black/40 hover:bg-black/70 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4 text-white" />
-            </button>
-            <div className="flex gap-1.5">
-              {banners.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSlide([idx, idx > currentSlide ? 1 : -1])}
-                  aria-label={`Go to slide ${idx + 1}`}
-                  aria-current={idx === currentSlide}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentSlide ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`}
-                />
-              ))}
-            </div>
-            <button
-              onClick={() => paginate(1)}
-              aria-label="Next slide"
-              className="w-8 h-8 bg-black/40 hover:bg-black/70 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center transition-colors"
-            >
-              <ChevronRight className="w-4 h-4 text-white" />
-            </button>
           </div>
-        )}
-      </div>
+        )
+      })}
+
+      {/* Controls */}
+      {count > 1 && (
+        <>
+          <button
+            onClick={() => go(index - 1)}
+            aria-label="Previous slide"
+            className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-20 w-9 h-9 md:w-11 md:h-11 rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-sm border border-white/25 flex items-center justify-center text-white transition md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => go(index + 1)}
+            aria-label="Next slide"
+            className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-20 w-9 h-9 md:w-11 md:h-11 rounded-full bg-white/15 hover:bg-white/30 backdrop-blur-sm border border-white/25 flex items-center justify-center text-white transition md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:left-auto md:right-8 md:translate-x-0 z-20 flex items-center gap-2">
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => go(i)}
+                aria-label={`Go to slide ${i + 1}`}
+                aria-current={i === index}
+                className={`h-1.5 rounded-full transition-all ${i === index ? 'w-6 bg-white' : 'w-1.5 bg-white/40 hover:bg-white/70'}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </section>
   )
 }

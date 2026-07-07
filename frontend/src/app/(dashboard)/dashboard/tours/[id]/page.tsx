@@ -55,7 +55,6 @@ function ListField({ label, items, onChange, placeholder }: {
 type FormState = {
   title: string; slug: string; description: string; longDescription: string
   duration: number; price: number; maxGroupSize: number
-  difficulty: 'easy' | 'moderate' | 'challenging'
   category: 'city' | 'heritage' | 'desert' | 'custom'
   images: string[]; highlights: string[]; included: string[]; excluded: string[]
   destinations: string[]
@@ -73,7 +72,6 @@ function tourToForm(t: Tour): FormState {
     duration:        t.duration,
     price:           typeof t.price === 'string' ? parseFloat(t.price) || 0 : t.price,
     maxGroupSize:    t.maxGroupSize,
-    difficulty:      t.difficulty as FormState['difficulty'],
     category:        t.category as FormState['category'],
     images:          (t.images ?? []).length > 0 ? t.images : [''],
     highlights:      (t.highlights ?? []).length > 0 ? t.highlights : [''],
@@ -186,7 +184,6 @@ export default function EditTourPage() {
         duration:        form.duration,
         price:           form.price,
         maxGroupSize:    form.maxGroupSize,
-        difficulty:      form.difficulty,
         category:        form.category,
         images:          clean(form.images),
         highlights:      clean(form.highlights),
@@ -279,14 +276,6 @@ export default function EditTourPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Max Group Size</label>
               <input type="number" min="1" value={form.maxGroupSize} onChange={e => set('maxGroupSize')(parseInt(e.target.value) || 1)} className={cls} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Difficulty</label>
-              <select value={form.difficulty} onChange={e => set('difficulty')(e.target.value)} className={cls}>
-                <option value="easy">Easy</option>
-                <option value="moderate">Moderate</option>
-                <option value="challenging">Challenging</option>
-              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Category</label>

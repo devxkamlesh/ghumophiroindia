@@ -7,7 +7,7 @@ import {
   Clock, Users, MapPin, Star, Check, X, ChevronRight,
   AlertCircle, Loader2, Shield, Award, ThumbsUp, HeartHandshake,
   Hotel, Bus, UtensilsCrossed, Camera, Binoculars, Coffee, Utensils,
-  ChevronDown, ChevronUp, Info, Mountain, Tag, Phone, Share2, Sparkles,
+  ChevronDown, ChevronUp, Info, Tag, Phone, Share2, Sparkles,
   Wallet, ShieldCheck, Headphones, FileText, Ban,
 } from 'lucide-react'
 import { tourService, locationAdminService } from '@/services/api'
@@ -453,7 +453,6 @@ export default function TourDetailPage({ initialTour = null }: { initialTour?: T
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 mt-4">
           <FactCard icon={Clock}    label="Duration"   value={`${tour.duration} Days${nights > 0 ? ` / ${nights} Nights` : ''}`} />
           <FactCard icon={Users}    label="Group Size" value={`Max ${tour.maxGroupSize}`} />
-          <FactCard icon={Mountain} label="Difficulty" value={tour.difficulty} />
           <FactCard icon={Tag}      label="Category"   value={tour.category} />
         </div>
       </div>

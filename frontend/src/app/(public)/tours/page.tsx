@@ -19,12 +19,6 @@ const FALLBACKS = [
   'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&q=80',
 ]
 
-const DIFF: Record<string, string> = {
-  easy:        'bg-green-100 text-green-700',
-  moderate:    'bg-amber-100 text-amber-700',
-  challenging: 'bg-red-100 text-red-700',
-}
-
 function img(tour: Tour, i: number) {
   return (tour.images ?? [])[0] || FALLBACKS[i % FALLBACKS.length]
 }
@@ -123,9 +117,6 @@ function TourCard({ tour, i }: { tour: Tour; i: number }) {
             <Users className="w-3.5 h-3.5 text-primary-400" />
             <span className="font-medium">{tour.maxGroupSize} max</span>
           </span>
-          <span className={`px-2 py-0.5 rounded-full font-medium capitalize ${DIFF[tour.difficulty] ?? 'bg-gray-100 text-gray-600'}`}>
-            {tour.difficulty}
-          </span>
         </div>
       </div>
     </Link>
@@ -196,7 +187,6 @@ function ToursInner() {
 
   const [search,     setSearch]     = useState(searchParams.get('search')     ?? '')
   const [category,   setCategory]   = useState(searchParams.get('category')   ?? '')
-  const [difficulty, setDifficulty] = useState(searchParams.get('difficulty') ?? '')
   const [budget,     setBudget]     = useState(searchParams.get('budget')     ?? '')
   const [travelers,  setTravelers]  = useState(initialTravelers)
   const [sortBy,     setSortBy]     = useState(searchParams.get('sortBy')     ?? 'createdAt')
@@ -221,7 +211,6 @@ function ToursInner() {
         page, limit: 12,
         ...(search     && { search }),
         ...(category   && { category }),
-        ...(difficulty && { difficulty }),
         sortBy: sortBy as any, sortOrder,
       })
       setTours(Array.isArray(r.tours) ? r.tours : [])
@@ -229,41 +218,40 @@ function ToursInner() {
     } catch (e: any) {
       setError(e.message || 'Failed to load tours'); setTours([])
     } finally { setLoading(false) }
-  }, [page, search, category, difficulty, sortBy, sortOrder])
+  }, [page, search, category, sortBy, sortOrder])
 
   useEffect(() => { fetch() }, [fetch])
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault(); setPage(1)
-    push({ search, category, difficulty, budget, travelers, sortBy, sortOrder, page: 1 })
+    push({ search, category, budget, travelers, sortBy, sortOrder, page: 1 })
   }
 
   const onFilter = (k: string, v: string) => {
     setPage(1)
     if (k === 'category')   setCategory(v)
-    if (k === 'difficulty') setDifficulty(v)
     if (k === 'budget')     setBudget(v)
     if (k === 'travelers')  setTravelers(v)
-    push({ search, category, difficulty, budget, travelers, sortBy, sortOrder, [k]: v, page: 1 })
+    push({ search, category, budget, travelers, sortBy, sortOrder, [k]: v, page: 1 })
   }
 
   const onSort = (val: string) => {
     const [sb, so] = val.split(':')
     setSortBy(sb); setSortOrder(so as any); setPage(1)
-    push({ search, category, difficulty, budget, travelers, sortBy: sb, sortOrder: so, page: 1 })
+    push({ search, category, budget, travelers, sortBy: sb, sortOrder: so, page: 1 })
   }
 
   const onPage = (p: number) => {
-    setPage(p); push({ search, category, difficulty, budget, travelers, sortBy, sortOrder, page: p })
+    setPage(p); push({ search, category, budget, travelers, sortBy, sortOrder, page: p })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const clearAll = () => {
-    setSearch(''); setCategory(''); setDifficulty(''); setBudget(''); setTravelers(''); setPage(1)
+    setSearch(''); setCategory(''); setBudget(''); setTravelers(''); setPage(1)
     router.push('/tours')
   }
 
-  const hasFilters = !!(search || category || difficulty || budget || travelers)
+  const hasFilters = !!(search || category || budget || travelers)
 
   return (
     <div className="flex gap-8">
@@ -302,18 +290,6 @@ function ToursInner() {
               {[['', 'Any Group'], ['solo', 'Solo / Personal'], ['couple', 'Couple'], ['group', 'Group']].map(([v, l]) => (
                 <button key={v} onClick={() => onFilter('travelers', v)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${travelers === v ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
-                  {l}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t border-gray-100 pt-5">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Difficulty</p>
-            <div className="space-y-1">
-              {[['', 'All Levels'], ['easy', 'Easy'], ['moderate', 'Moderate'], ['challenging', 'Challenging']].map(([v, l]) => (
-                <button key={v} onClick={() => onFilter('difficulty', v)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${difficulty === v ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-gray-600 hover:bg-gray-50'}`}>
                   {l}
                 </button>
               ))}
@@ -393,11 +369,10 @@ function ToursInner() {
         {/* Active filter pills */}
         {hasFilters && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {search     && <FilterPill label={`"${search}"`}  onRemove={() => { setSearch('');     push({ category, difficulty, budget, travelers, sortBy, sortOrder, page: 1 }) }} />}
-            {category   && <FilterPill label={category}       onRemove={() => { setCategory('');   push({ search, difficulty, budget, travelers, sortBy, sortOrder, page: 1 }) }} />}
-            {difficulty && <FilterPill label={difficulty}     onRemove={() => { setDifficulty(''); push({ search, category, budget, travelers, sortBy, sortOrder, page: 1 }) }} />}
-            {budget     && <FilterPill label={budget}         onRemove={() => { setBudget('');     push({ search, category, difficulty, travelers, sortBy, sortOrder, page: 1 }) }} />}
-            {travelers  && <FilterPill label={travelers}      onRemove={() => { setTravelers('');  push({ search, category, difficulty, budget, sortBy, sortOrder, page: 1 }) }} />}
+            {search     && <FilterPill label={`"${search}"`}  onRemove={() => { setSearch('');     push({ category, budget, travelers, sortBy, sortOrder, page: 1 }) }} />}
+            {category   && <FilterPill label={category}       onRemove={() => { setCategory('');   push({ search, budget, travelers, sortBy, sortOrder, page: 1 }) }} />}
+            {budget     && <FilterPill label={budget}         onRemove={() => { setBudget('');     push({ search, category, travelers, sortBy, sortOrder, page: 1 }) }} />}
+            {travelers  && <FilterPill label={travelers}      onRemove={() => { setTravelers('');  push({ search, category, budget, sortBy, sortOrder, page: 1 }) }} />}
           </div>
         )}
 

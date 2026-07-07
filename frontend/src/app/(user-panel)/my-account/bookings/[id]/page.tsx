@@ -310,7 +310,7 @@ export default function BookingOrderPage() {
               <MapPin className="w-4 h-4" /> View Tour Page
             </Link>
           )}
-          <a href={`mailto:support@ghumophiroindia.com?subject=Booking %23${booking.id}`}
+          <a href={`mailto:support@ghumofiroindia.com?subject=Booking %23${booking.id}`}
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors">
             <Mail className="w-4 h-4" /> Contact Support
           </a>

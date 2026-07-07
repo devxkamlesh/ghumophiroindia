@@ -9,8 +9,8 @@ const COMPANY = {
   address: 'Jaipur, Rajasthan — 302001, India',
   gst:     'GSTIN: 08AAXCG1234X1ZX',
   phone:   '+91 98765 43210',
-  email:   'support@ghumophiroindia.com',
-  web:     'ghumophiroindia.com',
+  email:   'support@ghumofiroindia.com',
+  web:     'ghumofiroindia.com',
 }
 
 const ADDONS: Record<string, { label: string; price: number }> = {

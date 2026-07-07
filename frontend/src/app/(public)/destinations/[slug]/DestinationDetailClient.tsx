@@ -32,12 +32,6 @@ function priceNum(p: string | number | null | undefined) {
   return typeof p === 'string' ? parseFloat(p) || 0 : p
 }
 
-const DIFF_STYLE: Record<string, string> = {
-  easy:        'bg-green-100 text-green-700',
-  moderate:    'bg-amber-100 text-amber-700',
-  challenging: 'bg-red-100 text-red-700',
-}
-
 export default function DestinationDetailPage({ initialLocation = null }: { initialLocation?: LocationNode | null }) {
   const { slug } = useParams<{ slug: string }>()
   const router   = useRouter()
@@ -47,7 +41,6 @@ export default function DestinationDetailPage({ initialLocation = null }: { init
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState('')
   const [search,   setSearch]   = useState('')
-  const [difficulty, setDifficulty] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true); setError('')
@@ -63,11 +56,9 @@ export default function DestinationDetailPage({ initialLocation = null }: { init
 
   useEffect(() => { load() }, [load])
 
-  const filtered = tours.filter(t => {
-    const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase())
-    const matchDiff   = !difficulty || t.difficulty === difficulty
-    return matchSearch && matchDiff
-  })
+  const filtered = tours.filter(t =>
+    !search || t.title.toLowerCase().includes(search.toLowerCase())
+  )
 
   if (loading) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -173,13 +164,6 @@ export default function DestinationDetailPage({ initialLocation = null }: { init
                   placeholder="Search tours…"
                   className="pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none w-44" />
               </div>
-              <select value={difficulty} onChange={e => setDifficulty(e.target.value)}
-                className="px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none">
-                <option value="">All levels</option>
-                <option value="easy">Easy</option>
-                <option value="moderate">Moderate</option>
-                <option value="challenging">Challenging</option>
-              </select>
             </div>
           </div>
 
@@ -222,27 +206,17 @@ const PKG_ICONS = [
 
 const WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, '') || '919876543210'
 
-// Mock location chips — shown when a tour has no destinations set yet.
-// TODO: replace with real tour.destinations from the database.
-const MOCK_PLACES = ['Jaipur', 'Udaipur', 'Jodhpur', 'Pushkar']
-
 function TourCard({ tour }: { tour: Tour }) {
   const p      = priceNum(tour.price)
   const rating = tour.rating ? Number(tour.rating) : null
   const img    = tour.images?.[0] || FALLBACK_TOUR
   const nights = tour.duration > 1 ? tour.duration - 1 : 0
   const included = tour.included ?? []
-  const detectedPkg = PKG_ICONS.filter(pkg => included.some(inc => pkg.match.test(inc)))
-  // Fallback to default inclusions when none are set (mock — replace with real data later)
-  const displayPkg = detectedPkg.length > 0 ? detectedPkg : PKG_ICONS
+  // Only show inclusion icons actually detected in the tour's "included" list.
+  const displayPkg = PKG_ICONS.filter(pkg => included.some(inc => pkg.match.test(inc)))
 
-  // Location chips — fallback to mock places when destinations are empty
-  const places = (tour.destinations && tour.destinations.length > 0)
-    ? tour.destinations
-    : MOCK_PLACES
-
-  // Mock original (strikethrough) price — ~22% higher than deal price
-  const originalPrice = Math.round((p * 1.22) / 100) * 100
+  // Real destinations only — no chips when the tour has none.
+  const places = tour.destinations ?? []
 
   return (
     <div className="group bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col sm:flex-row">
@@ -313,7 +287,6 @@ function TourCard({ tour }: { tour: Tour }) {
         <p className="text-[11px] font-semibold text-green-600 uppercase tracking-wide mb-0.5">Super Deal Price</p>
         <div className="flex items-end gap-1.5 mb-0.5">
           <p className="text-2xl font-extrabold text-gray-900">₹{p.toLocaleString('en-IN')}</p>
-          <span className="text-gray-400 text-xs line-through mb-1">₹{originalPrice.toLocaleString('en-IN')}</span>
         </div>
         <p className="text-[11px] text-gray-400 mb-3">per person on sharing</p>
 

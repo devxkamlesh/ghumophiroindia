@@ -110,7 +110,6 @@ export const tourService = {
     page?: number
     limit?: number
     category?: string
-    difficulty?: string
     featured?: boolean
     search?: string
     sortBy?: string

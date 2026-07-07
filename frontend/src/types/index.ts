@@ -35,7 +35,6 @@ export interface Tour {
   description: string
   longDescription?: string
   category: string
-  difficulty: string
   duration: number
   price: string | number
   maxGroupSize: number
@@ -211,6 +210,8 @@ export interface LocationNode {
   isActive:    boolean
   isPopular:   boolean
   createdAt:   string
+  // Descendant-aware count of active tour packages (provided by the API).
+  tourCount?:  number
   // client-only — built from flat list
   children?:   LocationNode[]
 }

@@ -71,7 +71,7 @@ export default function ContactPage() {
             <div className="space-y-5">
               {[
                 { icon: Phone,  title: 'Phone',          lines: ['+91 98765 43210', 'Mon–Sat, 9 AM – 7 PM IST'] },
-                { icon: Mail,   title: 'Email',          lines: ['info@ghumophiroindia.com', 'We respond within 24 hours'] },
+                { icon: Mail,   title: 'Email',          lines: ['info@ghumofiroindia.com', 'We respond within 24 hours'] },
                 { icon: MapPin, title: 'Office',         lines: ['123 MI Road, Jaipur', 'Rajasthan 302001, India'] },
                 { icon: Clock,  title: 'Business Hours', lines: ['Mon–Sat: 9 AM – 7 PM', 'Sunday: 10 AM – 5 PM'] },
               ].map(({ icon: Icon, title, lines }) => (

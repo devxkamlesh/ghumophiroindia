@@ -132,8 +132,6 @@ function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
   const href = `/tours/${tour.id}`
   const imageUrl = toWebP((tour.images ?? [])[0] || fallback, 800)
   const price = priceNum(tour.price)
-  const original = Math.round((price * 1.2) / 100) * 100
-  const discount = original > price ? Math.round(((original - price) / original) * 100) : 0
   const rating = tour.rating ? Number(tour.rating) : null
   const nights = tour.duration > 1 ? tour.duration - 1 : 0
 
@@ -181,11 +179,7 @@ function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
             </span>
           )}
         </div>
-        {discount > 0 && (
-          <span className="absolute bottom-3 right-3 rounded-full bg-green-600 px-2.5 py-1 text-[11px] font-bold text-white shadow">
-            {discount}% OFF
-          </span>
-        )}
+
       </Link>
 
       {/* Content */}
@@ -227,9 +221,6 @@ function TourCard({ tour, fallback }: { tour: Tour; fallback: string }) {
         <div className="mb-5 mt-auto">
           <div className="flex items-end gap-2">
             <span className="text-2xl font-extrabold text-gray-900">₹{price.toLocaleString('en-IN')}</span>
-            {discount > 0 && (
-              <span className="mb-0.5 text-sm text-gray-400 line-through">₹{original.toLocaleString('en-IN')}</span>
-            )}
           </div>
           <span className="text-xs text-gray-500">per person</span>
         </div>

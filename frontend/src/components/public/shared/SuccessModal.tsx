@@ -81,11 +81,11 @@ export default function SuccessModal({
                     <span className="font-medium">+91 98765 43210</span>
                   </a>
                   <a
-                    href="mailto:info@ghumophiroindia.com"
+                    href="mailto:info@ghumofiroindia.com"
                     className="flex items-center justify-center space-x-3 text-gray-700 hover:text-primary-600 transition-colors"
                   >
                     <Mail className="w-5 h-5" />
-                    <span className="font-medium">info@ghumophiroindia.com</span>
+                    <span className="font-medium">info@ghumofiroindia.com</span>
                   </a>
                   <button
                     onClick={() => {
