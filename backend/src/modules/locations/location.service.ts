@@ -1,9 +1,18 @@
-import { eq, isNull, like } from 'drizzle-orm'
+import { eq, and, or, like, inArray, sql } from 'drizzle-orm'
 import db from '../../core/database'
-import { locations } from '../../core/database/schema'
+import { locations, tours, tourLocations } from '../../core/database/schema'
 import { NotFoundError, ConflictError } from '../../shared/errors'
+import { getCache, setCache, deleteCache, CACHE_TTL } from '../../core/redis'
 import logger from '../../core/logger'
 import type { CreateLocationInput, UpdateLocationInput, LocationQueryInput } from './location.validator'
+
+// `getAll` returns the full location tree and is hit from many public pages.
+// The data changes only via admin CRUD, so cache the whole payload and drop the
+// key on any location mutation.
+// Bump the version suffix whenever the cached payload shape changes (e.g. adding
+// tourCount) so a deploy serves a freshly-computed value instead of stale cache.
+const ALL_LOCATIONS_KEY = 'locations:all:v2'
+type LocationList = { locations: unknown[]; pagination: { page: number; limit: number; total: number; totalPages: number } }
 
 const cols = {
   id:          locations.id,
@@ -23,16 +32,89 @@ const cols = {
 
 export class LocationService {
   async getAll(_query: LocationQueryInput) {
+    const cached = await getCache<LocationList>(ALL_LOCATIONS_KEY)
+    if (cached) return cached
+
     try {
       const result = await db.select(cols).from(locations).orderBy(locations.path)
-      return { locations: result, pagination: { page: 1, limit: 500, total: result.length, totalPages: 1 } }
+
+      // Attach a descendant-aware active-tour count to each location. A state
+      // aggregates the tours linked to all its cities/places (via the `path`
+      // hierarchy), not only the tours linked to the state node directly.
+      const countMap = await this.getTourCounts()
+      const withCounts = result.map(l => ({ ...l, tourCount: countMap.get(l.id) ?? 0 }))
+
+      const payload: LocationList = {
+        locations: withCounts,
+        pagination: { page: 1, limit: 500, total: withCounts.length, totalPages: 1 },
+      }
+      await setCache(ALL_LOCATIONS_KEY, payload, CACHE_TTL.WARM)
+      return payload
     } catch {
       return { locations: [], pagination: { page: 1, limit: 500, total: 0, totalPages: 0 } }
     }
   }
 
-  async getRoots() {
-    return db.select(cols).from(locations).where(isNull(locations.parentId)).orderBy(locations.name)
+  /**
+   * Map of locationId -> count of DISTINCT active tours, aggregated over the
+   * location and all its descendants (matched by `path` prefix). One query.
+   */
+  private async getTourCounts(): Promise<Map<number, number>> {
+    const map = new Map<number, number>()
+    try {
+      const rows = await db.execute(sql`
+        SELECT l.id AS id, COUNT(DISTINCT t.id)::int AS tour_count
+        FROM locations l
+        LEFT JOIN locations d ON d.path = l.path OR d.path LIKE l.path || '/%'
+        LEFT JOIN tour_locations tl ON tl.location_id = d.id
+        LEFT JOIN tours t ON t.id = tl.tour_id AND t.is_active = true
+        GROUP BY l.id
+      `)
+      for (const r of rows as unknown as Array<{ id: number; tour_count: number }>) {
+        map.set(Number(r.id), Number(r.tour_count) || 0)
+      }
+    } catch (e) {
+      logger.warn(`getTourCounts failed: ${(e as Error).message}`)
+    }
+    return map
+  }
+
+  /**
+   * All active tours linked to a location OR any of its descendants.
+   * Deduplicated, so a tour linked to several cities in a state appears once.
+   */
+  async getToursForLocationTree(id: number) {
+    const loc = await this.getById(id)
+    const descendants = await db
+      .select({ id: locations.id })
+      .from(locations)
+      .where(or(eq(locations.id, id), like(locations.path, `${loc.path}/%`)))
+    const ids = descendants.map(d => d.id)
+    if (ids.length === 0) return []
+
+    return db
+      .selectDistinct({
+        id:           tours.id,
+        title:        tours.title,
+        slug:         tours.slug,
+        price:        tours.price,
+        duration:     tours.duration,
+        rating:       tours.rating,
+        images:       tours.images,
+        category:     tours.category,
+        isFeatured:   tours.isFeatured,
+        description:  tours.description,
+        included:     tours.included,
+        destinations: tours.destinations,
+      })
+      .from(tourLocations)
+      .innerJoin(tours, eq(tourLocations.tourId, tours.id))
+      .where(and(inArray(tourLocations.locationId, ids), eq(tours.isActive, true)))
+  }
+
+  /** Drop the cached location list. Called after any location mutation. */
+  private async invalidateCache() {
+    await deleteCache(ALL_LOCATIONS_KEY)
   }
 
   async getChildren(parentId: number) {
@@ -80,6 +162,7 @@ export class LocationService {
       isPopular:   data.isPopular ?? false,
     }).returning()
     logger.info(`Location created: ${loc.name} (${loc.type})`)
+    await this.invalidateCache()
     return loc
   }
 
@@ -114,6 +197,7 @@ export class LocationService {
 
     const [updated] = await db.update(locations).set(updateData).where(eq(locations.id, id)).returning()
     logger.info(`Location updated: ${updated.name}, isPopular: ${updated.isPopular}`)
+    await this.invalidateCache()
     return updated
   }
 
@@ -121,6 +205,7 @@ export class LocationService {
     await this.getById(id) // throws if not found
     await db.delete(locations).where(eq(locations.id, id))
     logger.info(`Location deleted: ${id}`)
+    await this.invalidateCache()
     return { message: 'Location deleted' }
   }
 

@@ -65,18 +65,3 @@ export async function verifyRefreshToken(token: string): Promise<JWTPayload> {
     throw new Error('Invalid or expired refresh token')
   }
 }
-
-/**
- * Decode token without verification (for debugging)
- */
-export function decodeToken(token: string): any {
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3) return null
-    
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString())
-    return payload
-  } catch {
-    return null
-  }
-}

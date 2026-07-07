@@ -76,28 +76,10 @@ router.get('/:id/children', validateParams(idParam), async (req, res, next) => {
   } catch (e) { next(e) }
 })
 
-// Get all tours linked to a location
+// Get all tours linked to a location OR any of its descendants (path-based).
 router.get('/:id/tours', validateParams(idParam), async (req, res, next) => {
   try {
-    const { tourLocations, tours } = await import('../../core/database/schema')
-    const { eq } = await import('drizzle-orm')
-    const db = (await import('../../core/database')).default
-    const rows = await db
-      .select({
-        id:       tours.id,
-        title:    tours.title,
-        slug:     tours.slug,
-        price:    tours.price,
-        duration: tours.duration,
-        rating:   tours.rating,
-        images:   tours.images,
-        category: tours.category,
-        difficulty: tours.difficulty,
-        isFeatured: tours.isFeatured,
-      })
-      .from(tourLocations)
-      .innerJoin(tours, eq(tourLocations.tourId, tours.id))
-      .where(eq(tourLocations.locationId, Number(req.params.id)))
+    const rows = await locationService.getToursForLocationTree(Number(req.params.id))
     sendSuccess(res, { tours: rows })
   } catch (e) { next(e) }
 })

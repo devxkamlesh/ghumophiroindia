@@ -3,6 +3,7 @@ import { createServer } from './core/server'
 import { errorHandler } from './middleware/errorHandler'
 import { notFoundHandler } from './middleware/notFoundHandler'
 import { apiLimiter } from './middleware/rateLimiter'
+import { optionalAuth } from './middleware/auth.middleware'
 import authRoutes from './modules/auth/auth.routes'
 import adminManagementRoutes from './modules/auth/admin-management.routes'
 import tourRoutes from './modules/tours/tour.routes'
@@ -61,6 +62,14 @@ apiRouter.get('/health', async (req: any, res: any) => {
       redis: redisConnected ? 'connected' : 'disconnected',
     },
   })
+})
+
+// Populate req.user (when a valid token is present) BEFORE rate limiting so the
+// limiters can key on the authenticated user id instead of a shared IP.
+// optionalAuth never rejects — anonymous requests simply fall through to IP keying.
+apiRouter.use((req: any, res: any, next: any) => {
+  if (req.path === '/health') return next()
+  return optionalAuth(req, res, next)
 })
 
 apiRouter.use((req: any, res: any, next: any) => {

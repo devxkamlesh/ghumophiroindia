@@ -42,6 +42,8 @@ interface Config {
   rateLimit: {
     windowMs: number
     maxRequests: number
+    authenticatedMax: number
+    anonReadMax: number
   }
   logging: {
     level: string
@@ -86,7 +88,7 @@ const config: Config = {
   
   email: {
     resendApiKey: process.env.RESEND_API_KEY || '',
-    from: process.env.EMAIL_FROM || 'noreply@ghumophiroindia.com',
+    from: process.env.EMAIL_FROM || 'noreply@ghumofiroindia.com',
     // Legacy SMTP (kept for fallback)
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT || '587', 10),
@@ -96,7 +98,14 @@ const config: Config = {
   
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
+    // Anonymous write/mutation budget per IP (the strict-ish fallback).
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
+    // Logged-in users are keyed on their user id, so they get a generous budget
+    // that is not shared with anyone else behind the same NAT/proxy.
+    authenticatedMax: parseInt(process.env.RATE_LIMIT_AUTHENTICATED_MAX || '1000', 10),
+    // Anonymous read-only GETs are cheap and cacheable, so allow far more than
+    // writes to avoid 429s for many users sharing one public IP (shared NAT).
+    anonReadMax: parseInt(process.env.RATE_LIMIT_ANON_READ_MAX || '600', 10),
   },
   
   logging: {

@@ -25,7 +25,6 @@ const MOCK_TOURS: NewTour[] = [
     duration: 8,
     price: '35900',
     maxGroupSize: 16,
-    difficulty: 'easy',
     category: 'heritage',
     images: [
       img('photo-1599661046289-e31897846e41'),
@@ -84,7 +83,6 @@ const MOCK_TOURS: NewTour[] = [
     duration: 7,
     price: '22999',
     maxGroupSize: 20,
-    difficulty: 'moderate',
     category: 'adventure',
     images: [
       img('photo-1626621341517-bbf3d9990a23'),
@@ -138,7 +136,6 @@ const MOCK_TOURS: NewTour[] = [
     duration: 6,
     price: '28900',
     maxGroupSize: 18,
-    difficulty: 'easy',
     category: 'heritage',
     images: [
       img('photo-1564507592333-c60657eea523'),
@@ -191,7 +188,6 @@ const MOCK_TOURS: NewTour[] = [
     duration: 5,
     price: '31500',
     maxGroupSize: 12,
-    difficulty: 'easy',
     category: 'nature',
     images: [
       img('photo-1602216056096-3b40cc0c9944'),
@@ -243,7 +239,6 @@ const MOCK_TOURS: NewTour[] = [
     duration: 4,
     price: '16900',
     maxGroupSize: 15,
-    difficulty: 'moderate',
     category: 'desert',
     images: [
       img('photo-1477587458883-47145ed94245'),
@@ -293,7 +288,6 @@ const MOCK_TOURS: NewTour[] = [
     duration: 5,
     price: '19900',
     maxGroupSize: 20,
-    difficulty: 'easy',
     category: 'beach',
     images: [
       img('photo-1512343879784-a960bf40e7f2'),

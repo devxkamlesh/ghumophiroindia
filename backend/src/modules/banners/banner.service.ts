@@ -2,7 +2,15 @@ import { eq } from 'drizzle-orm'
 import db from '../../core/database'
 import { banners } from '../../core/database/schema'
 import { NotFoundError } from '../../shared/errors'
+import { getCache, setCache, deleteCache, CACHE_TTL } from '../../core/redis'
 import logger from '../../core/logger'
+
+type Banner = typeof banners.$inferSelect
+
+// The homepage carousel reads active banners on every visit — a hot, DB-backed
+// read. Cache it and drop the key whenever a banner changes (all mutations are
+// admin-only and low-frequency), so the origin serves it from Redis.
+const ACTIVE_BANNERS_KEY = 'banners:active'
 
 interface CreateBannerInput {
   title: string
@@ -32,11 +40,22 @@ export class BannerService {
   }
 
   async getActive() {
-    return db
+    const cached = await getCache<Banner[]>(ACTIVE_BANNERS_KEY)
+    if (cached) return cached
+
+    const rows = await db
       .select()
       .from(banners)
       .where(eq(banners.isActive, true))
       .orderBy(banners.displayOrder, banners.id)
+
+    await setCache(ACTIVE_BANNERS_KEY, rows, CACHE_TTL.WARM)
+    return rows
+  }
+
+  /** Drop the cached active-banners list. Called after any banner mutation. */
+  private async invalidateCache() {
+    await deleteCache(ACTIVE_BANNERS_KEY)
   }
 
   async getById(id: number) {
@@ -58,6 +77,7 @@ export class BannerService {
     }).returning()
 
     logger.info(`Banner created: ${banner.title}`)
+    await this.invalidateCache()
     return banner
   }
 
@@ -76,6 +96,7 @@ export class BannerService {
 
     const [updated] = await db.update(banners).set(updateData).where(eq(banners.id, id)).returning()
     logger.info(`Banner updated: ${updated.title}`)
+    await this.invalidateCache()
     return updated
   }
 
@@ -83,6 +104,7 @@ export class BannerService {
     await this.getById(id) // Check exists
     await db.delete(banners).where(eq(banners.id, id))
     logger.info(`Banner deleted: ${id}`)
+    await this.invalidateCache()
     return { message: 'Banner deleted' }
   }
 
@@ -91,6 +113,7 @@ export class BannerService {
       await db.update(banners).set({ displayOrder, updatedAt: new Date() }).where(eq(banners.id, id))
     }
     logger.info(`Banners reordered: ${orders.length} items`)
+    await this.invalidateCache()
     return { message: 'Banners reordered' }
   }
 }

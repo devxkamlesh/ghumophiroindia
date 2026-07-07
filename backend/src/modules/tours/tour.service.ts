@@ -107,7 +107,6 @@ export class TourService {
       page = 1,
       limit = 10,
       category,
-      difficulty,
       minPrice,
       maxPrice,
       minDuration,
@@ -134,7 +133,6 @@ export class TourService {
     conditions.push(eq(tours.isActive, true))
     
     if (category) conditions.push(eq(tours.category, category))
-    if (difficulty) conditions.push(eq(tours.difficulty, difficulty))
     if (minPrice) conditions.push(gte(tours.price, minPrice.toString()))
     if (maxPrice) conditions.push(lte(tours.price, maxPrice.toString()))
     if (minDuration) conditions.push(gte(tours.duration, minDuration))

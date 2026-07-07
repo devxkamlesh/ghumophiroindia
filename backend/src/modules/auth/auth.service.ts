@@ -232,8 +232,8 @@ export class AuthService {
   }
 
   /**
-   * Forgot password — generate a reset token and log it
-   * (In production, send via email. Email service not yet implemented.)
+   * Forgot password — generate a reset token and email a reset link (via Resend).
+   * Always returns a generic message to prevent email enumeration.
    */
   async forgotPassword(data: ForgotPasswordInput) {
     const user = await db.query.users.findFirst({
