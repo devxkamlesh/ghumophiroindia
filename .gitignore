@@ -59,3 +59,15 @@ drizzle/
 
 # Old backup
 old-monolith-backup/
+
+# Security report + local/editor cruft (must never be committed to a public repo)
+AUDIT_REPORT.md
+advanced-load-test.js
+.obsidian/
+
+# Security/pentest reports — internal only, never publish to the public repo
+docs/SECURITY-LOAD-TEST-REPORT.md
+docs/REPORT.MD
+docs/REPORT.md
+docs/**/*SECURITY*
+docs/**/*security-report*

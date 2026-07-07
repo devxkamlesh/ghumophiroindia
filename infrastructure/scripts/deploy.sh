@@ -38,7 +38,7 @@ echo -e "${GREEN}✓ Build completed${NC}\n"
 # Step 4: Update Nginx config (if exists)
 if [ -f "infrastructure/nginx/nginx.conf" ]; then
     echo -e "${YELLOW}🔧 Updating Nginx configuration...${NC}"
-    sudo cp infrastructure/nginx/nginx.conf /etc/nginx/sites-available/ghumophiroindia.com
+    sudo cp infrastructure/nginx/nginx.conf /etc/nginx/sites-available/ghumofiroindia.com
     if [ $? -ne 0 ]; then
         echo -e "${RED}❌ Nginx config copy failed${NC}"
         exit 1
@@ -87,4 +87,4 @@ echo -e "${YELLOW}📊 Current PM2 status:${NC}"
 pm2 status
 
 echo -e "\n${GREEN}✅ Deployment completed successfully!${NC}"
-echo -e "${GREEN}🌐 Site: https://ghumophiroindia.com${NC}"
+echo -e "${GREEN}🌐 Site: https://ghumofiroindia.com${NC}"

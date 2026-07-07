@@ -1,0 +1,194 @@
+apiVersion: 1
+
+# Remove rules that don't work reliably in this environment:
+#  - alert_container_down: cadvisor can't name containers under snap Docker
+#  - alert_host_disk: node-exporter reports bogus fs stats via the bind-mounted
+#    host root under snap Docker (no shared mount propagation). Disk is watched
+#    host-side instead.
+deleteRules:
+  - orgId: 1
+    uid: alert_container_down
+  - orgId: 1
+    uid: alert_host_disk
+
+groups:
+  - orgId: 1
+    name: infra
+    folder: Infrastructure
+    interval: 1m
+    rules:
+      # ---- A monitored target (prometheus/cadvisor/node-exporter/blackbox) is down ----
+      - uid: alert_target_down
+        title: Target down
+        condition: C
+        for: 2m
+        # NoData/errors mean monitoring itself blipped (e.g. a deploy) — not a real
+        # outage. A truly-down target reports up=0 (a real value) and still fires.
+        noDataState: OK
+        execErrState: OK
+        labels:
+          severity: critical
+        annotations:
+          summary: "Target down: {{ $labels.job }} ({{ $labels.instance }})"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: up
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: lt
+                    params: [1]
+              refId: C
+
+      # ---- The live app (frontend or API) is not returning 2xx ----
+      - uid: alert_app_down
+        title: App endpoint down
+        condition: C
+        for: 2m
+        noDataState: OK
+        execErrState: OK
+        labels:
+          severity: critical
+        annotations:
+          summary: "App endpoint not responding: {{ $labels.instance }}"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: probe_success
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: lt
+                    params: [1]
+              refId: C
+
+      # ---- Host CPU usage above 85% ----
+      - uid: alert_host_cpu
+        title: High host CPU
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host CPU above 85% (current {{ $values.B.Value }}%)"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: '100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [85]
+              refId: C
+
+      # ---- Host memory usage above 80% (no swap on this box -> earlier warning) ----
+      - uid: alert_host_mem
+        title: High host memory
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels:
+          severity: warning
+        annotations:
+          summary: "Host memory above 80% (current {{ $values.B.Value }}%)"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: '100 * (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)'
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              type: reduce
+              expression: A
+              reducer: last
+              refId: B
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [80]
+              refId: C
+
+

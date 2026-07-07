@@ -1,0 +1,13 @@
+apiVersion: 1
+
+templates:
+  - orgId: 1
+    name: telegram.custom
+    template: |
+      {{ define "telegram.message" -}}
+      {{ if eq .Status "firing" }}🔴🔴🔴 <b>ALERT FIRING</b> 🔴🔴🔴{{ else }}✅✅ <b>RESOLVED</b> ✅✅{{ end }}
+      {{ range .Alerts }}
+      {{ if eq .Labels.severity "critical" }}🚨 <b>CRITICAL</b>{{ else }}⚠️ <b>WARNING</b>{{ end }} — <b>{{ .Labels.alertname }}</b>
+      {{ if .Annotations.summary }}📝 {{ .Annotations.summary }}{{ end }}
+      {{ end -}}
+      {{- end }}

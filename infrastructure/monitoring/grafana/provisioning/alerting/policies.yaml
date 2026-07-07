@@ -1,0 +1,10 @@
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: Telegram
+    group_by: ['grafana_folder', 'alertname']
+    # First alert 30s after firing; then re-send EVERY MINUTE while still firing.
+    group_wait: 30s
+    group_interval: 1m
+    repeat_interval: 1m

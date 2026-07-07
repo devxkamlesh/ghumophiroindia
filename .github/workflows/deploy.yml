@@ -7,6 +7,9 @@ name: Deploy
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'infrastructure/monitoring/**'
+      - '**.md'
   workflow_dispatch:
 
 concurrency:
@@ -36,7 +39,9 @@ jobs:
   build-and-push:
     name: Build & push images
     needs: verify
-    runs-on: ubuntu-latest
+    # Native ARM64 runner — the VPS is aarch64 (Oracle Ampere), so images must be
+    # arm64. Free for public repos; avoids slow QEMU cross-builds.
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
@@ -56,6 +61,7 @@ jobs:
             build_args: |
               NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://ghumofiroindia.com/api/v1' }}
               NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || 'https://ghumofiroindia.com' }}
+              NEXT_PUBLIC_GA_ID=${{ vars.NEXT_PUBLIC_GA_ID || 'G-VNTQ3X32JE' }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
@@ -69,6 +75,7 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
           push: true
+          platforms: linux/arm64
           build-args: ${{ matrix.build_args }}
           tags: |
             ${{ matrix.image }}:latest
@@ -81,8 +88,9 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     environment: production
-    # SAFETY GATE: manual only until PM2 -> Docker cutover is complete.
-    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.2

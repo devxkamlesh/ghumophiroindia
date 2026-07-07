@@ -1,0 +1,81 @@
+# Monitoring stack: cAdvisor (container metrics) + node-exporter (host metrics)
+# -> Prometheus (storage) -> Grafana (dashboards).
+# Runs independently of the app. Deploy on the VPS:
+#   cd infrastructure/monitoring
+#   sudo docker compose -f docker-compose.monitoring.yml up -d
+# Grafana is published on 127.0.0.1:3001 and fronted by nginx at
+# monitor.ghumofiroindia.com (Cloudflare-only, Grafana's own login).
+
+name: ghumo-monitoring
+
+services:
+  # cAdvisor removed: incompatible with snap Docker's storage layout (couldn't
+  # resolve container names, and spammed "failed to identify read-write layer"
+  # errors). Host metrics come from node-exporter; app up/down from blackbox.
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: ghumo-node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - '--path.rootfs=/host'
+    volumes:
+      - /:/host:ro
+    networks: [monitoring]
+
+  blackbox-exporter:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: ghumo-blackbox
+    restart: unless-stopped
+    networks: [monitoring]
+
+  prometheus:
+    # Config baked into the image (snap Docker can't bind-mount from /var/www).
+    build: ./prometheus
+    container_name: ghumo-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    volumes:
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks: [monitoring]
+
+  grafana:
+    # Provisioning (datasource) baked into the image — no host bind mount.
+    build: ./grafana
+    container_name: ghumo-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SERVER_ROOT_URL: https://monitor.ghumofiroindia.com
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Injected into alerting provisioning via $__env{...} — kept out of the repo.
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      # SMTP via Resend (reuses the app's key) so alerts can also email.
+      GF_SMTP_ENABLED: "true"
+      GF_SMTP_HOST: "smtp.resend.com:465"
+      GF_SMTP_USER: "resend"
+      GF_SMTP_PASSWORD: ${RESEND_API_KEY}
+      GF_SMTP_FROM_ADDRESS: ${EMAIL_FROM}
+      GF_SMTP_FROM_NAME: "Ghumo Monitoring"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on: [prometheus]
+    networks: [monitoring]
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  monitoring:
+    driver: bridge
