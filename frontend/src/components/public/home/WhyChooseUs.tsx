@@ -40,9 +40,9 @@ const features = [
 
 const stats = [
   { number: '5+',     label: 'Years of Experience' },
-  { number: '12,000+', label: 'Happy Travellers' },
+  { number: '2,000+', label: 'Happy Travellers' },
   { number: '4.9/5',  label: 'Average Rating' },
-  { number: '60+',    label: 'Destinations Covered' },
+  { number: '25+',    label: 'Destinations Covered' },
 ]
 
 const containerVariants: Variants = {
@@ -77,7 +77,7 @@ export default function WhyChooseUs() {
           className="mb-14 text-center"
         >
           <p className="font-montez text-4xl text-[#f97316] md:text-5xl lg:text-6xl">
-            Why Ghumo Phiro India
+            Why Ghumo Firo Holidays
           </p>
           <h2 className="mt-1 font-poppins text-3xl font-bold text-slate-800 md:text-5xl">
             Why <span className="text-blue-600">Choose</span> Us

@@ -50,7 +50,7 @@ export default function Hero() {
     return (
       <section className={`${BOX} flex items-center justify-center bg-gradient-to-br from-primary-600 to-orange-500`}>
         <div className="text-center text-white px-4">
-          <h2 className="text-2xl md:text-4xl font-extrabold drop-shadow">Ghumo Phiro India</h2>
+          <h2 className="text-2xl md:text-4xl font-extrabold drop-shadow">Ghumo Firo Holidays</h2>
           <p className="mt-2 text-white/90 text-sm md:text-base">Custom Rajasthan tours from Jaipur</p>
           <Link
             href="/tours"

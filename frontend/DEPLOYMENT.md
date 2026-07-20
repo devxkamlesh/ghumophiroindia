@@ -1,4 +1,4 @@
-# Deployment Guide - Ghumo Firo India Frontend
+# Deployment Guide - Ghumo Firo Holidays Frontend
 
 ## Prerequisites
 
@@ -81,7 +81,7 @@ NEXT_PUBLIC_API_TIMEOUT=30000
 
 # App Configuration
 NEXT_PUBLIC_APP_URL="https://ghumofiroindia.com"
-NEXT_PUBLIC_APP_NAME="Ghumo Firo India"
+NEXT_PUBLIC_APP_NAME="Ghumo Firo Holidays"
 
 # Cloudinary
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="djoqjwwid"
@@ -105,6 +105,9 @@ Create `/etc/nginx/sites-available/ghumofiroindia`:
 server {
     listen 80;
     server_name ghumofiroindia.com www.ghumofiroindia.com;
+
+    # Allow image uploads (nginx default is only 1MB -> causes HTTP 413).
+    client_max_body_size 50M;
 
     # Frontend
     location / {

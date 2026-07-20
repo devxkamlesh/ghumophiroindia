@@ -1,4 +1,4 @@
-# Ghumo Firo India - Architecture
+# Ghumo Firo Holidays - Architecture
 
 This document covers only three things: the **user flow**, the **architecture map**,
 and the **VPS / Docker layout**.

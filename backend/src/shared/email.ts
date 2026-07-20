@@ -20,7 +20,7 @@ const resend = config.email.resendApiKey
 const FROM = config.email.resendApiKey
   ? (config.email.from || 'onboarding@resend.dev')  // use verified domain or sandbox
   : config.email.from
-const BRAND = 'Ghumo Phiro India'
+const BRAND = 'Ghumo Firo Holidays'
 const ADMIN_EMAIL = 'info@ghumofiroindia.com'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

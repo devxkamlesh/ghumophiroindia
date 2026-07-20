@@ -88,7 +88,7 @@ function buildJsonLd(tour: Tour, idOrSlug: string) {
           },
         }
       : {}),
-    provider: { '@type': 'Organization', name: 'Ghumo Phiro India', url: SITE_URL },
+    provider: { '@type': 'Organization', name: 'Ghumo Firo Holidays', url: SITE_URL },
   }
 
   const breadcrumb = {

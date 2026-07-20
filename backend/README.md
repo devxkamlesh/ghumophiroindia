@@ -1,4 +1,4 @@
-# Backend API - Ghumo Phiro India
+# Backend API - Ghumo Firo Holidays
 
 Domain-driven architecture with modular design.
 

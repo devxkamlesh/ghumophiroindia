@@ -179,7 +179,7 @@ export default function InquiriesTable({ search = '', statusFilter = '', onStats
                       <Eye className="w-4 h-4 text-primary-600" />
                     </Link>
                     <a
-                      href={`mailto:${inquiry.email}?subject=Re: Your Inquiry - Ghumo Phiro India`}
+                      href={`mailto:${inquiry.email}?subject=Re: Your Inquiry - Ghumo Firo Holidays`}
                       className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                       title="Send email"
                     >

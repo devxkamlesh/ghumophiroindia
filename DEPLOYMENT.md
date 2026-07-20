@@ -1,4 +1,4 @@
-# Ghumo Phiro India — VPS Deployment Guide
+# Ghumo Firo Holidays — VPS Deployment Guide
 
 **Server:** 161.118.176.26  
 **Domain:** ghumofiroindia.com  
@@ -94,6 +94,9 @@ sudo nano /etc/nginx/sites-available/ghumofiroindia
 server {
     listen 80;
     server_name ghumofiroindia.com www.ghumofiroindia.com 161.118.176.26;
+
+    # Allow image uploads (nginx default is only 1MB -> causes HTTP 413).
+    client_max_body_size 50M;
 
     location / {
         proxy_pass http://localhost:3000;

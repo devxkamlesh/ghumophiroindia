@@ -131,7 +131,7 @@ export function ImageField({ images, onChange }: Props) {
               <>
                 <Upload className="w-8 h-8 text-gray-400" />
                 <p className="text-sm text-gray-600 font-medium">Click to upload images</p>
-                <p className="text-xs text-gray-400">PNG, JPG, WEBP up to 10MB each</p>
+                <p className="text-xs text-gray-400">PNG, JPG, WEBP — large photos are optimized automatically</p>
               </>
             )}
           </label>

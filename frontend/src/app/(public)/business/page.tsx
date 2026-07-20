@@ -26,7 +26,7 @@ const services = [
   { icon: Building2, title: 'Corporate Travel', desc: 'Tailored packages for corporate teams, offsites & incentive trips.', color: 'bg-blue-50 text-blue-600' },
   { icon: Users, title: 'Group Tours', desc: 'Special rates for schools, colleges and large group bookings.', color: 'bg-green-50 text-green-600' },
   { icon: Handshake, title: 'Agent Partnership', desc: 'Earn attractive commissions on every booking you refer.', color: 'bg-orange-50 text-orange-600' },
-  { icon: Globe, title: 'Franchise', desc: 'Open your own Ghumo Phiro India franchise outlet.', color: 'bg-purple-50 text-purple-600' },
+  { icon: Globe, title: 'Franchise', desc: 'Open your own Ghumo Firo Holidays franchise outlet.', color: 'bg-purple-50 text-purple-600' },
   { icon: TrendingUp, title: 'DMC Services', desc: 'Destination management for international travel operators.', color: 'bg-red-50 text-red-600' },
   { icon: Star, title: 'White Label', desc: 'Custom-branded travel solutions for hospitality businesses.', color: 'bg-yellow-50 text-yellow-600' },
 ]

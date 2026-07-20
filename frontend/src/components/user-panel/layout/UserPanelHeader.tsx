@@ -91,7 +91,7 @@ export default function UserPanelHeader() {
                       <span className="text-white font-bold text-xs">GP</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-gray-900 leading-none">Ghumo Phiro India</p>
+                      <p className="text-sm font-bold text-gray-900 leading-none">Ghumo Firo Holidays</p>
                       <p className="text-xs text-gray-500 mt-0.5">My Account</p>
                     </div>
                   </Link>
@@ -170,7 +170,7 @@ export default function UserPanelHeader() {
               <span className="text-white font-bold text-xs">GP</span>
             </div>
             <div className="hidden sm:block">
-              <p className="text-sm font-bold text-gray-900 leading-none">Ghumo Phiro India</p>
+              <p className="text-sm font-bold text-gray-900 leading-none">Ghumo Firo Holidays</p>
               <p className="text-xs text-gray-400">My Account</p>
             </div>
           </Link>

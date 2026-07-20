@@ -1,6 +1,6 @@
-# Ghumo Firo India - Frontend
+# Ghumo Firo Holidays - Frontend
 
-Modern Next.js 16 frontend for the Ghumo Firo India tour booking platform.
+Modern Next.js 16 frontend for the Ghumo Firo Holidays tour booking platform.
 
 ## Features
 
@@ -44,7 +44,7 @@ cp .env.example .env.local
 3. Update `.env.local` with your API URL:
 ```env
 NEXT_PUBLIC_API_URL="http://187.127.151.137/api/v1"
-NEXT_PUBLIC_APP_NAME="Ghumo Firo India"
+NEXT_PUBLIC_APP_NAME="Ghumo Firo Holidays"
 ```
 
 ### Development

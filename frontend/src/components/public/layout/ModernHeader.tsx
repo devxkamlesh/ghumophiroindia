@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import * as React from 'react'
 import Link from 'next/link'
@@ -156,14 +156,14 @@ export default function ModernHeader() {
 
             {/* Logo */}
             <Link href="/" className="shrink-0 flex flex-col items-start">
-              <Image src="/images/ghumofirologo.png" alt="Ghumo Firo India"
+              <Image src="/images/ghumofirologo.png" alt="Ghumo Firo Holidays"
                 width={160} height={48} className="h-12 w-auto object-contain" priority />
               <div className="flex flex-col items-start -mt-0.5 leading-none ml-5">
                 <span className="text-xs font-bold text-gray-900 tracking-wider">
                   GHUMO FIRO
                 </span>
                 <span className="text-xs font-bold text-orange-600 tracking-wider -mt-0.5 ml-5">
-                  INDIA
+                  HOLIDAYS
                 </span>
               </div>
             </Link>
@@ -289,7 +289,7 @@ export default function ModernHeader() {
                 <SheetContent side="top" className="max-h-[92dvh] overflow-y-auto">
                   <SheetHeader className="mb-3">
                     <SheetTitle asChild>
-                      <Link href="/"><Image src="/images/ghumofirologo.png" alt="Ghumo Firo India" width={140} height={40} className="h-10 w-auto object-contain" /></Link>
+                      <Link href="/"><Image src="/images/ghumofirologo.png" alt="Ghumo Firo Holidays" width={140} height={40} className="h-10 w-auto object-contain" /></Link>
                     </SheetTitle>
                   </SheetHeader>
                   {/* Mobile search */}

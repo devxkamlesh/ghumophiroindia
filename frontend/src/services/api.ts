@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { clearAuth } from '@/lib/auth'
+import { compressImage } from '@/lib/image'
 import type {
   Tour,
   Booking,
@@ -95,6 +96,8 @@ api.interceptors.response.use(
       error.message ||
       'Something went wrong'
     const wrapped = new Error(message)
+    // Preserve the HTTP status so callers can react to specific cases (e.g. 413).
+    if (error.response?.status) (wrapped as any).status = error.response.status
     // Surface field-level validation errors (Record<field, string[]>) so
     // callers can map them onto individual form fields.
     const fieldErrors = error.response?.data?.errors
@@ -462,12 +465,22 @@ export const bannerService = {
 
 export const uploadService = {
   image: async (file: File): Promise<string> => {
+    // Downscale + re-encode in the browser first so the payload stays small
+    // (~150–500 KB) and never trips proxy body-size limits (HTTP 413).
+    const optimized = await compressImage(file)
     const formData = new FormData()
-    formData.append('image', file)
-    const { data } = await api.post('/upload/image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    })
-    return data.data.url as string
+    formData.append('image', optimized)
+    try {
+      const { data } = await api.post('/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return data.data.url as string
+    } catch (err: any) {
+      if (err?.status === 413) {
+        throw new Error('This image is too large to upload. Please choose a photo under 10 MB.')
+      }
+      throw err
+    }
   },
 }
 

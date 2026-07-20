@@ -1,4 +1,4 @@
-# Quick Start Guide - Ghumo Firo India Frontend
+# Quick Start Guide - Ghumo Firo Holidays Frontend
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ The `.env.local` file is already configured with:
 
 ```env
 NEXT_PUBLIC_API_URL="http://187.127.151.137/api/v1"
-NEXT_PUBLIC_APP_NAME="Ghumo Firo India"
+NEXT_PUBLIC_APP_NAME="Ghumo Firo Holidays"
 NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="djoqjwwid"
 ```
 
@@ -156,7 +156,7 @@ For issues or questions:
 
 ## Brand Information
 
-- **Name**: Ghumo Firo India (not Phiro)
+- **Name**: Ghumo Firo Holidays (not Phiro)
 - **Domain**: ghumofiroindia.com
 - **Focus**: Rajasthan tour packages
 - **API**: http://187.127.151.137/api/v1

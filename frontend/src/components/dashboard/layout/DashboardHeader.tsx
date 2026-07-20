@@ -81,7 +81,7 @@ export default function DashboardHeader() {
               <SheetHeader className="px-5 py-4 border-b border-gray-100">
                 <SheetTitle asChild>
                   <Link href="/dashboard" className="flex items-center gap-2.5">
-                    <Image src="/images/ghumofirologo.png" alt="Ghumo Firo India" width={130} height={38} className="h-9 w-auto object-contain" />
+                    <Image src="/images/ghumofirologo.png" alt="Ghumo Firo Holidays" width={130} height={38} className="h-9 w-auto object-contain" />
                     <span className="rounded-md bg-orange-100 px-1.5 py-0.5 text-xs font-semibold text-orange-700">Admin</span>
                   </Link>
                 </SheetTitle>
@@ -154,7 +154,7 @@ export default function DashboardHeader() {
 
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center gap-2.5">
-            <Image src="/images/ghumofirologo.png" alt="Ghumo Firo India" width={140} height={42} className="h-9 w-auto object-contain" priority />
+            <Image src="/images/ghumofirologo.png" alt="Ghumo Firo Holidays" width={140} height={42} className="h-9 w-auto object-contain" priority />
             <span className="hidden rounded-md bg-orange-100 px-1.5 py-0.5 text-xs font-semibold text-orange-700 sm:inline">Admin</span>
           </Link>
         </div>

@@ -109,7 +109,7 @@ export default function InquiryDetailPage() {
 
         <div className="flex items-center gap-2 flex-shrink-0">
           <a
-            href={`mailto:${inquiry.email}?subject=Re: Your Inquiry - Ghumo Phiro India&body=Dear ${inquiry.name},%0D%0A%0D%0AThank you for reaching out to us.%0D%0A%0D%0A`}
+            href={`mailto:${inquiry.email}?subject=Re: Your Inquiry - Ghumo Firo Holidays&body=Dear ${inquiry.name},%0D%0A%0D%0AThank you for reaching out to us.%0D%0A%0D%0A`}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Mail className="w-4 h-4" />

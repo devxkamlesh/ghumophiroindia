@@ -15,7 +15,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">GP</span>
           </div>
-          <span className="text-white/80 font-medium text-sm tracking-wide">Ghumo Phiro India</span>
+          <span className="text-white/80 font-medium text-sm tracking-wide">Ghumo Firo Holidays</span>
         </Link>
 
         {/* Hero text */}
@@ -65,7 +65,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">GP</span>
             </div>
-            <span className="font-bold text-gray-900">Ghumo Phiro India</span>
+            <span className="font-bold text-gray-900">Ghumo Firo Holidays</span>
           </Link>
         </div>
 
@@ -77,7 +77,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {/* Footer */}
         <div className="px-6 pb-6 text-center">
           <p className="text-xs text-gray-400">
-            © {new Date().getFullYear()} Ghumo Phiro India. All rights reserved.
+            © {new Date().getFullYear()} Ghumo Firo Holidays. All rights reserved.
           </p>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/render
 import type { Booking } from '@/types'
 
 const COMPANY = {
-  name:    'Ghumo Phiro India',
+  name:    'Ghumo Firo Holidays',
   tagline: 'Explore India, One Journey at a Time',
   address: 'Jaipur, Rajasthan — 302001, India',
   gst:     'GSTIN: 08AAXCG1234X1ZX',

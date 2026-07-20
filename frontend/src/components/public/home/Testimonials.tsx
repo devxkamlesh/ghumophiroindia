@@ -12,7 +12,7 @@ const testimonials = [
     text: 'Absolutely incredible experience! Our guide was knowledgeable and the itinerary was perfectly paced. The Golden Triangle tour exceeded all expectations.',
     tour: 'Golden Triangle Tour',
     image: 'https://i.pravatar.cc/150?img=1',
-    date: 'Dec 2023',
+    date: 'Mar 2026',
   },
   {
     name: 'Marco Rossi',
@@ -37,8 +37,8 @@ const testimonials = [
 ]
 
 const stats = [
-  { value: '4.9/5', label: 'Average Rating', sub: 'Based on 2,500+ reviews' },
-  { value: '12,000+', label: 'Happy Travellers', sub: 'From 50+ countries' },
+  { value: '4.9/5', label: 'Average Rating', sub: 'Based on 480+ reviews' },
+  { value: '2,000+', label: 'Happy Travellers', sub: 'From 30+ countries' },
   { value: '98%', label: 'Satisfaction Rate', sub: 'Would recommend us' },
 ]
 

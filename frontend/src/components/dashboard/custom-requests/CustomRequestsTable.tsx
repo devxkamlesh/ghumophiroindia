@@ -200,7 +200,7 @@ export default function CustomRequestsTable({ search = '', statusFilter = '', on
                       <Eye className="w-4 h-4 text-primary-600" />
                     </Link>
                     <a
-                      href={`mailto:${req.email}?subject=Your Custom Tour Request - Ghumo Phiro India`}
+                      href={`mailto:${req.email}?subject=Your Custom Tour Request - Ghumo Firo Holidays`}
                       className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
                       title="Send email"
                     >

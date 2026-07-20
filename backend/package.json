@@ -1,7 +1,7 @@
 {
   "name": "ghumo-firo-backend",
   "version": "1.0.0",
-  "description": "Backend API for Ghumo Firo India - Tour Booking Platform",
+  "description": "Backend API for Ghumo Firo Holidays - Tour Booking Platform",
   "main": "dist/app.js",
   "scripts": {
     "dev": "tsx watch src/app.ts",
@@ -30,7 +30,7 @@
     "redis",
     "postgresql"
   ],
-  "author": "Ghumo Firo India",
+  "author": "Ghumo Firo Holidays",
   "license": "MIT",
   "dependencies": {
     "@types/multer": "^2.1.0",

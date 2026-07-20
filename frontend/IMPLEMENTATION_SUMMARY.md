@@ -2,7 +2,7 @@
 
 ## Overview
 
-Complete Next.js 16 frontend for **Ghumo Firo India** tour booking platform, connecting to backend API at `http://187.127.151.137/api/v1`.
+Complete Next.js 16 frontend for **Ghumo Firo Holidays** tour booking platform, connecting to backend API at `http://187.127.151.137/api/v1`.
 
 ## What Was Built
 
@@ -50,7 +50,7 @@ All components built with Radix UI primitives:
 - Sticky navigation bar
 - Responsive mobile menu
 - Links to all pages
-- Brand name: "Ghumo Firo India"
+- Brand name: "Ghumo Firo Holidays"
 
 #### Footer (`src/components/public/Footer.tsx`)
 - Company information
@@ -341,7 +341,7 @@ NEXT_PUBLIC_API_URL="http://187.127.151.137/api/v1"
 ✅ API integration working
 ✅ Forms functional
 ✅ Navigation working
-✅ Brand name correct ("Ghumo Firo India")
+✅ Brand name correct ("Ghumo Firo Holidays")
 ✅ API URL correct (http://187.127.151.137/api/v1)
 
 ## Conclusion

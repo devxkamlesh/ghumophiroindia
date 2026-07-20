@@ -8,7 +8,26 @@ import {
   ChevronLeft, ChevronRight, AlertCircle, SlidersHorizontal, X,
 } from 'lucide-react'
 import { tourService } from '@/services/api'
+import JsonLd from '@/components/JsonLd'
+import SeoContentSection from '@/components/public/SeoContentSection'
+import { breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo'
+import { toursContent } from '@/config/seo-content'
 import type { Tour, PaginationMeta } from '@/types'
+
+// Static structured data for the listing (safe on a client page — SSR-rendered).
+const TOURS_JSONLD = [
+  itemListJsonLd('Rajasthan & India Tour Packages', '/tours', [
+    { name: 'Golden Triangle Tour', path: '/tours?search=golden+triangle' },
+    { name: 'Rajasthan Heritage Tours', path: '/tours?category=heritage' },
+    { name: 'Desert Safari Tours', path: '/tours?category=desert' },
+    { name: 'City Tours', path: '/tours?category=city' },
+    { name: 'Custom Tours', path: '/custom-tour' },
+  ]),
+  breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Tours', path: '/tours' },
+  ]),
+]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -429,12 +448,13 @@ function ToursInner() {
 export default function ToursPage() {
   return (
     <div className="min-h-screen bg-gray-50">
+      <JsonLd data={TOURS_JSONLD} />
       {/* Hero */}
       <div className="bg-white border-b border-gray-100 pt-24 pb-8">
         <div className="container-custom">
           <p className="text-xs font-semibold text-primary-600 uppercase tracking-widest mb-2">Explore India</p>
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">All Tours</h1>
-          <p className="text-gray-500 text-sm">Handpicked experiences across Rajasthan and beyond</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-1">Rajasthan &amp; India Tour Packages</h1>
+          <p className="text-gray-500 text-sm">Handpicked, guide-led experiences across Rajasthan and beyond</p>
         </div>
       </div>
 
@@ -447,6 +467,9 @@ export default function ToursPage() {
           <ToursInner />
         </Suspense>
       </div>
+
+      {/* Long-form SEO content for search + answer engines */}
+      <SeoContentSection {...toursContent} />
     </div>
   )
 }

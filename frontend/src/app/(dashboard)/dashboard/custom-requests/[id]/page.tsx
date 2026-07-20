@@ -119,7 +119,7 @@ export default function CustomRequestDetailPage() {
         {/* Quick actions */}
         <div className="flex items-center gap-2 flex-shrink-0">
           <a
-            href={`mailto:${request.email}?subject=Your Custom Tour Request #${request.id} - Ghumo Phiro India&body=Dear ${request.name},%0D%0A%0D%0AThank you for your custom tour request.%0D%0A%0D%0A`}
+            href={`mailto:${request.email}?subject=Your Custom Tour Request #${request.id} - Ghumo Firo Holidays&body=Dear ${request.name},%0D%0A%0D%0AThank you for your custom tour request.%0D%0A%0D%0A`}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors"
           >
             <Mail className="w-4 h-4" />

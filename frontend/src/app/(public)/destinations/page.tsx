@@ -5,7 +5,27 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { MapPin, Search, Loader2, AlertCircle, ArrowRight, TrendingUp } from 'lucide-react'
 import { locationAdminService } from '@/services/api'
+import JsonLd from '@/components/JsonLd'
+import SeoContentSection from '@/components/public/SeoContentSection'
+import { breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo'
+import { destinationsContent } from '@/config/seo-content'
 import type { LocationNode } from '@/types'
+
+// Static structured data for the destinations listing (SSR-rendered on a client page).
+const DEST_JSONLD = [
+  itemListJsonLd('India Travel Destinations', '/destinations', [
+    { name: 'Jaipur', path: '/destinations/jaipur' },
+    { name: 'Udaipur', path: '/destinations/udaipur' },
+    { name: 'Jodhpur', path: '/destinations/jodhpur' },
+    { name: 'Jaisalmer', path: '/destinations/jaisalmer' },
+    { name: 'Pushkar', path: '/destinations/pushkar' },
+    { name: 'Bikaner', path: '/destinations/bikaner' },
+  ]),
+  breadcrumbJsonLd([
+    { name: 'Home', path: '/' },
+    { name: 'Destinations', path: '/destinations' },
+  ]),
+]
 
 export default function DestinationsPage() {
   const [locations, setLocations] = useState<LocationNode[]>([])
@@ -27,6 +47,7 @@ export default function DestinationsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <JsonLd data={DEST_JSONLD} />
 
       {/* Hero */}
       <div className="relative min-h-[420px] flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-20 px-4 overflow-hidden">
@@ -106,6 +127,9 @@ export default function DestinationsPage() {
           </>
         )}
       </div>
+
+      {/* Long-form SEO content for search + answer engines */}
+      <SeoContentSection {...destinationsContent} />
     </div>
   )
 }

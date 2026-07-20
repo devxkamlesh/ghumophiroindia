@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🐫 Ghumo Phiro India
+# 🐫 Ghumo Firo Holidays
 
 ### Full-stack tour-booking platform for exploring Rajasthan — production-grade, containerized, observable.
 
@@ -50,7 +50,7 @@
 
 ## 🧭 Overview
 
-**Ghumo Phiro India** is a modern travel platform for discovering and booking curated tours across
+**Ghumo Firo Holidays** is a modern travel platform for discovering and booking curated tours across
 Rajasthan — the Golden Triangle, heritage city tours, and desert safaris from Jaipur. It pairs a
 polished, SEO-optimized **Next.js** storefront with a secure **Express** REST API, and runs as a
 fully containerized stack behind Cloudflare on a single ARM64 VPS — with push-to-deploy CI/CD,
